@@ -1,32 +1,91 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
-  "known_issues": [
-    "Deployment failed during build/deploy process (needs redeploy/investigation)."
+  "summary": "Website updates: replace homepage-only logo and add podcast submission workflow with user dashboard podcast show creation + multi-episode uploads, and admin dashboard submissions management.",
+  "architectural_notes": [
+    "Podcast workflow: user must create a podcast show before uploading episodes; episodes belong to a show and can be added any time after show creation.",
+    "Admin dashboard should surface user podcast submissions in a dedicated submissions area/column."
   ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Edit Images\n- Convert/resize the uploaded logo for web usage (Picsart_26-01-29_16-52-47-900.png > itmp-home-logo-transparent.dim_200x200.png)",
   "existing_features": [
     {
-      "id": "feature-investigate-the-most-recent-build-deploy-failure-and-identify-the-root-cause-frontend-build-backend-canister-build-dfx-configuration-asset-canister-or-environment-canister-ids-then-apply-the-minimal-code-config-changes-needed-so-the-project-builds-successfully-end-to-end",
-      "title": "Investigate the most recent build/deploy failure and identify the root cause (frontend build, backend canister build, dfx configuration, asset canister, or environment/canister IDs), then apply the minimal code/config changes needed so the project builds successfully end-to-end.",
+      "id": "feature-replace-the-homepage-hero-logo-image-on-the-public-landing-page-only-do-not-change-the-global-header-nav-logo-using-the-user-uploaded-logo-image",
+      "title": "Replace the homepage hero logo image on the public landing page only (do not change the global header/nav logo) using the user-uploaded logo image.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-perform-a-clean-redeploy-after-applying-the-fix-ensuring-the-deployed-frontend-loads-and-can-communicate-with-the-backend-canister-anonymous-access-at-minimum-without-runtime-errors",
-      "title": "Perform a clean redeploy after applying the fix, ensuring the deployed frontend loads and can communicate with the backend canister (anonymous access at minimum) without runtime errors.",
+      "id": "feature-add-a-new-submit-your-podcast-area-in-the-user-dashboard-that-lets-users-1-create-a-podcast-show-2-view-their-created-shows-and-3-add-multiple-episodes-per-show-using-a-dedicated-episode-form-with-the-specified-fields-and-file-uploads-audio-video",
+      "title": "Add a new \"Submit Your Podcast\" area in the user dashboard that lets users: (1) create a podcast show, (2) view their created shows, and (3) add multiple episodes per show using a dedicated episode form with the specified fields and file uploads (audio/video).",
       "reqIds": [
-        "REQ-2"
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-admin-dashboard-section-separate-from-music-submissions-that-displays-podcast-submissions-created-by-users-shows-and-their-episodes-and-allows-admins-to-browse-shows-and-inspect-episode-metadata-and-downloaded-assets-artwork-thumbnail-media",
+      "title": "Add an admin dashboard section (separate from music submissions) that displays podcast submissions created by users (shows and their episodes) and allows admins to browse shows and inspect episode metadata and downloaded assets (artwork/thumbnail/media).",
+      "reqIds": [
+        "REQ-5"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [],
-  "projectName": "Investigate deployment failure and redeploy application",
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Replace Melodify logo with indie Tamil music production logo on homepage only (not site-wide header/nav).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add user dashboard feature to create a podcast show with fields: show title, podcast type (audio/video), description, category, language.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add user dashboard feature to add multiple episodes to a podcast show with fields: episode title, description, 18+ toggle, explicit toggle, promotional toggle, episode type (trailer/full/bonus), season number, episode number, episode artwork image, thumbnail, audio/video file upload.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Add admin dashboard 'submission' column/section to display podcast submissions (shows/episodes) created by users.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Add backend data models and actor methods to support creating podcast shows with fields: show title, podcast type (audio or video), description, podcast category, and language; shows must be owned by the creating user.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Add backend data models and actor methods to support adding multiple episodes to a specific podcast show at any time, with episode fields: episode title, description, 18+ only toggle, explicit content toggle, promotional content toggle, episode type (trailer/full/bonus), season number, episode number, episode artwork image, thumbnail image, and an uploaded media file (audio or video).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "If adding new stable state for podcast shows/episodes changes the backend stable schema, implement a conditional state migration to preserve existing app data and initialize new podcast-related storage safely.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Homepage logo update and podcast shows + multi-episode uploads with admin review",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSaveArtistProfile, useUpdateArtistProfile, useGetArtistProfileEditingAccessStatus } from '../hooks/useQueries';
+import { useSaveArtistProfile, useGetArtistProfileEditingAccessStatus } from '../hooks/useQueries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,7 +38,6 @@ export default function ArtistSetupForm({ onSuccess, initialData, isEditing = fa
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const saveProfile = useSaveArtistProfile();
-  const updateProfile = useUpdateArtistProfile();
   const { data: editingEnabled, isLoading: editingStatusLoading } = useGetArtistProfileEditingAccessStatus();
 
   const isApproved = initialData?.isApproved || false;
@@ -99,11 +98,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, isEditing = fa
         isApproved: initialData?.isApproved || false,
       };
 
-      if (isEditing) {
-        await updateProfile.mutateAsync(profileInput);
-      } else {
-        await saveProfile.mutateAsync(profileInput);
-      }
+      await saveProfile.mutateAsync(profileInput);
 
       setUploadProgress(0);
       if (onSuccess) onSuccess();
@@ -404,8 +399,8 @@ export default function ArtistSetupForm({ onSuccess, initialData, isEditing = fa
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={saveProfile.isPending || updateProfile.isPending || isUploading}>
-            {saveProfile.isPending || updateProfile.isPending || isUploading ? 'Saving...' : isEditing ? 'Update Profile' : 'Complete Setup'}
+          <Button type="submit" className="w-full" disabled={saveProfile.isPending || isUploading}>
+            {saveProfile.isPending || isUploading ? 'Saving...' : isEditing ? 'Update Profile' : 'Complete Setup'}
           </Button>
         </form>
       </CardContent>

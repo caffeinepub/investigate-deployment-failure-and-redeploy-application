@@ -1,133 +1,105 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DollarSign, Save } from 'lucide-react';
 import { useGetDistributionFee, useGetAnnualMaintenanceFee, useSetDistributionFee, useSetAnnualMaintenanceFee } from '../hooks/useQueries';
+import { Save } from 'lucide-react';
 
 export default function AdminFeeManagement() {
-  const { data: currentDistributionFee, isLoading: loadingDistribution } = useGetDistributionFee();
-  const { data: currentAnnualFee, isLoading: loadingAnnual } = useGetAnnualMaintenanceFee();
+  const { data: currentDistributionFee } = useGetDistributionFee();
+  const { data: currentAnnualFee } = useGetAnnualMaintenanceFee();
   const setDistributionFee = useSetDistributionFee();
   const setAnnualMaintenanceFee = useSetAnnualMaintenanceFee();
 
-  const [distributionFeeValue, setDistributionFeeValue] = useState('199');
-  const [annualFeeValue, setAnnualFeeValue] = useState('1000');
-
-  useEffect(() => {
-    if (currentDistributionFee !== undefined) {
-      setDistributionFeeValue(Number(currentDistributionFee).toString());
-    }
-  }, [currentDistributionFee]);
-
-  useEffect(() => {
-    if (currentAnnualFee !== undefined) {
-      setAnnualFeeValue(Number(currentAnnualFee).toString());
-    }
-  }, [currentAnnualFee]);
+  const [distributionFee, setDistributionFeeValue] = useState('');
+  const [annualFee, setAnnualFeeValue] = useState('');
 
   const handleSaveDistributionFee = () => {
-    const fee = parseInt(distributionFeeValue, 10);
+    const fee = parseInt(distributionFee);
     if (!isNaN(fee) && fee >= 0) {
-      setDistributionFee.mutate(fee);
+      setDistributionFee.mutate(BigInt(fee));
+      setDistributionFeeValue('');
     }
   };
 
   const handleSaveAnnualFee = () => {
-    const fee = parseInt(annualFeeValue, 10);
+    const fee = parseInt(annualFee);
     if (!isNaN(fee) && fee >= 0) {
-      setAnnualMaintenanceFee.mutate(fee);
+      setAnnualMaintenanceFee.mutate(BigInt(fee));
+      setAnnualFeeValue('');
     }
   };
 
-  const hasDistributionChanges = distributionFeeValue !== (currentDistributionFee ? Number(currentDistributionFee).toString() : '199');
-  const hasAnnualChanges = annualFeeValue !== (currentAnnualFee ? Number(currentAnnualFee).toString() : '1000');
-
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-            <DollarSign className="w-5 h-5 text-white" />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Distribution Fee</CardTitle>
+          <CardDescription>Set the fee charged per song release</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold">₹{currentDistributionFee ? Number(currentDistributionFee) : 199}</span>
+            <span className="text-muted-foreground">per release</span>
           </div>
-          <div>
-            <CardTitle>Fee Management</CardTitle>
-            <CardDescription>
-              Configure distribution and annual maintenance fees for all artists
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="distributionFee">Distribution Fee per Release (₹)</Label>
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
-                <Input
-                  id="distributionFee"
-                  type="number"
-                  min="0"
-                  value={distributionFeeValue}
-                  onChange={(e) => setDistributionFeeValue(e.target.value)}
-                  className="pl-8"
-                  disabled={loadingDistribution}
-                />
-              </div>
-              <Button
-                onClick={handleSaveDistributionFee}
-                disabled={!hasDistributionChanges || setDistributionFee.isPending}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {setDistributionFee.isPending ? 'Saving...' : 'Save'}
-              </Button>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label htmlFor="distributionFee">New Distribution Fee (₹)</Label>
+              <Input
+                id="distributionFee"
+                type="number"
+                min="0"
+                value={distributionFee}
+                onChange={(e) => setDistributionFeeValue(e.target.value)}
+                placeholder="Enter new fee"
+              />
             </div>
-            <p className="text-sm text-muted-foreground">
-              This fee is charged for each song release submitted by artists.
-            </p>
+            <Button
+              onClick={handleSaveDistributionFee}
+              disabled={!distributionFee || setDistributionFee.isPending}
+              className="mt-auto"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="space-y-2">
-            <Label htmlFor="annualFee">Annual Maintenance Fee (₹)</Label>
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
-                <Input
-                  id="annualFee"
-                  type="number"
-                  min="0"
-                  value={annualFeeValue}
-                  onChange={(e) => setAnnualFeeValue(e.target.value)}
-                  className="pl-8"
-                  disabled={loadingAnnual}
-                />
-              </div>
-              <Button
-                onClick={handleSaveAnnualFee}
-                disabled={!hasAnnualChanges || setAnnualMaintenanceFee.isPending}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {setAnnualMaintenanceFee.isPending ? 'Saving...' : 'Save'}
-              </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Annual Maintenance Fee</CardTitle>
+          <CardDescription>Set the annual maintenance fee for artists</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold">₹{currentAnnualFee ? Number(currentAnnualFee) : 1000}</span>
+            <span className="text-muted-foreground">per year</span>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label htmlFor="annualFee">New Annual Maintenance Fee (₹)</Label>
+              <Input
+                id="annualFee"
+                type="number"
+                min="0"
+                value={annualFee}
+                onChange={(e) => setAnnualFeeValue(e.target.value)}
+                placeholder="Enter new fee"
+              />
             </div>
-            <p className="text-sm text-muted-foreground">
-              This fee is charged annually for data maintenance and platform services.
-            </p>
+            <Button
+              onClick={handleSaveAnnualFee}
+              disabled={!annualFee || setAnnualMaintenanceFee.isPending}
+              className="mt-auto"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
           </div>
-        </div>
-
-        <div className="pt-4 border-t">
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p><strong>Current Distribution Fee:</strong> ₹{currentDistributionFee ? Number(currentDistributionFee) : 199}</p>
-            <p><strong>Current Annual Maintenance Fee:</strong> ₹{currentAnnualFee ? Number(currentAnnualFee) : 1000}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
-

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Music, Upload, List, User, Mail, Phone, Instagram, Facebook, AlertCircle, UserPlus, BadgeCheck, Zap, Clock, TrendingUp, Headphones, IndianRupee, BookOpen } from 'lucide-react';
+import { Music, Upload, List, User, Mail, Phone, Instagram, Facebook, AlertCircle, UserPlus, BadgeCheck, Zap, Clock, TrendingUp, Headphones, IndianRupee, BookOpen, Mic } from 'lucide-react';
 import { SiSpotify, SiApplemusic } from 'react-icons/si';
 import SongSubmissionForm from '../components/SongSubmissionForm';
 import UserSubmissionsList from '../components/UserSubmissionsList';
@@ -9,6 +9,7 @@ import ArtistSetupForm from '../components/ArtistSetupForm';
 import VerifiedBadge from '../components/VerifiedBadge';
 import GreenBadge from '../components/GreenBadge';
 import DashboardPublishedBlogList from '../components/DashboardPublishedBlogList';
+import UserPodcastSubmissionSection from '../components/UserPodcastSubmissionSection';
 import { useGetArtistProfile, useGetDistributionFee, useGetAnnualMaintenanceFee, useGetVerificationStatus, useApplyForVerification, useIsVerificationBadgeActive } from '../hooks/useQueries';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -35,10 +36,8 @@ export default function UserDashboard() {
 
   const handleVerificationClick = async () => {
     if (isWaiting || isApproved) {
-      // If already in waitlist or approved, navigate to verification page
       navigate({ to: '/verification-subscription' });
     } else {
-      // Apply for verification
       try {
         await applyForVerification.mutateAsync();
       } catch (error) {
@@ -214,127 +213,83 @@ export default function UserDashboard() {
         </Card>
       )}
 
-      <div className="mb-4 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-          Artist Dashboard
-        </h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Manage your music submissions and track their status</p>
-      </div>
-
-      <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-        <Alert className="border-blue-500/50 bg-blue-500/10">
-          <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
-          <AlertDescription className="text-sm sm:text-base font-medium">
-            Every release will be charged a distribution fee of ₹{distributionFeeAmount}
+      {artistProfile && (
+        <Alert className="mb-4 sm:mb-8 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/30">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="text-xs sm:text-sm">
+            <strong>Fee Notice:</strong> Distribution Fee: ₹{distributionFeeAmount} per release | Annual Maintenance: ₹{annualMaintenanceFeeAmount} per year
           </AlertDescription>
         </Alert>
+      )}
 
-        <Alert className="border-purple-500/50 bg-purple-500/10">
-          <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
-          <AlertDescription className="text-sm sm:text-base font-medium">
-            For data maintenance, ₹{annualMaintenanceFeeAmount} is charged per year
-          </AlertDescription>
-        </Alert>
-      </div>
-
-      {/* Verification Benefits Section */}
-      <Card className="mb-4 sm:mb-6 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 border-blue-500/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <BadgeCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
-            Verification Benefits
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-sm">
-            Unlock premium features and accelerate your music career with verification
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
+      {isBadgeActive && (
+        <Card className="mb-4 sm:mb-8 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 border-blue-500/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <BadgeCheck className="w-5 h-5 text-blue-500" />
+              Verification Benefits
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-5 h-5 text-blue-500" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Faster Distribution</h4>
+                  <p className="text-xs text-muted-foreground">Priority processing</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-sm sm:text-base font-semibold mb-1">25% Discount on Release Fees</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground">Save money on every release you distribute</p>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 text-purple-500" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Priority Approval</h4>
+                  <p className="text-xs text-muted-foreground">Quick review</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-pink-500" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">Promotion</h4>
+                  <p className="text-xs text-muted-foreground">Featured placement</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                  <Headphones className="w-5 h-5 text-blue-500" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm">24/7 Support</h4>
+                  <p className="text-xs text-muted-foreground">Dedicated help</p>
+                </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
 
-            <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-              </div>
-              <div>
-                <h4 className="text-sm sm:text-base font-semibold mb-1">Faster Distribution</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground">Get your music live within 7 days</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
-              </div>
-              <div>
-                <h4 className="text-sm sm:text-base font-semibold mb-1">Quicker Approvals</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground">Priority review within 24–48 hours</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-500/20">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                <Headphones className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
-              </div>
-              <div>
-                <h4 className="text-sm sm:text-base font-semibold mb-1">24-Hour Contact Support</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground">Get dedicated support when you need it</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 sm:col-span-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
-              </div>
-              <div>
-                <h4 className="text-sm sm:text-base font-semibold mb-1">₹200 per Month for Verified Artists</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground">Exclusive monthly pricing benefit</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 sm:mt-6 text-center">
-            <Button
-              onClick={handleVerificationClick}
-              disabled={applyForVerification.isPending}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-sm sm:text-base"
-            >
-              <BadgeCheck className="w-4 h-4 mr-2" />
-              {applyForVerification.isPending
-                ? 'Processing...'
-                : isWaiting
-                ? 'View Verification Status'
-                : isApproved
-                ? 'View Verification Details'
-                : 'Apply for Verification'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-        <TabsList className="grid w-full grid-cols-3 gap-1">
-          <TabsTrigger value="submissions" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-            <List className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">My Submissions</span>
-            <span className="sm:hidden">Submissions</span>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+          <TabsTrigger value="submissions" className="text-xs sm:text-sm py-2">
+            <List className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">My </span>Submissions
           </TabsTrigger>
-          <TabsTrigger value="submit" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-            <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Submit New</span>
-            <span className="sm:hidden">Submit</span>
+          <TabsTrigger value="submit" className="text-xs sm:text-sm py-2">
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Submit </span>Song
           </TabsTrigger>
-          <TabsTrigger value="blog" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-            <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span>Blog</span>
+          <TabsTrigger value="podcasts" className="text-xs sm:text-sm py-2">
+            <Mic className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">My </span>Podcasts
+          </TabsTrigger>
+          <TabsTrigger value="blog" className="text-xs sm:text-sm py-2">
+            <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            Blog
           </TabsTrigger>
         </TabsList>
 
@@ -343,20 +298,11 @@ export default function UserDashboard() {
         </TabsContent>
 
         <TabsContent value="submit">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                <Music className="w-5 h-5 sm:w-6 sm:h-6" />
-                Submit Your Music
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Fill in all the details about your track and upload your files
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SongSubmissionForm onSuccess={() => setActiveTab('submissions')} />
-            </CardContent>
-          </Card>
+          <SongSubmissionForm />
+        </TabsContent>
+
+        <TabsContent value="podcasts">
+          <UserPodcastSubmissionSection />
         </TabsContent>
 
         <TabsContent value="blog">

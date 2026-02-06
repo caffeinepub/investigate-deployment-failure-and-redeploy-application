@@ -1,44 +1,85 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T17:41:43.715Z",
+  "generatedAt": "2026-02-06T17:08:38.052Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 6,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Investigate the most recent build/deploy failure and identify the root cause (frontend build, backend canister build, dfx configuration, asset canister, or environment/canister IDs), then apply the minimal code/config changes needed so the project builds successfully end-to-end.",
+        "summary": "Replace the homepage hero logo image on the public landing page only (do not change the global header/nav logo) using the user-uploaded logo image.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/config.ts",
-          "frontend/src/hooks/useActor.ts",
-          "frontend/src/hooks/useInternetIdentity.ts",
-          "frontend/src/App.tsx",
-          "frontend/DEPLOYMENT.md"
+          "frontend/public/assets/generated/itmp-home-logo-transparent.dim_200x200.png",
+          "frontend/src/pages/LandingPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/DEPLOYMENT.md"
+          "frontend/public/assets/generated/itmp-home-logo-transparent.dim_200x200.png",
+          "frontend/src/pages/LandingPage.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Perform a clean redeploy after applying the fix, ensuring the deployed frontend loads and can communicate with the backend canister (anonymous access at minimum) without runtime errors.",
+        "summary": "Add backend data models and actor methods to support creating podcast shows with fields: show title, podcast type (audio or video), description, podcast category, and language; shows must be owned by the creating user.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Add backend data models and actor methods to support adding multiple episodes to a specific podcast show at any time, with episode fields: episode title, description, 18+ only toggle, explicit content toggle, promotional content toggle, episode type (trailer/full/bonus), season number, episode number, episode artwork image, thumbnail image, and an uploaded media file (audio or video).",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Add a new \"Submit Your Podcast\" area in the user dashboard that lets users: (1) create a podcast show, (2) view their created shows, and (3) add multiple episodes per show using a dedicated episode form with the specified fields and file uploads (audio/video).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/config.ts",
-          "frontend/src/hooks/useActor.ts",
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/LandingPage.tsx"
+          "frontend/src/utils/fileToExternalBlob.ts",
+          "frontend/src/components/PodcastShowForm.tsx",
+          "frontend/src/components/PodcastEpisodeForm.tsx",
+          "frontend/src/components/UserPodcastSubmissionSection.tsx",
+          "frontend/src/pages/UserDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/LandingPage.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/utils/fileToExternalBlob.ts",
+          "frontend/src/components/PodcastShowForm.tsx",
+          "frontend/src/components/PodcastEpisodeForm.tsx",
+          "frontend/src/components/UserPodcastSubmissionSection.tsx",
+          "frontend/src/pages/UserDashboard.tsx"
         ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Add an admin dashboard section (separate from music submissions) that displays podcast submissions created by users (shows and their episodes) and allows admins to browse shows and inspect episode metadata and downloaded assets (artwork/thumbnail/media).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/AdminPodcastSubmissions.tsx",
+          "frontend/src/pages/AdminDashboard.tsx",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/AdminPodcastSubmissions.tsx",
+          "frontend/src/pages/AdminDashboard.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "If adding new stable state for podcast shows/episodes changes the backend stable schema, implement a conditional state migration to preserve existing app data and initialize new podcast-related storage safely.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
@@ -50,9 +91,27 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/DEPLOYMENT.md",
-    "frontend/src/App.tsx",
+    "frontend/public/assets/generated/itmp-home-logo-transparent.dim_200x200.png",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/AdminArtistManagement.tsx",
+    "frontend/src/components/AdminEditArtistDialog.tsx",
+    "frontend/src/components/AdminFeeManagement.tsx",
+    "frontend/src/components/AdminPodcastSubmissions.tsx",
+    "frontend/src/components/AdminSubmissionsList.tsx",
+    "frontend/src/components/AdminUserRoleManagement.tsx",
+    "frontend/src/components/AdminVerificationManagement.tsx",
+    "frontend/src/components/ArtistSetupForm.tsx",
+    "frontend/src/components/PodcastEpisodeForm.tsx",
+    "frontend/src/components/PodcastShowForm.tsx",
+    "frontend/src/components/UserPodcastSubmissionSection.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AdminDashboard.tsx",
     "frontend/src/pages/LandingPage.tsx",
+    "frontend/src/pages/UserDashboard.tsx",
+    "frontend/src/utils/fileToExternalBlob.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

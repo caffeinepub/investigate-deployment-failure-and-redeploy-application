@@ -53,12 +53,92 @@ export interface CommunityMessage {
   'timestamp' : Time,
 }
 export interface CommunityMessageInput { 'content' : string }
+export type EpisodeType = { 'full' : null } |
+  { 'trailer' : null } |
+  { 'bonus' : null };
 export type ExternalBlob = Uint8Array;
 export interface InviteCode {
   'created' : Time,
   'code' : string,
   'used' : boolean,
 }
+export type Language = { 'tamil' : null } |
+  { 'hindi' : null } |
+  { 'other' : null } |
+  { 'marathi' : null } |
+  { 'gujarati' : null } |
+  { 'punjabi' : null } |
+  { 'malayalam' : null } |
+  { 'kannada' : null } |
+  { 'telugu' : null } |
+  { 'bengali' : null } |
+  { 'english' : null };
+export type PodcastCategory = { 'kidsFamily' : null } |
+  { 'music' : null } |
+  { 'newsPolitics' : null } |
+  { 'other' : null } |
+  { 'arts' : null } |
+  { 'education' : null } |
+  { 'religionSpirituality' : null } |
+  { 'healthFitness' : null } |
+  { 'tvFilm' : null } |
+  { 'technology' : null } |
+  { 'business' : null } |
+  { 'sports' : null } |
+  { 'comedy' : null } |
+  { 'science' : null };
+export interface PodcastEpisode {
+  'id' : string,
+  'isPromotional' : boolean,
+  'title' : string,
+  'isEighteenPlus' : boolean,
+  'thumbnail' : ExternalBlob,
+  'showId' : string,
+  'createdBy' : Principal,
+  'description' : string,
+  'artwork' : ExternalBlob,
+  'seasonNumber' : bigint,
+  'episodeNumber' : bigint,
+  'episodeType' : EpisodeType,
+  'mediaFile' : ExternalBlob,
+  'timestamp' : Time,
+  'isExplicit' : boolean,
+}
+export interface PodcastEpisodeInput {
+  'isPromotional' : boolean,
+  'title' : string,
+  'isEighteenPlus' : boolean,
+  'thumbnail' : ExternalBlob,
+  'showId' : string,
+  'description' : string,
+  'artwork' : ExternalBlob,
+  'seasonNumber' : bigint,
+  'episodeNumber' : bigint,
+  'episodeType' : EpisodeType,
+  'mediaFile' : ExternalBlob,
+  'isExplicit' : boolean,
+}
+export interface PodcastShow {
+  'id' : string,
+  'podcastType' : PodcastType,
+  'title' : string,
+  'createdBy' : Principal,
+  'description' : string,
+  'artwork' : ExternalBlob,
+  'language' : Language,
+  'timestamp' : Time,
+  'category' : PodcastCategory,
+}
+export interface PodcastShowInput {
+  'podcastType' : PodcastType,
+  'title' : string,
+  'description' : string,
+  'artwork' : ExternalBlob,
+  'language' : Language,
+  'category' : PodcastCategory,
+}
+export type PodcastType = { 'audio' : null } |
+  { 'video' : null };
 export interface PreSaveInput { 'preSaveLink' : string, 'songId' : string }
 export interface RSVP {
   'name' : string,
@@ -225,6 +305,8 @@ export interface _SERVICE {
     [Array<ShoppingItem>, string, string],
     string
   >,
+  'createPodcastEpisode' : ActorMethod<[PodcastEpisodeInput], string>,
+  'createPodcastShow' : ActorMethod<[PodcastShowInput], string>,
   'createPreSave' : ActorMethod<[PreSaveInput], string>,
   'deleteBlogPost' : ActorMethod<[string], undefined>,
   'deletePreSaveLink' : ActorMethod<[string], undefined>,
@@ -239,6 +321,8 @@ export interface _SERVICE {
     Array<[Principal, ArtistProfile]>
   >,
   'getAllBlogPosts' : ActorMethod<[], Array<BlogPost>>,
+  'getAllEpisodes' : ActorMethod<[], Array<PodcastEpisode>>,
+  'getAllPodcasts' : ActorMethod<[], Array<PodcastShow>>,
   'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
   'getAllSubmissions' : ActorMethod<[], Array<SongSubmission>>,
   'getAllSubmissionsWithPreSaveLinks' : ActorMethod<[], Array<SongSubmission>>,
@@ -266,6 +350,16 @@ export interface _SERVICE {
   'getDistributionFee' : ActorMethod<[], bigint>,
   'getInviteCodes' : ActorMethod<[], Array<InviteCode>>,
   'getNextBatchOfMessages' : ActorMethod<[bigint], Array<CommunityMessage>>,
+  'getPodcastEpisodesByShow' : ActorMethod<[string], Array<PodcastEpisode>>,
+  'getPodcastEpisodesByUser' : ActorMethod<
+    [],
+    Array<[PodcastShow, Array<PodcastEpisode>]>
+  >,
+  'getPodcastShow' : ActorMethod<[string], [] | [PodcastShow]>,
+  'getPodcastShowWithEpisodes' : ActorMethod<
+    [string],
+    [] | [[PodcastShow, Array<PodcastEpisode>]]
+  >,
   'getPreSaveLink' : ActorMethod<[string], [] | [string]>,
   'getPreloadedCommunityMessages' : ActorMethod<[], Array<CommunityMessage>>,
   'getPublishedBlogPosts' : ActorMethod<[], Array<BlogPost>>,

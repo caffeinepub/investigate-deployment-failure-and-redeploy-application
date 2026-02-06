@@ -1,73 +1,102 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix frontend build/deploy configuration to restore successful deploy and runtime backend connectivity",
+  "title": "Landing hero logo refresh + podcast submission and admin review UI",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Identify and fix the frontend-side root cause preventing successful end-to-end build/deploy, and document the cause and minimal changes made.",
+      "summary": "Update only the public landing-page hero logo to use the new uploaded logo asset while leaving the global header/nav logo unchanged.",
       "acceptanceCriteria": [
-        "A clear root-cause summary is documented in the repo (e.g., in a short DEPLOYMENT.md note or similar) describing what failed and what was changed to fix it.",
-        "`dfx deploy` (or the platform’s equivalent deploy step) completes successfully without errors for all canisters.",
-        "Frontend production build completes successfully (TypeScript + bundler) with no build-stopping errors.",
-        "Backend canister compiles successfully (Motoko) with no build-stopping errors."
+        "Landing page hero logo uses the new uploaded logo asset.",
+        "Header/navbar logo remains unchanged across the rest of the site.",
+        "No broken image links in production build."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/config.ts",
+          "path": "frontend/public/assets/generated/itmp-home-logo-transparent.dim_200x200.png",
           "operation": "create",
-          "description": "Add the missing frontend configuration module required by existing imports (used by useActor/useInternetIdentity) to unblock TypeScript production builds. Implement minimal runtime config loading for canister IDs and agent host used by actor creation, using environment-driven values with safe fallbacks."
-        },
-        {
-          "path": "frontend/src/hooks/useActor.ts",
-          "operation": "modify",
-          "description": "Harden actor creation so build/runtime do not fail when optional config values are missing or when admin secret initialization is unavailable. Ensure anonymous actor creation works reliably by default and avoid throwing on access-control initialization failures (log and continue)."
-        },
-        {
-          "path": "frontend/src/hooks/useInternetIdentity.ts",
-          "operation": "modify",
-          "description": "Ensure Internet Identity configuration reads from the shared config loader and uses deploy-safe defaults when environment variables are absent, preventing production builds from failing due to undefined configuration."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Add minimal defensive handling so the app can render (at least the Landing page) even if backend actor/config initialization is still in progress or unavailable, preventing a build-time or runtime blank-screen scenario."
-        },
-        {
-          "path": "frontend/DEPLOYMENT.md",
-          "operation": "create",
-          "description": "Document the investigated deploy failure root cause and the minimal frontend changes applied (e.g., missing config module/import resolution, environment variable expectations for canister IDs/host), plus brief verification steps for successful build and deploy."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Ensure the deployed frontend loads and can communicate with the backend canister (anonymous access at minimum) without runtime errors.",
-      "acceptanceCriteria": [
-        "Opening the deployed app in a browser shows the Landing page without a blank screen.",
-        "No critical runtime errors appear in the browser console on initial load.",
-        "The frontend can successfully create an actor and complete at least one basic query call (e.g., fetch user/profile state) without failing due to canister ID / agent / CORS / host misconfiguration."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/config.ts",
-          "operation": "modify",
-          "description": "Finalize deploy-safe runtime configuration resolution (backend canister ID + agent host/network) so the frontend can create an actor correctly in both local and deployed environments, supporting anonymous access at minimum."
-        },
-        {
-          "path": "frontend/src/hooks/useActor.ts",
-          "operation": "modify",
-          "description": "Ensure actor creation uses the resolved deploy-time config and remains stable across route loads; keep behavior non-fatal on initialization steps so the app loads and queries can run without console-stopping errors."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add/adjust one lightweight query hook intended for deploy verification (e.g., a safe call to getCallerUserProfile) so it can run anonymously without throwing, enabling confirmation that actor creation + basic query communication works."
+          "description": "Add the resized/converted uploaded homepage hero logo asset per imageRequirements edit (Picsart_26-01-29_16-52-47-900.png -> itmp-home-logo-transparent.dim_200x200.png)."
         },
         {
           "path": "frontend/src/pages/LandingPage.tsx",
           "operation": "modify",
-          "description": "Add minimal non-intrusive runtime error surface (e.g., a small warning area) if backend connectivity/config is missing, while still rendering the Landing page content so deployed loads never appear blank."
+          "description": "Replace the hero-section <img> source to reference frontend/public/assets/generated/itmp-home-logo-transparent.dim_200x200.png, ensuring only the landing hero changes and no other logos (e.g., Header) are modified."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Add a 'Submit Your Podcast' area in the user dashboard to create shows, view created shows, and add multiple episodes with required metadata and file uploads.",
+      "acceptanceCriteria": [
+        "User Dashboard contains a clearly labeled section/tab for podcast submission.",
+        "Show creation form contains: title, podcast type (audio/video), description, category, language.",
+        "After creating a show, user can add episodes to that show using a separate episode form with all required fields and file uploads.",
+        "User can see a list of their shows and navigate/select a show to add episodes.",
+        "All user-facing text for these new UI elements is in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add React Query hooks for podcast user flows using existing backend capabilities: createPodcastShow, createPodcastEpisode, and fetching the caller’s shows/episodes (e.g., getPodcastEpisodesByUser, getPodcastEpisodesByShow/getPodcastShowWithEpisodes). Ensure queries/mutations invalidate relevant podcast caches and show English toast/error messages. Verify the authorization component usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/fileToExternalBlob.ts",
+          "operation": "create",
+          "description": "Create a small helper to convert browser File/Blob to the blob-storage ExternalBlob type used by the backend interface for uploads, with optional progress wiring support. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/PodcastShowForm.tsx",
+          "operation": "create",
+          "description": "Implement a show creation form UI with fields: title, podcast type (audio/video), description, category, language, and show artwork upload; submit via the new query hook. Use shadcn-ui form inputs already present in the app. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/PodcastEpisodeForm.tsx",
+          "operation": "create",
+          "description": "Implement an episode creation form UI for a selected show with fields: episode title, description, 18+ toggle, explicit toggle, promotional toggle, episode type (trailer/full/bonus), season number, episode number, artwork image upload, thumbnail image upload, and media file upload (audio/video). Convert uploads to ExternalBlob and submit via the new query hook; show upload progress where feasible. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/UserPodcastSubmissionSection.tsx",
+          "operation": "create",
+          "description": "Create the 'Submit Your Podcast' dashboard section that (1) shows a list of the user’s created shows, (2) provides a show creation panel, and (3) allows selecting a show to add episodes using the dedicated episode form. Ensure all user-facing strings are English and handle backend authorization errors gracefully. Verify the authorization and blob-storage components' usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/UserDashboard.tsx",
+          "operation": "modify",
+          "description": "Wire the new 'Submit Your Podcast' area into the existing dashboard tabs (add a clearly labeled tab/section) and render UserPodcastSubmissionSection so it is reachable without creating a new top-level route."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Add an admin-only podcasts submissions area to browse user-created podcast shows and inspect their episodes, metadata, and downloadable assets.",
+      "acceptanceCriteria": [
+        "Admin Dashboard includes a dedicated podcasts/podcast submissions area.",
+        "Admin can see a list of podcast shows submitted by users.",
+        "Admin can expand/open a show to view its episodes and metadata.",
+        "Admin can download episode assets (artwork, thumbnail, and audio/video file) from the admin UI.",
+        "Non-admin users cannot access admin podcast submissions views."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add/extend admin-focused podcast query hooks to fetch all podcast shows and related episodes/metadata using existing backend capabilities (e.g., getAllPodcasts, getAllEpisodes, getPodcastShowWithEpisodes). Ensure cache keys are distinct from user-specific queries and errors are shown in English. Verify the authorization component usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/AdminPodcastSubmissions.tsx",
+          "operation": "create",
+          "description": "Create an admin-only UI section to list podcast shows and inspect a selected show’s episodes and metadata; provide download buttons for artwork/thumbnail/media using the existing downloadExternalBlob utility and/or direct URLs for preview. Verify the blob-storage component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/AdminDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a dedicated 'Podcasts' (or 'Podcast Submissions') tab in the Admin Dashboard and render AdminPodcastSubmissions, ensuring it is separate from music submissions."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Confirm wiring preserves the existing admin-only gate (AdminDashboard only renders for admin role) so non-admin users cannot access the admin podcasts submissions views; keep behavior consistent with other admin sections."
         }
       ]
     }

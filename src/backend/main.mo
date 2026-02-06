@@ -8,13 +8,14 @@ import Array "mo:core/Array";
 import Storage "blob-storage/Storage";
 import Random "mo:core/Random";
 import MixinStorage "blob-storage/Mixin";
-import Migration "migration";
+
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import InviteLinksModule "invite-links/invite-links-module";
 import Stripe "stripe/stripe";
 import OutCall "http-outcalls/outcall";
 import UserApproval "user-approval/approval";
+import Migration "migration";
 
 // Use migration function via "with" clause
 (with migration = Migration.run)
@@ -178,15 +179,111 @@ actor {
     content : Text;
   };
 
+  // Podcast Podcast Types
+  public type PodcastType = { #audio; #video };
+  public type EpisodeType = {
+    #trailer;
+    #full;
+    #bonus;
+  };
+
+  public type PodcastCategory = {
+    #arts;
+    #business;
+    #comedy;
+    #education;
+    #healthFitness;
+    #kidsFamily;
+    #music;
+    #newsPolitics;
+    #religionSpirituality;
+    #science;
+    #sports;
+    #technology;
+    #tvFilm;
+    #other;
+  };
+
+  public type Language = {
+    #english;
+    #hindi;
+    #tamil;
+    #telugu;
+    #kannada;
+    #malayalam;
+    #punjabi;
+    #bengali;
+    #marathi;
+    #gujarati;
+    #other;
+  };
+
+  public type PodcastShow = {
+    id : Text;
+    title : Text;
+    description : Text;
+    podcastType : PodcastType;
+    category : PodcastCategory;
+    language : Language;
+    artwork : Storage.ExternalBlob;
+    createdBy : Principal;
+    timestamp : Time.Time;
+  };
+
+  public type PodcastEpisode = {
+    id : Text;
+    showId : Text;
+    title : Text;
+    description : Text;
+    seasonNumber : Nat;
+    episodeNumber : Nat;
+    episodeType : EpisodeType;
+    isEighteenPlus : Bool;
+    isExplicit : Bool;
+    isPromotional : Bool;
+    artwork : Storage.ExternalBlob;
+    thumbnail : Storage.ExternalBlob;
+    mediaFile : Storage.ExternalBlob;
+    createdBy : Principal;
+    timestamp : Time.Time;
+  };
+
+  public type PodcastShowInput = {
+    title : Text;
+    description : Text;
+    podcastType : PodcastType;
+    category : PodcastCategory;
+    language : Language;
+    artwork : Storage.ExternalBlob;
+  };
+
+  public type PodcastEpisodeInput = {
+    showId : Text;
+    title : Text;
+    description : Text;
+    seasonNumber : Nat;
+    episodeNumber : Nat;
+    episodeType : EpisodeType;
+    isEighteenPlus : Bool;
+    isExplicit : Bool;
+    isPromotional : Bool;
+    artwork : Storage.ExternalBlob;
+    thumbnail : Storage.ExternalBlob;
+    mediaFile : Storage.ExternalBlob;
+  };
+
   include MixinStorage();
 
   let submissions = Map.empty<Text, SongSubmission>();
+  let podcasts = Map.empty<Text, PodcastShow>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let artistProfiles = Map.empty<Principal, ArtistProfile>();
   let verificationRequests = Map.empty<Text, VerificationRequest>();
   let teamMembers = Map.empty<Principal, Bool>();
   let blogPosts = Map.empty<Text, BlogPost>();
   let communityMessages = Map.empty<Text, CommunityMessage>();
+
+  let podcastEpisodes = Map.empty<Text, PodcastEpisode>();
 
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -268,6 +365,118 @@ actor {
       Runtime.trap("Unauthorized: Only authenticated users can perform this action");
     };
     artistProfileEditingAccessEnabled;
+  };
+
+  // Podcast functionality
+  public shared ({ caller }) func createPodcastShow(input : PodcastShowInput) : async Text {
+    requireUser(caller);
+
+    let blob = await Random.blob();
+    let id = InviteLinksModule.generateUUID(blob);
+
+    let show : PodcastShow = {
+      id;
+      title = input.title;
+      description = input.description;
+      podcastType = input.podcastType;
+      category = input.category;
+      language = input.language;
+      artwork = input.artwork;
+      createdBy = caller;
+      timestamp = Time.now();
+    };
+
+    podcasts.add(id, show);
+    id;
+  };
+
+  public shared ({ caller }) func createPodcastEpisode(input : PodcastEpisodeInput) : async Text {
+    requireUser(caller);
+
+    switch (podcasts.get(input.showId)) {
+      case (null) {
+        Runtime.trap("Podcast show not found");
+      };
+      case (?show) {
+        if (show.createdBy != caller) {
+          Runtime.trap("Unauthorized: Only the creator of the podcast show can add episodes");
+        };
+
+        let blob = await Random.blob();
+        let episodeId = InviteLinksModule.generateUUID(blob);
+
+        let episode : PodcastEpisode = {
+          id = episodeId;
+          showId = input.showId;
+          title = input.title;
+          description = input.description;
+          seasonNumber = input.seasonNumber;
+          episodeNumber = input.episodeNumber;
+          episodeType = input.episodeType;
+          isEighteenPlus = input.isEighteenPlus;
+          isExplicit = input.isExplicit;
+          isPromotional = input.isPromotional;
+          artwork = input.artwork;
+          thumbnail = input.thumbnail;
+          mediaFile = input.mediaFile;
+          createdBy = caller;
+          timestamp = Time.now();
+        };
+
+        podcastEpisodes.add(episodeId, episode);
+        episode.id;
+      };
+    };
+  };
+
+  public query ({ caller }) func getAllPodcasts() : async [PodcastShow] {
+    requireAdminOrTeam(caller);
+    podcasts.values().toArray();
+  };
+
+  public query ({ caller }) func getAllEpisodes() : async [PodcastEpisode] {
+    requireAdminOrTeam(caller);
+    podcastEpisodes.values().toArray();
+  };
+
+  public query ({ caller }) func getPodcastShow(showId : Text) : async ?PodcastShow {
+    requireUser(caller);
+    podcasts.get(showId);
+  };
+
+  public query ({ caller }) func getPodcastEpisodesByShow(showId : Text) : async [PodcastEpisode] {
+    requireUser(caller);
+    podcastEpisodes.values().toArray().filter(
+      func(episode) { episode.showId == showId }
+    );
+  };
+
+  public query ({ caller }) func getPodcastShowWithEpisodes(showId : Text) : async ?(PodcastShow, [PodcastEpisode]) {
+    requireUser(caller);
+    switch (podcasts.get(showId)) {
+      case (null) { null };
+      case (?show) {
+        let episodes = podcastEpisodes.values().toArray().filter(
+          func(episode) { episode.showId == showId }
+        );
+        ?(show, episodes);
+      };
+    };
+  };
+
+  public query ({ caller }) func getPodcastEpisodesByUser() : async [(PodcastShow, [PodcastEpisode])] {
+    requireUser(caller);
+    let userShows = podcasts.values().toArray().filter(
+      func(show) { show.createdBy == caller }
+    );
+    userShows.map(
+      func(show) {
+        let episodes = podcastEpisodes.values().toArray().filter(
+          func(episode) { episode.showId == show.id }
+        );
+        (show, episodes);
+      }
+    );
   };
 
   // Team role management functions

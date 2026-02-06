@@ -1,10 +1,17 @@
 import Map "mo:core/Map";
+import Text "mo:core/Text";
 import Principal "mo:core/Principal";
-import Storage "blob-storage/Storage";
 import Time "mo:core/Time";
+import Storage "blob-storage/Storage";
+import AccessControl "authorization/access-control";
+import InviteLinksModule "invite-links/invite-links-module";
+import Stripe "stripe/stripe";
+import UserApproval "user-approval/approval";
 
 module {
-  type OldSongSubmission = {
+  type SongStatus = { #pending; #approved; #rejected; #draft };
+
+  type SongSubmission = {
     id : Text;
     title : Text;
     releaseType : Text;
@@ -21,40 +28,18 @@ module {
     audioFile : Storage.ExternalBlob;
     audioFilename : Text;
     additionalDetails : Text;
-    status : { #pending; #approved; #rejected; #draft };
+    status : SongStatus;
     adminRemarks : Text;
     adminComment : Text;
     submitter : Principal;
     timestamp : Time.Time;
     discountCode : ?Text;
-    acrResult : ?{
-      statusCode : Text;
-      music : Text;
-    };
+    acrResult : ?{ statusCode : Text; music : Text };
     preSaveLink : ?Text;
   };
 
-  type OldVerificationRequest = {
-    id : Text;
-    user : Principal;
-    status : { #pending; #approved; #rejected; #waiting };
-    timestamp : Time.Time;
-    verificationApprovedTimestamp : ?Time.Time;
-    expiryExtensionDays : Nat;
-  };
-
-  type OldBlogPost = {
-    id : Text;
-    title : Text;
-    content : Text;
-    author : Principal;
-    timestamp : Time.Time;
-    media : ?Storage.ExternalBlob;
-    status : { #draft; #published };
-  };
-
   type OldActor = {
-    submissions : Map.Map<Text, OldSongSubmission>;
+    submissions : Map.Map<Text, SongSubmission>;
     userProfiles : Map.Map<Principal, { name : Text; artistId : Text }>;
     artistProfiles : Map.Map<Principal, {
       fullName : Text;
@@ -68,9 +53,29 @@ module {
       profilePhoto : Storage.ExternalBlob;
       isApproved : Bool;
     }>;
-    verificationRequests : Map.Map<Text, OldVerificationRequest>;
+    verificationRequests : Map.Map<Text, {
+      id : Text;
+      user : Principal;
+      status : {
+        #pending;
+        #approved;
+        #rejected;
+        #waiting;
+      };
+      timestamp : Time.Time;
+      verificationApprovedTimestamp : ?Time.Time;
+      expiryExtensionDays : Nat;
+    }>;
     teamMembers : Map.Map<Principal, Bool>;
-    blogPosts : Map.Map<Text, OldBlogPost>;
+    blogPosts : Map.Map<Text, {
+      id : Text;
+      title : Text;
+      content : Text;
+      author : Principal;
+      timestamp : Time.Time;
+      media : ?Storage.ExternalBlob;
+      status : { #draft; #published };
+    }>;
     communityMessages : Map.Map<Text, {
       id : Text;
       user : Principal;
@@ -79,28 +84,81 @@ module {
       role : Text;
       fullName : Text;
     }>;
-    verificationRequestsWithFullName : Map.Map<Text, {
-      id : Text;
-      user : Principal;
-      status : { #pending; #approved; #rejected; #waiting };
-      timestamp : Time.Time;
-      fullName : Text;
-      verificationApprovedTimestamp : ?Time.Time;
-      expiryExtensionDays : Nat;
-    }>;
+    accessControlState : AccessControl.AccessControlState;
+    approvalState : UserApproval.UserApprovalState;
+    inviteState : InviteLinksModule.InviteLinksSystemState;
     distributionFee : Int;
     annualMaintenanceFee : Int;
-    stripeConfiguration : ?{
-      secretKey : Text;
-      allowedCountries : [Text];
-    };
+    stripeConfiguration : ?Stripe.StripeConfiguration;
     globalAnnouncement : Text;
     lastVerificationCheckTime : Time.Time;
     artistProfileEditingAccessEnabled : Bool;
   };
 
+  type PodcastShow = {
+    id : Text;
+    title : Text;
+    description : Text;
+    podcastType : { #audio; #video };
+    category : {
+      #arts;
+      #business;
+      #comedy;
+      #education;
+      #healthFitness;
+      #kidsFamily;
+      #music;
+      #newsPolitics;
+      #religionSpirituality;
+      #science;
+      #sports;
+      #technology;
+      #tvFilm;
+      #other;
+    };
+    language : {
+      #english;
+      #hindi;
+      #tamil;
+      #telugu;
+      #kannada;
+      #malayalam;
+      #punjabi;
+      #bengali;
+      #marathi;
+      #gujarati;
+      #other;
+    };
+    artwork : Storage.ExternalBlob;
+    createdBy : Principal;
+    timestamp : Time.Time;
+  };
+
+  type PodcastEpisode = {
+    id : Text;
+    showId : Text;
+    title : Text;
+    description : Text;
+    seasonNumber : Nat;
+    episodeNumber : Nat;
+    episodeType : {
+      #trailer;
+      #full;
+      #bonus;
+    };
+    isEighteenPlus : Bool;
+    isExplicit : Bool;
+    isPromotional : Bool;
+    artwork : Storage.ExternalBlob;
+    thumbnail : Storage.ExternalBlob;
+    mediaFile : Storage.ExternalBlob;
+    createdBy : Principal;
+    timestamp : Time.Time;
+  };
+
   type NewActor = {
-    submissions : Map.Map<Text, OldSongSubmission>;
+    submissions : Map.Map<Text, SongSubmission>;
+    podcasts : Map.Map<Text, PodcastShow>;
     userProfiles : Map.Map<Principal, { name : Text; artistId : Text }>;
     artistProfiles : Map.Map<Principal, {
       fullName : Text;
@@ -114,9 +172,29 @@ module {
       profilePhoto : Storage.ExternalBlob;
       isApproved : Bool;
     }>;
-    verificationRequests : Map.Map<Text, OldVerificationRequest>;
+    verificationRequests : Map.Map<Text, {
+      id : Text;
+      user : Principal;
+      status : {
+        #pending;
+        #approved;
+        #rejected;
+        #waiting;
+      };
+      timestamp : Time.Time;
+      verificationApprovedTimestamp : ?Time.Time;
+      expiryExtensionDays : Nat;
+    }>;
     teamMembers : Map.Map<Principal, Bool>;
-    blogPosts : Map.Map<Text, OldBlogPost>;
+    blogPosts : Map.Map<Text, {
+      id : Text;
+      title : Text;
+      content : Text;
+      author : Principal;
+      timestamp : Time.Time;
+      media : ?Storage.ExternalBlob;
+      status : { #draft; #published };
+    }>;
     communityMessages : Map.Map<Text, {
       id : Text;
       user : Principal;
@@ -125,12 +203,13 @@ module {
       role : Text;
       fullName : Text;
     }>;
+    podcastEpisodes : Map.Map<Text, PodcastEpisode>;
+    accessControlState : AccessControl.AccessControlState;
+    approvalState : UserApproval.UserApprovalState;
+    inviteState : InviteLinksModule.InviteLinksSystemState;
     distributionFee : Int;
     annualMaintenanceFee : Int;
-    stripeConfiguration : ?{
-      secretKey : Text;
-      allowedCountries : [Text];
-    };
+    stripeConfiguration : ?Stripe.StripeConfiguration;
     globalAnnouncement : Text;
     lastVerificationCheckTime : Time.Time;
     artistProfileEditingAccessEnabled : Bool;
@@ -138,19 +217,9 @@ module {
 
   public func run(old : OldActor) : NewActor {
     {
-      submissions = old.submissions;
-      userProfiles = old.userProfiles;
-      artistProfiles = old.artistProfiles;
-      verificationRequests = old.verificationRequests;
-      teamMembers = old.teamMembers;
-      blogPosts = old.blogPosts;
-      communityMessages = old.communityMessages;
-      distributionFee = old.distributionFee;
-      annualMaintenanceFee = old.annualMaintenanceFee;
-      stripeConfiguration = old.stripeConfiguration;
-      globalAnnouncement = old.globalAnnouncement;
-      lastVerificationCheckTime = old.lastVerificationCheckTime;
-      artistProfileEditingAccessEnabled = old.artistProfileEditingAccessEnabled;
+      old with
+      podcasts = Map.empty<Text, PodcastShow>();
+      podcastEpisodes = Map.empty<Text, PodcastEpisode>();
     };
   };
 };

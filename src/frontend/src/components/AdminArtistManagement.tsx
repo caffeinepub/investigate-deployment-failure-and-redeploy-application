@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Search, Mail, Phone, Instagram, Facebook, Edit2 } from 'lucide-react';
 import { SiSpotify, SiApplemusic } from 'react-icons/si';
-import { useGetAllArtistsWithUserIds, useGetAllVerificationRequests } from '../hooks/useQueries';
+import { useGetAllArtists, useGetAllVerificationRequests } from '../hooks/useQueries';
 import AdminEditArtistDialog from './AdminEditArtistDialog';
 import VerifiedBadge from './VerifiedBadge';
 import GreenBadge from './GreenBadge';
@@ -16,7 +16,7 @@ interface AdminArtistManagementProps {
 }
 
 export default function AdminArtistManagement({ isTeamMember = false }: AdminArtistManagementProps) {
-  const { data: artistsWithUserIds } = useGetAllArtistsWithUserIds();
+  const { data: artistsWithUserIds } = useGetAllArtists();
   const { data: verificationRequests } = useGetAllVerificationRequests();
   const [searchTerm, setSearchTerm] = useState('');
   const [editingArtist, setEditingArtist] = useState<{ principal: string; profile: ArtistProfile } | null>(null);
@@ -198,4 +198,3 @@ export default function AdminArtistManagement({ isTeamMember = false }: AdminArt
     </div>
   );
 }
-

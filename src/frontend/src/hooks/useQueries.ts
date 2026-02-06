@@ -1,10 +1,236 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { useInternetIdentity } from './useInternetIdentity';
-import type { UserProfile, SubmitSongInput, SongSubmission, ArtistProfile, SaveArtistProfileInput, VerificationStatus, VerificationRequestWithFullName, SongStatus, AppUserRole, BlogPost, BlogPostInput, ACRResult, PreSaveInput } from '../backend';
+import {
+  SongSubmission,
+  SubmitSongInput,
+  ArtistProfile,
+  SaveArtistProfileInput,
+  UserProfile,
+  VerificationStatus,
+  SongStatus,
+  BlogPost,
+  BlogPostInput,
+  CommunityMessage,
+  CommunityMessageInput,
+  ACRResult,
+  PreSaveInput,
+  PodcastShowInput,
+  PodcastEpisodeInput,
+  PodcastShow,
+  PodcastEpisode,
+  AppUserRole,
+  InviteCode,
+} from '../backend';
 import { toast } from 'sonner';
-import { Principal } from '@icp-sdk/core/principal';
 
+// Song Submissions
+export function useSubmitSong() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: SubmitSongInput) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.submitSong(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
+      toast.success('Song submitted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to submit song');
+    },
+  });
+}
+
+export function useGetUserSubmissions() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<SongSubmission[]>({
+    queryKey: ['userSubmissions'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getUserSubmissions();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllSubmissions() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<SongSubmission[]>({
+    queryKey: ['allSubmissions'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllSubmissions();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateSubmissionStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status, remarks }: { id: string; status: SongStatus; remarks: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.updateSubmissionStatus(id, status, remarks);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
+      toast.success('Submission status updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update status');
+    },
+  });
+}
+
+export function useDeleteSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.deleteSubmission(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
+      toast.success('Submission deleted');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete submission');
+    },
+  });
+}
+
+export function useUpdateSongSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (updatedSubmission: SongSubmission) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.updateSongSubmission(updatedSubmission);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
+      toast.success('Submission updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update submission');
+    },
+  });
+}
+
+export function useAdminEditSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (update: SongSubmission) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.adminEditSubmission(update);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
+      toast.success('Submission updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update submission');
+    },
+  });
+}
+
+// Artist Profile
+export function useGetArtistProfile() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ArtistProfile | null>({
+    queryKey: ['artistProfile'],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getArtistProfile();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useHasCompleteArtistProfile() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ['hasCompleteArtistProfile'],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.hasCompleteArtistProfile();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSaveArtistProfile() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: SaveArtistProfileInput) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.saveArtistProfile(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['hasCompleteArtistProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['allArtists'] });
+      toast.success('Artist profile saved successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to save artist profile');
+    },
+  });
+}
+
+export function useGetAllArtists() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Array<[any, ArtistProfile]>>({
+    queryKey: ['allArtists'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllArtistsWithUserIds();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAdminEditArtistProfile() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ artist, profile }: { artist: any; profile: ArtistProfile }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.adminEditArtistProfile(artist, profile);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allArtists'] });
+      toast.success('Artist profile updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update artist profile');
+    },
+  });
+}
+
+// User Profile
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
@@ -38,451 +264,49 @@ export function useSaveCallerUserProfile() {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
       toast.success('Profile saved successfully');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to save profile: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to save profile');
     },
-  });
-}
-
-export function useGetArtistProfile() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  const query = useQuery<ArtistProfile | null>({
-    queryKey: ['artistProfile'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getArtistProfile();
-    },
-    enabled: !!actor && !actorFetching && !!identity,
-    retry: false,
-  });
-
-  return {
-    ...query,
-    isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && query.isFetched,
-  };
-}
-
-export function useSaveArtistProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: SaveArtistProfileInput) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.saveArtistProfile(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['hasCompleteArtistProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
-      toast.success('Your artist profile has been created successfully!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to save artist profile: ${error.message}`);
-    },
-  });
-}
-
-export function useUpdateArtistProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: SaveArtistProfileInput) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.saveArtistProfile(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['hasCompleteArtistProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
-      toast.success('Artist profile updated successfully!');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update artist profile: ${error.message}`);
-    },
-  });
-}
-
-export function useHasCompleteArtistProfile() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['hasCompleteArtistProfile'],
-    queryFn: async () => {
-      if (!actor) return false;
-      return actor.hasCompleteArtistProfile();
-    },
-    enabled: !!actor && !actorFetching && !!identity,
-  });
-}
-
-export function useGetArtistProfileByUserId() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (userId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      const principal = { __principal__: userId };
-      return actor.getArtistProfileByUserId(principal as any);
-    },
-  });
-}
-
-export function useGetAllArtistsWithUserIds() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<Array<[Principal, ArtistProfile]>>({
-    queryKey: ['allArtistsWithUserIds'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllArtistsWithUserIds();
-    },
-    enabled: !!actor && !actorFetching,
-  });
-}
-
-export function useIsCurrentUserAdmin() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['isAdmin', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor) return false;
-      try {
-        return await actor.isCallerAdmin();
-      } catch {
-        return false;
-      }
-    },
-    enabled: !!actor && !actorFetching && !!identity,
   });
 }
 
 export function useGetCallerRole() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
+  const { actor, isFetching } = useActor();
 
   return useQuery<AppUserRole>({
-    queryKey: ['callerRole', identity?.getPrincipal().toString()],
+    queryKey: ['callerRole'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) return AppUserRole.user;
       return actor.getCallerRole();
     },
-    enabled: !!actor && !actorFetching && !!identity,
+    enabled: !!actor && !isFetching,
   });
 }
 
-export function useIsCallerTeamMember() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['isTeamMember', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor) return false;
-      try {
-        return await actor.isCallerTeamMember();
-      } catch {
-        return false;
-      }
-    },
-    enabled: !!actor && !actorFetching && !!identity,
-  });
-}
-
-export function useUpgradeUserToTeam() {
+// Comments
+export function useAddSongComment() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async ({ songId, comment }: { songId: string; comment: string }) => {
       if (!actor) throw new Error('Actor not available');
-      const principal = Principal.fromText(userId);
-      return actor.upgradeUserToTeam(principal as any);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allTeamMembers'] });
-      toast.success('User upgraded to team member successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to upgrade user: ${error.message}`);
-    },
-  });
-}
-
-export function useDowngradeTeamToUser() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      const principal = Principal.fromText(userId);
-      return actor.downgradeTeamToUser(principal as any);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allTeamMembers'] });
-      toast.success('Team member downgraded to regular user successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to downgrade team member: ${error.message}`);
-    },
-  });
-}
-
-export function useGetAllTeamMembers() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<Principal[]>({
-    queryKey: ['allTeamMembers'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllTeamMembers();
-    },
-    enabled: !!actor && !actorFetching,
-  });
-}
-
-export function useDeleteUser() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      const principal = Principal.fromText(userId);
-      return actor.deleteUser(principal as any);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
-      queryClient.invalidateQueries({ queryKey: ['allTeamMembers'] });
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['allVerificationRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtists'] });
-      toast.success('User deleted successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete user: ${error.message}`);
-    },
-  });
-}
-
-export function useSubmitSong() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: SubmitSongInput) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.submitSong(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to submit song: ${error.message}`);
-    },
-  });
-}
-
-export function useUpdateSongSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (submission: SongSubmission) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.updateSongSubmission(submission);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      toast.success('Submission updated successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update submission: ${error.message}`);
-    },
-  });
-}
-
-export function useGetUserSubmissions() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<SongSubmission[]>({
-    queryKey: ['userSubmissions'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getUserSubmissions();
-    },
-    enabled: !!actor && !actorFetching && !!identity,
-  });
-}
-
-export function useGetAllSubmissions() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<SongSubmission[]>({
-    queryKey: ['allSubmissions'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllSubmissions();
-    },
-    enabled: !!actor && !actorFetching,
-  });
-}
-
-export function useUpdateSubmissionStatus() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, status, remarks }: { id: string; status: SongStatus; remarks: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.updateSubmissionStatus(id, status, remarks);
+      return actor.addSongComment(songId, comment);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
       queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
-      toast.success('Submission status updated');
+      toast.success('Comment added');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update status: ${error.message}`);
-    },
-  });
-}
-
-export function useDeleteSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.deleteSubmission(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      toast.success('Submission deleted');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete submission: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to add comment');
     },
   });
 }
 
-export function useAdminEditSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (submission: SongSubmission) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.adminEditSubmission(submission);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
-      toast.success('Submission updated successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update submission: ${error.message}`);
-    },
-  });
-}
-
-export function useAdminEditArtistProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ artistPrincipal, profile }: { artistPrincipal: string; profile: ArtistProfile }) => {
-      if (!actor) throw new Error('Actor not available');
-      const principal = Principal.fromText(artistPrincipal);
-      return actor.adminEditArtistProfile(principal as any, profile);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allArtists'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['allVerificationRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['artistProfile'] });
-      toast.success('Artist profile updated successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update artist profile: ${error.message}`);
-    },
-  });
-}
-
-export function useGetDashboardSummary() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<string>({
-    queryKey: ['dashboardSummary'],
-    queryFn: async () => {
-      if (!actor) return '';
-      return actor.getDashboardSummary();
-    },
-    enabled: !!actor && !actorFetching,
-  });
-}
-
-export function useGenerateInviteCode() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.generateInviteCode();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inviteCodes'] });
-      toast.success('Invite code generated');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to generate invite code: ${error.message}`);
-    },
-  });
-}
-
-export function useGetInviteCodes() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['inviteCodes'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getInviteCodes();
-    },
-    enabled: !!actor && !actorFetching,
-  });
-}
-
-export function useGetAllArtists() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<ArtistProfile[]>({
-    queryKey: ['allArtists'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllArtists();
-    },
-    enabled: !!actor && !actorFetching,
-  });
-}
-
+// Announcements
 export function useGetAnnouncement() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
+  const { actor, isFetching } = useActor();
 
   return useQuery<string>({
     queryKey: ['announcement'],
@@ -490,7 +314,7 @@ export function useGetAnnouncement() {
       if (!actor) return '';
       return actor.getAnnouncement();
     },
-    enabled: !!actor && !actorFetching && !!identity,
+    enabled: !!actor && !isFetching,
   });
 }
 
@@ -505,16 +329,17 @@ export function useUpdateAnnouncement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcement'] });
-      toast.success('Announcement updated successfully');
+      toast.success('Announcement updated');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update announcement: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update announcement');
     },
   });
 }
 
+// Fees
 export function useGetDistributionFee() {
-  const { actor, isFetching: actorFetching } = useActor();
+  const { actor, isFetching } = useActor();
 
   return useQuery<bigint>({
     queryKey: ['distributionFee'],
@@ -522,12 +347,12 @@ export function useGetDistributionFee() {
       if (!actor) return BigInt(199);
       return actor.getDistributionFee();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !isFetching,
   });
 }
 
 export function useGetAnnualMaintenanceFee() {
-  const { actor, isFetching: actorFetching } = useActor();
+  const { actor, isFetching } = useActor();
 
   return useQuery<bigint>({
     queryKey: ['annualMaintenanceFee'],
@@ -535,7 +360,7 @@ export function useGetAnnualMaintenanceFee() {
       if (!actor) return BigInt(1000);
       return actor.getAnnualMaintenanceFee();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !isFetching,
   });
 }
 
@@ -544,16 +369,16 @@ export function useSetDistributionFee() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (fee: number) => {
+    mutationFn: async (fee: bigint) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.setDistributionFee(BigInt(fee));
+      return actor.setDistributionFee(fee);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['distributionFee'] });
-      toast.success('Distribution fee updated successfully');
+      toast.success('Distribution fee updated');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update distribution fee: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update fee');
     },
   });
 }
@@ -563,63 +388,31 @@ export function useSetAnnualMaintenanceFee() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (fee: number) => {
+    mutationFn: async (fee: bigint) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.setAnnualMaintenanceFee(BigInt(fee));
+      return actor.setAnnualMaintenanceFee(fee);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['annualMaintenanceFee'] });
-      toast.success('Annual maintenance fee updated successfully');
+      toast.success('Annual maintenance fee updated');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update annual maintenance fee: ${error.message}`);
-    },
-  });
-}
-
-export function useAddSongComment() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ songId, comment }: { songId: string; comment: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.addSongComment(songId, comment);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
-      toast.success('Comment saved successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to save comment: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update fee');
     },
   });
 }
 
-export function useGetSongComment() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (songId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getSongComment(songId);
-    },
-  });
-}
-
-// Verification Subscription Hooks
+// Verification
 export function useGetVerificationStatus() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
+  const { actor, isFetching } = useActor();
 
   return useQuery<VerificationStatus>({
     queryKey: ['verificationStatus'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) return 'rejected' as VerificationStatus;
       return actor.getVerificationStatus();
     },
-    enabled: !!actor && !actorFetching && !!identity,
+    enabled: !!actor && !isFetching,
   });
 }
 
@@ -635,45 +428,43 @@ export function useApplyForVerification() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['verificationStatus'] });
       queryClient.invalidateQueries({ queryKey: ['allVerificationRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['verificationBadgeActive'] });
-      toast.success('Verification application submitted successfully!');
+      toast.success('Verification request submitted');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to apply for verification: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to submit verification request');
     },
   });
 }
 
 export function useGetAllVerificationRequests() {
-  const { actor, isFetching: actorFetching } = useActor();
+  const { actor, isFetching } = useActor();
 
-  return useQuery<VerificationRequestWithFullName[]>({
+  return useQuery({
     queryKey: ['allVerificationRequests'],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllVerificationRequests();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !isFetching,
   });
 }
 
-export function useUpdateVerificationStatus() {
+export function useUpdateVerificationStatusWithData() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, status }: { userId: string; status: VerificationStatus }) => {
+    mutationFn: async ({ id, status }: { id: string; status: VerificationStatus }) => {
       if (!actor) throw new Error('Actor not available');
-      const principal = Principal.fromText(userId);
-      return actor.updateVerificationStatus(principal as any, status);
+      return actor.updateVerificationStatusWithData(id, status);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allVerificationRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['verificationBadgeActive'] });
-      toast.success('Verification status updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['verificationStatus'] });
+      toast.success('Verification status updated');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update verification status: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update verification status');
     },
   });
 }
@@ -683,124 +474,153 @@ export function useUpdateVerificationExpiryDays() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, extraDays }: { userId: string; extraDays: number }) => {
+    mutationFn: async ({ userId, extraDays }: { userId: any; extraDays: bigint }) => {
       if (!actor) throw new Error('Actor not available');
-      const principal = Principal.fromText(userId);
-      return actor.updateVerificationExpiryDays(principal as any, BigInt(extraDays));
+      return actor.updateVerificationExpiryDays(userId, extraDays);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allVerificationRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['verificationBadgeActive'] });
-      toast.success('Verification expiry updated successfully');
+      toast.success('Verification expiry updated');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update verification expiry: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update expiry');
     },
   });
 }
 
-// Verification Badge Hooks
 export function useIsVerificationBadgeActive() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
+  const { actor, isFetching } = useActor();
 
   return useQuery<boolean>({
-    queryKey: ['verificationBadgeActive'],
+    queryKey: ['isVerificationBadgeActive'],
     queryFn: async () => {
       if (!actor) return false;
-      try {
-        return await actor.isVerificationBadgeActive();
-      } catch {
-        return false;
-      }
+      return actor.isVerificationBadgeActive();
     },
-    enabled: !!actor && !actorFetching && !!identity,
+    enabled: !!actor && !isFetching,
   });
 }
 
-export function useIsUserVerificationBadgeActive(userId: string | null) {
-  const { actor, isFetching: actorFetching } = useActor();
+export function useIsUserVerificationBadgeActive(userId: any) {
+  const { actor, isFetching } = useActor();
 
   return useQuery<boolean>({
-    queryKey: ['userVerificationBadgeActive', userId],
+    queryKey: ['isUserVerificationBadgeActive', userId?.toString()],
     queryFn: async () => {
       if (!actor || !userId) return false;
-      try {
-        const principal = Principal.fromText(userId);
-        return await actor.isUserVerificationBadgeActive(principal as any);
-      } catch {
-        return false;
-      }
+      return actor.isUserVerificationBadgeActive(userId);
     },
-    enabled: !!actor && !actorFetching && !!userId,
+    enabled: !!actor && !isFetching && !!userId,
   });
 }
 
-// Artist Profile Editing Access Control Hooks
-export function useGetArtistProfileEditingAccessStatus() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['artistProfileEditingAccessStatus'],
-    queryFn: async () => {
-      if (!actor) return true;
-      try {
-        return await actor.getArtistProfileEditingAccessStatus();
-      } catch {
-        return true;
-      }
-    },
-    enabled: !!actor && !actorFetching && !!identity,
-  });
-}
-
-export function useSetArtistProfileEditingAccess() {
+// Team Management
+export function useUpgradeUserToTeam() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (enabled: boolean) => {
+    mutationFn: async (user: any) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.setArtistProfileEditingAccess(enabled);
+      return actor.upgradeUserToTeam(user);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfileEditingAccessStatus'] });
-      toast.success('Profile editing access updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['allTeamMembers'] });
+      toast.success('User upgraded to team member');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update profile editing access: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to upgrade user');
     },
   });
 }
 
-// Blog Hooks
-export function useGetPublishedBlogPosts() {
-  const { actor, isFetching: actorFetching } = useActor();
+export function useDowngradeTeamToUser() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
 
-  return useQuery<BlogPost[]>({
-    queryKey: ['publishedBlogPosts'],
+  return useMutation({
+    mutationFn: async (user: any) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.downgradeTeamToUser(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allTeamMembers'] });
+      toast.success('Team member downgraded to user');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to downgrade user');
+    },
+  });
+}
+
+export function useGetAllTeamMembers() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery({
+    queryKey: ['allTeamMembers'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getPublishedBlogPosts();
+      return actor.getAllTeamMembers();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !isFetching,
   });
 }
 
-export function useGetAllBlogPosts() {
-  const { actor, isFetching: actorFetching } = useActor();
+export function useDeleteUser() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
 
-  return useQuery<BlogPost[]>({
-    queryKey: ['allBlogPosts'],
+  return useMutation({
+    mutationFn: async (user: any) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.deleteUser(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allArtists'] });
+      queryClient.invalidateQueries({ queryKey: ['allTeamMembers'] });
+      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
+      toast.success('User deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete user');
+    },
+  });
+}
+
+// Invite Codes
+export function useGenerateInviteCode() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.generateInviteCode();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inviteCodes'] });
+      toast.success('Invite code generated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to generate invite code');
+    },
+  });
+}
+
+export function useGetInviteCodes() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<InviteCode[]>({
+    queryKey: ['inviteCodes'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllBlogPosts();
+      return actor.getInviteCodes();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !isFetching,
   });
 }
 
+// Blog Posts
 export function useCreateBlogPost() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -812,11 +632,10 @@ export function useCreateBlogPost() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allBlogPosts'] });
-      queryClient.invalidateQueries({ queryKey: ['publishedBlogPosts'] });
-      toast.success('Blog post created successfully');
+      toast.success('Blog post created');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to create blog post: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create blog post');
     },
   });
 }
@@ -832,11 +651,10 @@ export function useUpdateBlogPost() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allBlogPosts'] });
-      queryClient.invalidateQueries({ queryKey: ['publishedBlogPosts'] });
-      toast.success('Blog post updated successfully');
+      toast.success('Blog post updated');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to update blog post: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update blog post');
     },
   });
 }
@@ -853,10 +671,10 @@ export function usePublishBlogPost() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allBlogPosts'] });
       queryClient.invalidateQueries({ queryKey: ['publishedBlogPosts'] });
-      toast.success('Blog post published successfully');
+      toast.success('Blog post published');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to publish blog post: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to publish blog post');
     },
   });
 }
@@ -873,28 +691,41 @@ export function useDeleteBlogPost() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allBlogPosts'] });
       queryClient.invalidateQueries({ queryKey: ['publishedBlogPosts'] });
-      toast.success('Blog post deleted successfully');
+      toast.success('Blog post deleted');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete blog post: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete blog post');
     },
   });
 }
 
-// ACRCloud Hooks
-export function useGetAcrCloudResult(songId: string | null) {
-  const { actor, isFetching: actorFetching } = useActor();
+export function useGetAllBlogPosts() {
+  const { actor, isFetching } = useActor();
 
-  return useQuery<ACRResult | null>({
-    queryKey: ['acrCloudResult', songId],
+  return useQuery<BlogPost[]>({
+    queryKey: ['allBlogPosts'],
     queryFn: async () => {
-      if (!actor || !songId) return null;
-      return actor.getAcrCloudResult(songId);
+      if (!actor) return [];
+      return actor.getAllBlogPosts();
     },
-    enabled: !!actor && !actorFetching && !!songId,
+    enabled: !!actor && !isFetching,
   });
 }
 
+export function useGetPublishedBlogPosts() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<BlogPost[]>({
+    queryKey: ['publishedBlogPosts'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getPublishedBlogPosts();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// ACRCloud
 export function useSetAcrResult() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -904,18 +735,30 @@ export function useSetAcrResult() {
       if (!actor) throw new Error('Actor not available');
       return actor.setAcrResult(songId, acrResult);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['acrCloudResult', variables.songId] });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
+      toast.success('ACR result saved');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to save ACR result: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to save ACR result');
     },
   });
 }
 
-// Pre-save Hooks
+export function useGetAcrCloudResult(songId: string) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ACRResult | null>({
+    queryKey: ['acrResult', songId],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getAcrCloudResult(songId);
+    },
+    enabled: !!actor && !isFetching && !!songId,
+  });
+}
+
+// Pre-save Links
 export function useCreatePreSave() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -927,11 +770,10 @@ export function useCreatePreSave() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
-      toast.success('Pre-save link created successfully');
+      toast.success('Pre-save link created');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to create pre-save link: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create pre-save link');
     },
   });
 }
@@ -947,11 +789,123 @@ export function useDeletePreSaveLink() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['userSubmissions'] });
-      toast.success('Pre-save link deleted successfully');
+      toast.success('Pre-save link deleted');
     },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete pre-save link: ${error.message}`);
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete pre-save link');
+    },
+  });
+}
+
+// Podcast Queries
+export function useCreatePodcastShow() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: PodcastShowInput) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.createPodcastShow(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['podcastEpisodesByUser'] });
+      queryClient.invalidateQueries({ queryKey: ['allPodcasts'] });
+      toast.success('Podcast show created successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create podcast show');
+    },
+  });
+}
+
+export function useCreatePodcastEpisode() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: PodcastEpisodeInput) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.createPodcastEpisode(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['podcastEpisodesByUser'] });
+      queryClient.invalidateQueries({ queryKey: ['allEpisodes'] });
+      toast.success('Episode created successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create episode');
+    },
+  });
+}
+
+export function useGetPodcastEpisodesByUser() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Array<[PodcastShow, PodcastEpisode[]]>>({
+    queryKey: ['podcastEpisodesByUser'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getPodcastEpisodesByUser();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllPodcasts() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<PodcastShow[]>({
+    queryKey: ['allPodcasts'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllPodcasts();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllEpisodes() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<PodcastEpisode[]>({
+    queryKey: ['allEpisodes'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllEpisodes();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// Profile Editing Access Control
+export function useGetArtistProfileEditingAccessStatus() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ['artistProfileEditingAccessStatus'],
+    queryFn: async () => {
+      if (!actor) return true;
+      return actor.getArtistProfileEditingAccessStatus();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSetArtistProfileEditingAccess() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.setArtistProfileEditingAccess(enabled);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artistProfileEditingAccessStatus'] });
+      toast.success('Profile editing access updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update access');
     },
   });
 }

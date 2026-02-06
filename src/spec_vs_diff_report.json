@@ -1,54 +1,97 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T17:41:43.710Z",
-  "summary": "REQ-1 is partially addressed by adding deployment documentation (frontend/DEPLOYMENT.md), but the diff summary does not show the actual frontend fix files that the documentation claims were created/updated (e.g., frontend/src/config.ts, frontend/src/hooks/useActor.ts). REQ-2 (successful redeploy + verified runtime actor/query communication) cannot be confirmed from the provided diff summary. The diff also appears to include substantial unrelated feature/UI changes (per frontend-file-summaries.txt) and a backend state migration addition that are not requested by the BuildRequest and may violate the stated non-goals/minimal-change constraint.",
+  "generatedAt": "2026-02-06T17:08:38.049Z",
+  "summary": "Diff implements the homepage landing hero logo swap and adds substantial podcast show/episode UI plus an admin podcasts tab, along with backend stable-state migration scaffolding. However, the diff also includes multiple unrelated admin/artist/fee/verification changes not requested in the BuildRequest.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Apply the minimal code/config changes needed so the project builds successfully end-to-end (including fixing the identified root cause).",
-      "reason": "DEPLOYMENT.md states the root cause is a missing frontend/src/config.ts and that hooks were updated, but the diff summary does not show frontend/src/config.ts added nor the referenced hook files modified. If those files are still missing/unchanged, the TypeScript build failure would not be resolved end-to-end.",
+      "id": "REQ-3",
+      "requirement": "Backend must enforce that only the show owner can add episodes to that show.",
+      "reason": "Frontend adds episode creation UI and query hooks, but the diff summary does not provide evidence of backend authorization checks for episode creation (e.g., explicit owner check/guard in backend/main.mo). Because backend/main.mo is truncated, this cannot be verified from the provided diff summary.",
       "evidence": [
-        "frontend/DEPLOYMENT.md",
-        "MODIFIED FILES list does not include frontend/src/config.ts, frontend/src/hooks/useActor.ts, or frontend/src/hooks/useInternetIdentity.ts"
+        "backend/main.mo (truncated)",
+        "frontend/src/hooks/useQueries.ts (truncated)",
+        "frontend/src/components/PodcastEpisodeForm.tsx (truncated)"
       ]
     },
     {
-      "id": "REQ-2",
-      "requirement": "Perform a clean redeploy after applying the fix, ensuring the deployed frontend loads and can communicate with the backend canister (anonymous access at minimum) without runtime errors.",
-      "reason": "The diff summary contains code/doc changes but no verifiable evidence of an actual redeploy, deployed app validation, console/runtime verification, or a confirmed successful basic query call using correct canister IDs/agent configuration.",
+      "id": "REQ-5",
+      "requirement": "Non-admin users cannot access admin podcast submissions views.",
+      "reason": "Admin UI for podcast submissions is added, and AdminDashboard includes a Podcasts tab, but the diff summary does not show any explicit role-guarding logic for the podcast submissions view itself. If access control exists elsewhere, it is not evidenced here.",
       "evidence": [
-        "frontend/DEPLOYMENT.md (describes verification steps but does not provide results)",
-        "No deployment logs or config/canister-ID changes shown in diff summary"
+        "frontend/src/pages/AdminDashboard.tsx (truncated)",
+        "frontend/src/components/AdminPodcastSubmissions.tsx (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Large-scale frontend feature/UI changes unrelated to fixing deployment/build (e.g., removing Community, adding/altering dashboards/tabs/settings, extensive form behavior changes).",
-      "reason": "BuildRequest explicitly calls for minimal changes to fix deployment/build and lists non-goals including adding new product features and unrelated refactors/redesign. The frontend-file-summaries.txt describes many functional changes beyond deployment fix scope.",
+      "description": "Added/modified admin fee management UI (distribution fee and annual maintenance fee)",
+      "reason": "BuildRequest is focused on homepage logo + podcast submissions workflow; fee management features are not requested.",
       "evidence": [
-        "frontend-file-summaries.txt (describes: community removal, new admin settings tab, extensive changes across dashboards/forms/lists/hooks)"
+        "frontend/src/components/AdminFeeManagement.ts"
       ]
     },
     {
-      "description": "Backend upgrade/state migration machinery added (backend/migration.mo + migration integration in backend/main.mo).",
-      "reason": "The BuildRequest does not request any data model change or state migration; it emphasizes minimal changes and keeping backend logic in a single actor, using backend/migration.mo only if an upgrade requires state migration. The diff adds migration code without showing that an upgrade/state incompatibility was the root cause of the deployment failure.",
+      "description": "Artist management enhancements (search, edit dialog, verification badge mapping)",
+      "reason": "Not requested in the BuildRequest; unrelated to logo/podcast requirements.",
       "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo (imports Migration and uses '(with migration = Migration.run) actor { ... }')",
-        "frontend/DEPLOYMENT.md (root cause described as missing frontend/src/config.ts; does not mention backend upgrade/state migration)"
+        "frontend/src/components/AdminArtistManagement.tsx (truncated)",
+        "frontend/src/components/AdminEditArtistDialog.tsx (truncated)"
+      ]
+    },
+    {
+      "description": "Admin user role management changes including user deletion workflow/alerts",
+      "reason": "Not requested; BuildRequest did not ask for role/user deletion updates.",
+      "evidence": [
+        "frontend/src/components/AdminUserRoleManagement.tsx (truncated)"
+      ]
+    },
+    {
+      "description": "Verification management UI enhancements (status tabs, expiry day updates, badge expiry computation)",
+      "reason": "Not requested; outside the homepage logo and podcast workflow scope.",
+      "evidence": [
+        "frontend/src/components/AdminVerificationManagement.tsx (truncated)"
+      ]
+    },
+    {
+      "description": "Song submissions admin list download functionality/toasts and other behavior changes",
+      "reason": "Not requested; BuildRequest explicitly scopes admin changes to adding a separate podcasts section, not altering music submissions admin behavior.",
+      "evidence": [
+        "frontend/src/components/AdminSubmissionsList.tsx (truncated)"
+      ]
+    },
+    {
+      "description": "Podcast show artwork upload requirement added in UI/data model",
+      "reason": "REQ-2 specifies show fields (title, type, description, category, language) but does not request show-level artwork; the diff adds artwork to PodcastShow and makes it required in the show creation form.",
+      "evidence": [
+        "backend/migration.mo (truncated)",
+        "frontend/src/components/PodcastShowForm.tsx (truncated)",
+        "frontend/src/components/AdminPodcastSubmissions.tsx (truncated)"
       ]
     }
   ],
-  "confidence": 0.74,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/DEPLOYMENT.md",
-    "frontend/src/App.tsx",
+    "frontend/src/components/AdminArtistManagement.tsx",
+    "frontend/src/components/AdminEditArtistDialog.tsx",
+    "frontend/src/components/AdminFeeManagement.tsx",
+    "frontend/src/components/AdminPodcastSubmissions.tsx",
+    "frontend/src/components/AdminSubmissionsList.tsx",
+    "frontend/src/components/AdminUserRoleManagement.tsx",
+    "frontend/src/components/AdminVerificationManagement.tsx",
+    "frontend/src/components/ArtistSetupForm.tsx",
+    "frontend/src/components/PodcastEpisodeForm.tsx",
+    "frontend/src/components/PodcastShowForm.tsx",
+    "frontend/src/components/UserPodcastSubmissionSection.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AdminDashboard.tsx",
     "frontend/src/pages/LandingPage.tsx",
+    "frontend/src/pages/UserDashboard.tsx",
+    "frontend/src/utils/fileToExternalBlob.ts",
     "project_state.json"
   ]
 }

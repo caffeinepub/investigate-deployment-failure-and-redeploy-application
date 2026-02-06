@@ -8,6 +8,7 @@ import { useAdminEditArtistProfile } from '../hooks/useQueries';
 import { ArtistProfile, ExternalBlob } from '../backend';
 import { Upload, User } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Principal } from '@icp-sdk/core/principal';
 
 interface AdminEditArtistDialogProps {
   artistProfile: ArtistProfile;
@@ -87,7 +88,7 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
       };
 
       await editArtistProfile.mutateAsync({
-        artistPrincipal,
+        artist: Principal.fromText(artistPrincipal),
         profile: updatedProfile,
       });
 
@@ -112,20 +113,37 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
           <div className="space-y-2">
             <Label htmlFor="profilePhoto">Profile Photo</Label>
             <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
-              <img
-                src={photoPreview}
-                alt="Profile preview"
-                className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-primary/20 mb-3"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => document.getElementById('profilePhoto')?.click()}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Change Photo
-              </Button>
+              {photoPreview ? (
+                <div className="space-y-4">
+                  <img
+                    src={photoPreview}
+                    alt="Profile preview"
+                    className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-primary/20"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('profilePhoto')?.click()}
+                  >
+                    Change Photo
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <User className="w-12 h-12 mx-auto text-muted-foreground" />
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('profilePhoto')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Photo
+                    </Button>
+                  </div>
+                </div>
+              )}
               <input
                 id="profilePhoto"
                 type="file"
@@ -142,49 +160,44 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
             )}
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name *</Label>
+              <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
                 value={formData.fullName}
                 onChange={(e) => handleInputChange('fullName', e.target.value)}
-                placeholder="Enter full name"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stageName">Stage Name *</Label>
+              <Label htmlFor="stageName">Stage Name</Label>
               <Input
                 id="stageName"
                 value={formData.stageName}
                 onChange={(e) => handleInputChange('stageName', e.target.value)}
-                placeholder="Enter stage name"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="email@example.com"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mobileNumber">Mobile Number *</Label>
+              <Label htmlFor="mobileNumber">Mobile Number</Label>
               <Input
                 id="mobileNumber"
-                type="tel"
                 value={formData.mobileNumber}
                 onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
-                placeholder="+1 234 567 8900"
                 required
               />
             </div>
@@ -195,7 +208,6 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
                 id="instagramLink"
                 value={formData.instagramLink}
                 onChange={(e) => handleInputChange('instagramLink', e.target.value)}
-                placeholder="https://instagram.com/profile"
               />
             </div>
 
@@ -205,12 +217,11 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
                 id="facebookLink"
                 value={formData.facebookLink}
                 onChange={(e) => handleInputChange('facebookLink', e.target.value)}
-                placeholder="https://facebook.com/profile"
               />
             </div>
           </div>
 
-          <div className="space-y-4 border-t pt-6">
+          <div className="space-y-4 border-t pt-4">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -218,22 +229,18 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
                   checked={hasSpotifyProfile}
                   onCheckedChange={handleSpotifyCheckboxChange}
                 />
-                <Label
-                  htmlFor="hasSpotifyProfile"
-                  className="text-sm font-medium leading-none cursor-pointer"
-                >
-                  Existing Artist with Spotify Profile
+                <Label htmlFor="hasSpotifyProfile" className="cursor-pointer">
+                  Has Spotify Profile
                 </Label>
               </div>
 
               {hasSpotifyProfile && (
                 <div className="space-y-2 ml-6">
-                  <Label htmlFor="spotifyProfile">Spotify Artist Profile Link *</Label>
+                  <Label htmlFor="spotifyProfile">Spotify Profile Link</Label>
                   <Input
                     id="spotifyProfile"
                     value={formData.spotifyProfile}
                     onChange={(e) => handleInputChange('spotifyProfile', e.target.value)}
-                    placeholder="https://open.spotify.com/artist/..."
                     required={hasSpotifyProfile}
                   />
                 </div>
@@ -247,22 +254,18 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
                   checked={hasAppleProfile}
                   onCheckedChange={handleAppleCheckboxChange}
                 />
-                <Label
-                  htmlFor="hasAppleProfile"
-                  className="text-sm font-medium leading-none cursor-pointer"
-                >
-                  Existing Artist with Apple Music Profile
+                <Label htmlFor="hasAppleProfile" className="cursor-pointer">
+                  Has Apple Music Profile
                 </Label>
               </div>
 
               {hasAppleProfile && (
                 <div className="space-y-2 ml-6">
-                  <Label htmlFor="appleProfile">Apple Music Profile Link *</Label>
+                  <Label htmlFor="appleProfile">Apple Music Profile Link</Label>
                   <Input
                     id="appleProfile"
                     value={formData.appleProfile}
                     onChange={(e) => handleInputChange('appleProfile', e.target.value)}
-                    placeholder="https://music.apple.com/artist/..."
                     required={hasAppleProfile}
                   />
                 </div>

@@ -1,63 +1,139 @@
 {
   "kind": "build_request",
-  "title": "Investigate deployment failure and redeploy application",
-  "priority": "high",
+  "title": "Homepage logo update and podcast shows + multi-episode uploads with admin review",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Investigate the most recent build/deploy failure and identify the root cause (frontend build, backend canister build, dfx configuration, asset canister, or environment/canister IDs), then apply the minimal code/config changes needed so the project builds successfully end-to-end.",
-      "target": "both",
+      "text": "Replace the homepage hero logo image on the public landing page only (do not change the global header/nav logo) using the user-uploaded logo image.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1",
-          "msg-2",
-          "msg-3",
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "🙏 Something went wrong with the deployment",
-          "Deployment error",
-          "Re deploy it"
+          "Replace logo only in home page"
         ]
       },
       "acceptanceCriteria": [
-        "A clear root-cause summary is documented in the repo (e.g., in a short DEPLOYMENT.md note or similar) describing what failed and what was changed to fix it.",
-        "`dfx deploy` (or the platform’s equivalent deploy step) completes successfully without errors for all canisters.",
-        "Frontend production build completes successfully (TypeScript + bundler) with no build-stopping errors.",
-        "Backend canister compiles successfully (Motoko) with no build-stopping errors."
+        "Landing page hero logo uses the new uploaded logo asset.",
+        "Header/navbar logo remains unchanged across the rest of the site.",
+        "No broken image links in production build."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Perform a clean redeploy after applying the fix, ensuring the deployed frontend loads and can communicate with the backend canister (anonymous access at minimum) without runtime errors.",
-      "target": "both",
+      "text": "Add backend data models and actor methods to support creating podcast shows with fields: show title, podcast type (audio or video), description, podcast category, and language; shows must be owned by the creating user.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-1"
         ],
         "quotes": [
-          "Re deploy it"
+          "create a show should contain show title, podcast type (audio or video) , description, podcast category, language. Using this user can create podcast show."
         ]
       },
       "acceptanceCriteria": [
-        "Opening the deployed app in a browser shows the Landing page without a blank screen.",
-        "No critical runtime errors appear in the browser console on initial load.",
-        "The frontend can successfully create an actor and complete at least one basic query call (e.g., fetch user/profile state) without failing due to canister ID / agent / CORS / host misconfiguration."
+        "Authenticated users can create a podcast show with the specified fields.",
+        "Backend can return the caller’s podcast shows list.",
+        "Data persists across refresh/reload (stable storage)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add backend data models and actor methods to support adding multiple episodes to a specific podcast show at any time, with episode fields: episode title, description, 18+ only toggle, explicit content toggle, promotional content toggle, episode type (trailer/full/bonus), season number, episode number, episode artwork image, thumbnail image, and an uploaded media file (audio or video).",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "To create a episode for each show they need to fill this episode info is episode title, description ,18+ only (on /off button), Explicit content(on /off button), Promotional content (on /off button), episode type ( trailer, full, bonus),  season number,  episode number, episode art work image , thumbnail and file upload (both audio and video) ."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Authenticated users can add an episode to one of their shows with all specified fields.",
+        "Backend enforces that only the show owner can add episodes to that show.",
+        "Backend can list episodes for a given show.",
+        "Uploaded episode artwork, thumbnail, and media file are stored and retrievable for display/download."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Add a new \"Submit Your Podcast\" area in the user dashboard that lets users: (1) create a podcast show, (2) view their created shows, and (3) add multiple episodes per show using a dedicated episode form with the specified fields and file uploads (audio/video).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Submit your podcast should available in user dashboard",
+          "We need seperate form for create a podcast show and after Successful create podcast show user Can add multiple episode at any time as audio or video file"
+        ]
+      },
+      "acceptanceCriteria": [
+        "User Dashboard contains a clearly labeled section/tab for podcast submission.",
+        "Show creation form contains: title, podcast type (audio/video), description, category, language.",
+        "After creating a show, user can add episodes to that show using a separate episode form with all required fields and file uploads.",
+        "User can see a list of their shows and navigate/select a show to add episodes.",
+        "All user-facing text for these new UI elements is in English."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add an admin dashboard section (separate from music submissions) that displays podcast submissions created by users (shows and their episodes) and allows admins to browse shows and inspect episode metadata and downloaded assets (artwork/thumbnail/media).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "if anything submit their podcast it will display in admin dashboard in submission column"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin Dashboard includes a dedicated podcasts/podcast submissions area.",
+        "Admin can see a list of podcast shows submitted by users.",
+        "Admin can expand/open a show to view its episodes and metadata.",
+        "Admin can download episode assets (artwork, thumbnail, and audio/video file) from the admin UI.",
+        "Non-admin users cannot access admin podcast submissions views."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "If adding new stable state for podcast shows/episodes changes the backend stable schema, implement a conditional state migration to preserve existing app data and initialize new podcast-related storage safely.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "User need to create a podcast show to Upload episodes of podcast"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Upgrade path does not wipe existing stored data (e.g., existing song submissions, profiles, etc.).",
+        "New podcast storage initializes correctly on upgrade.",
+        "Canister upgrade completes without trapping due to incompatible stable state."
       ]
     }
   ],
   "constraints": [
-    "Keep all Motoko backend logic within the single actor at backend/main.mo; only use backend/migration.mo if an upgrade requires state migration.",
-    "Do not modify any files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT.",
-    "Use English for any user-facing UI text."
+    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
+    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
+    "Store and serve user-uploaded podcast assets using existing Internet Computer patterns already used for artwork/audio uploads (no external storage providers).",
+    "Use English for any user-facing text added."
   ],
   "nonGoals": [
-    "Adding new product features (e.g., new dashboards, payments, community functionality).",
-    "Refactoring unrelated frontend components or redesigning the UI beyond what is necessary to fix deployment/build issues.",
-    "Introducing external backend services or databases."
+    "Implementing third-party authentication providers (only Internet Identity is supported).",
+    "Adding real-time features (websockets/chat/live updates).",
+    "Adding payments/subscriptions specifically for podcasts.",
+    "Public podcast directory/search/listen pages (not requested)."
   ],
   "imageRequirements": {
     "required": [],
-    "edits": []
+    "edits": [
+      "Convert/resize the uploaded logo for web usage (Picsart_26-01-29_16-52-47-900.png > itmp-home-logo-transparent.dim_200x200.png)"
+    ]
   }
 }

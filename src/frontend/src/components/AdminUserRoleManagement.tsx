@@ -5,256 +5,179 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, UserMinus, Search, Trash2 } from 'lucide-react';
-import { useGetAllTeamMembers, useUpgradeUserToTeam, useDowngradeTeamToUser, useGetAllArtistsWithUserIds, useDeleteUser } from '../hooks/useQueries';
+import { useGetAllTeamMembers, useUpgradeUserToTeam, useDowngradeTeamToUser, useGetAllArtists, useDeleteUser } from '../hooks/useQueries';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Info } from 'lucide-react';
 
 export default function AdminUserRoleManagement() {
   const { data: teamMembers } = useGetAllTeamMembers();
-  const { data: artistsWithUserIds } = useGetAllArtistsWithUserIds();
+  const { data: artistsWithUserIds } = useGetAllArtists();
   const upgradeUser = useUpgradeUserToTeam();
   const downgradeUser = useDowngradeTeamToUser();
   const deleteUser = useDeleteUser();
-  const [userIdToUpgrade, setUserIdToUpgrade] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [userToDelete, setUserToDelete] = useState<{ principal: any; name: string } | null>(null);
 
-  // Create a map of user principals to their full names
-  const userNameMap = useMemo(() => {
-    if (!artistsWithUserIds) return new Map<string, string>();
+  // Transform the data for display
+  const allUsers = useMemo(() => {
+    if (!artistsWithUserIds) return [];
     
-    const map = new Map<string, string>();
-    artistsWithUserIds.forEach(([principal, profile]) => {
-      map.set((principal as any).toString(), profile.fullName);
-    });
-    return map;
-  }, [artistsWithUserIds]);
+    return artistsWithUserIds.map(([principal, profile]) => ({
+      principal,
+      fullName: profile.fullName,
+      stageName: profile.stageName,
+      isTeamMember: teamMembers?.some((tm) => tm.toString() === (principal as any).toString()) || false,
+    }));
+  }, [artistsWithUserIds, teamMembers]);
 
-  // Get all unique user principals from artist profiles
-  const allUsers = artistsWithUserIds
-    ? artistsWithUserIds.map(([principal]) => (principal as any).toString())
-    : [];
+  const filteredUsers = allUsers.filter((user) =>
+    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.stageName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.principal as any).toString().toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const teamMemberIds = teamMembers?.map((p) => p.toString()) || [];
+  const teamMemberUsers = filteredUsers.filter((user) => user.isTeamMember);
+  const regularUsers = filteredUsers.filter((user) => !user.isTeamMember);
 
-  const handleUpgrade = async () => {
-    if (!userIdToUpgrade.trim()) {
-      alert('Please enter a valid user principal ID');
-      return;
-    }
-
-    try {
-      await upgradeUser.mutateAsync(userIdToUpgrade);
-      setUserIdToUpgrade('');
-    } catch (error) {
-      console.error('Failed to upgrade user:', error);
-    }
+  const handleUpgrade = async (principal: any) => {
+    await upgradeUser.mutateAsync(principal);
   };
 
-  const handleDowngrade = async (userId: string) => {
-    if (window.confirm('Are you sure you want to downgrade this team member to a regular user?')) {
-      try {
-        await downgradeUser.mutateAsync(userId);
-      } catch (error) {
-        console.error('Failed to downgrade user:', error);
-      }
-    }
+  const handleDowngrade = async (principal: any) => {
+    await downgradeUser.mutateAsync(principal);
   };
 
-  const handleDeleteClick = (userId: string) => {
-    const userName = userNameMap.get(userId) || 'Unknown User';
-    setUserToDelete({ id: userId, name: userName });
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
+  const handleDeleteUser = async () => {
     if (!userToDelete) return;
-
-    try {
-      await deleteUser.mutateAsync(userToDelete.id);
-      setDeleteDialogOpen(false);
-      setUserToDelete(null);
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-    }
+    await deleteUser.mutateAsync(userToDelete.principal);
+    setUserToDelete(null);
   };
-
-  const filteredUsers = allUsers.filter((userId) => {
-    const userName = userNameMap.get(userId) || '';
-    return (
-      userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      userName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
 
   return (
     <div className="space-y-6">
-      <Alert className="border-blue-500/50 bg-blue-500/10">
-        <Info className="h-5 w-5 text-blue-500" />
+      <Alert>
+        <Info className="h-4 w-4" />
         <AlertDescription>
-          Team members can review submissions, add comments, and change submission status, but cannot edit submissions, delete them, or manage artist profiles, fees, or announcements.
+          Team members have access to view submissions and manage artist profiles, but cannot modify platform settings or delete users.
         </AlertDescription>
       </Alert>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Upgrade User to Team Member</h3>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="userId">User Principal ID</Label>
-            <div className="flex gap-2 mt-2">
-              <Input
-                id="userId"
-                placeholder="Enter user principal ID..."
-                value={userIdToUpgrade}
-                onChange={(e) => setUserIdToUpgrade(e.target.value)}
-              />
-              <Button
-                onClick={handleUpgrade}
-                disabled={upgradeUser.isPending || !userIdToUpgrade.trim()}
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Upgrade
-              </Button>
-            </div>
-          </div>
+      <div>
+        <Label htmlFor="search">Search Users</Label>
+        <div className="relative mt-2">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            id="search"
+            placeholder="Search by name or principal ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
-      </Card>
+      </div>
 
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Current Team Members</h3>
-        {teamMembers && teamMembers.length > 0 ? (
-          <div className="space-y-3">
-            {teamMembers.map((member) => {
-              const memberId = member.toString();
-              const memberName = userNameMap.get(memberId);
-              
-              return (
-                <div
-                  key={memberId}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-purple-600">Team Member</Badge>
-                    <div className="flex flex-col">
-                      {memberName && (
-                        <span className="font-medium">{memberName}</span>
-                      )}
-                      <code className="text-xs text-muted-foreground">{memberId}</code>
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Team Members ({teamMemberUsers.length})</h3>
+          {teamMemberUsers.length === 0 ? (
+            <Card className="p-6">
+              <p className="text-center text-muted-foreground">No team members yet</p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {teamMemberUsers.map((user) => (
+                <Card key={(user.principal as any).toString()} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold">{user.fullName}</h4>
+                        <Badge variant="secondary">Team Member</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{user.stageName}</p>
+                      <code className="text-xs text-muted-foreground">{(user.principal as any).toString()}</code>
                     </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDowngrade(memberId)}
-                    disabled={downgradeUser.isPending}
-                  >
-                    <UserMinus className="w-4 h-4 mr-2" />
-                    Downgrade
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-center py-4">No team members yet</p>
-        )}
-      </Card>
-
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">All Users (from Artist Profiles)</h3>
-        <div className="mb-4">
-          <Label htmlFor="search">Search Users</Label>
-          <div className="relative mt-2">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              id="search"
-              placeholder="Search by name or principal ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-        {filteredUsers.length > 0 ? (
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {filteredUsers.map((userId) => {
-              const isTeamMember = teamMemberIds.includes(userId);
-              const userName = userNameMap.get(userId);
-              
-              return (
-                <div
-                  key={userId}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    {isTeamMember && <Badge className="bg-purple-600">Team Member</Badge>}
-                    <div className="flex flex-col">
-                      {userName && (
-                        <span className="font-medium">{userName}</span>
-                      )}
-                      <code className="text-xs text-muted-foreground">{userId}</code>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    {!isTeamMember && (
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
-                          setUserIdToUpgrade(userId);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onClick={() => handleDowngrade(user.principal)}
+                        disabled={downgradeUser.isPending}
+                      >
+                        <UserMinus className="w-4 h-4 mr-2" />
+                        Downgrade
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setUserToDelete({ principal: user.principal, name: user.fullName })}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Regular Users ({regularUsers.length})</h3>
+          {regularUsers.length === 0 ? (
+            <Card className="p-6">
+              <p className="text-center text-muted-foreground">
+                {searchTerm ? 'No users found' : 'No regular users yet'}
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {regularUsers.map((user) => (
+                <Card key={(user.principal as any).toString()} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold">{user.fullName}</h4>
+                      <p className="text-sm text-muted-foreground">{user.stageName}</p>
+                      <code className="text-xs text-muted-foreground">{(user.principal as any).toString()}</code>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleUpgrade(user.principal)}
+                        disabled={upgradeUser.isPending}
                       >
                         <UserPlus className="w-4 h-4 mr-2" />
-                        Upgrade
+                        Upgrade to Team
                       </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteClick(userId)}
-                      disabled={deleteUser.isPending}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setUserToDelete({ principal: user.principal, name: user.fullName })}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-center py-4">
-            {searchTerm ? 'No users found' : 'No users yet'}
-          </p>
-        )}
-      </Card>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete User</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Are you sure you want to permanently delete <strong>{userToDelete?.name}</strong>?
-              </p>
-              <p className="text-destructive font-semibold">
-                This action cannot be undone. This will permanently delete:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>User's artist profile</li>
-                <li>All song submissions</li>
-                <li>Verification data</li>
-                <li>All associated comments</li>
-              </ul>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete <strong>{userToDelete?.name}</strong>? This will remove their profile, all submissions, and verification requests. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={handleDeleteUser}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete User

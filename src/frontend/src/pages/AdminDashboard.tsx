@@ -1,121 +1,104 @@
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, Music, Users, Megaphone, DollarSign, BadgeCheck, UserCog, BookOpen, Settings } from 'lucide-react';
-import AdminSubmissionsList from '../components/AdminSubmissionsList';
+import { BarChart3, Users, Settings, DollarSign, Megaphone, BookOpen, UserCog, Mic } from 'lucide-react';
 import AdminStats from '../components/AdminStats';
-import AdminTeamManagement from '../components/AdminTeamManagement';
+import AdminSubmissionsList from '../components/AdminSubmissionsList';
 import AdminArtistManagement from '../components/AdminArtistManagement';
-import AdminAnnouncementSection from '../components/AdminAnnouncementSection';
-import AdminFeeManagement from '../components/AdminFeeManagement';
 import AdminVerificationManagement from '../components/AdminVerificationManagement';
 import AdminUserRoleManagement from '../components/AdminUserRoleManagement';
+import AdminFeeManagement from '../components/AdminFeeManagement';
+import AdminAnnouncementSection from '../components/AdminAnnouncementSection';
 import AdminBlogManagement from '../components/AdminBlogManagement';
+import AdminTeamManagement from '../components/AdminTeamManagement';
 import AdminProfileEditingControl from '../components/AdminProfileEditingControl';
+import AdminPodcastSubmissions from '../components/AdminPodcastSubmissions';
 
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('overview');
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
           Admin Dashboard
         </h1>
-        <p className="text-muted-foreground">Manage submissions, artists, fees, verification, blog, and team members</p>
+        <p className="text-muted-foreground mt-2">Manage submissions, artists, and platform settings</p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full max-w-6xl grid-cols-10 gap-1">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <LayoutDashboard className="w-4 h-4" />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 h-auto">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">
+            <BarChart3 className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="submissions" className="flex items-center gap-2">
-            <Music className="w-4 h-4" />
+          <TabsTrigger value="submissions" className="text-xs sm:text-sm">
+            <Users className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Submissions</span>
           </TabsTrigger>
-          <TabsTrigger value="artists" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
+          <TabsTrigger value="artists" className="text-xs sm:text-sm">
+            <Users className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Artists</span>
           </TabsTrigger>
-          <TabsTrigger value="verification" className="flex items-center gap-2">
-            <BadgeCheck className="w-4 h-4" />
+          <TabsTrigger value="verification" className="text-xs sm:text-sm">
+            <Settings className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Verification</span>
           </TabsTrigger>
-          <TabsTrigger value="roles" className="flex items-center gap-2">
-            <UserCog className="w-4 h-4" />
-            <span className="hidden sm:inline">Roles</span>
+          <TabsTrigger value="roles" className="text-xs sm:text-sm">
+            <UserCog className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">User Roles</span>
           </TabsTrigger>
-          <TabsTrigger value="fees" className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4" />
+          <TabsTrigger value="fees" className="text-xs sm:text-sm">
+            <DollarSign className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Fees</span>
           </TabsTrigger>
-          <TabsTrigger value="announcement" className="flex items-center gap-2">
-            <Megaphone className="w-4 h-4" />
+          <TabsTrigger value="announcement" className="text-xs sm:text-sm">
+            <Megaphone className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Announcement</span>
           </TabsTrigger>
-          <TabsTrigger value="blog" className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4" />
+          <TabsTrigger value="blog" className="text-xs sm:text-sm">
+            <BookOpen className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Blog</span>
           </TabsTrigger>
-          <TabsTrigger value="team" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
+          <TabsTrigger value="team" className="text-xs sm:text-sm">
+            <Users className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Team</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            <span className="hidden sm:inline">Settings</span>
+          <TabsTrigger value="podcasts" className="text-xs sm:text-sm">
+            <Mic className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Podcasts</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <AdminStats />
+          <div className="space-y-6">
+            <AdminStats />
+            <Card>
+              <CardHeader>
+                <CardTitle>Platform Settings</CardTitle>
+                <CardDescription>Configure platform-wide settings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdminProfileEditingControl />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="submissions">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Submissions</CardTitle>
-              <CardDescription>Review, approve, or reject music submissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminSubmissionsList />
-            </CardContent>
-          </Card>
+          <AdminSubmissionsList />
         </TabsContent>
 
         <TabsContent value="artists">
-          <Card>
-            <CardHeader>
-              <CardTitle>Artist Management</CardTitle>
-              <CardDescription>View and manage artist profiles</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminArtistManagement />
-            </CardContent>
-          </Card>
+          <AdminArtistManagement />
         </TabsContent>
 
         <TabsContent value="verification">
-          <Card>
-            <CardHeader>
-              <CardTitle>Verification Management</CardTitle>
-              <CardDescription>Review and manage artist verification requests</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminVerificationManagement />
-            </CardContent>
-          </Card>
+          <AdminVerificationManagement />
         </TabsContent>
 
         <TabsContent value="roles">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Role Management</CardTitle>
-              <CardDescription>Upgrade users to team members or downgrade team members to regular users</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminUserRoleManagement />
-            </CardContent>
-          </Card>
+          <AdminUserRoleManagement />
         </TabsContent>
 
         <TabsContent value="fees">
@@ -127,39 +110,15 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="blog">
-          <Card>
-            <CardHeader>
-              <CardTitle>Blog Management</CardTitle>
-              <CardDescription>Create, edit, and publish blog posts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminBlogManagement />
-            </CardContent>
-          </Card>
+          <AdminBlogManagement />
         </TabsContent>
 
         <TabsContent value="team">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Management</CardTitle>
-              <CardDescription>Invite team members to help manage submissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminTeamManagement />
-            </CardContent>
-          </Card>
+          <AdminTeamManagement />
         </TabsContent>
 
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Settings</CardTitle>
-              <CardDescription>Configure platform-wide settings and access controls</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AdminProfileEditingControl />
-            </CardContent>
-          </Card>
+        <TabsContent value="podcasts">
+          <AdminPodcastSubmissions />
         </TabsContent>
       </Tabs>
     </div>

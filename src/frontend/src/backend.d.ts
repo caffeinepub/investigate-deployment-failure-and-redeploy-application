@@ -18,6 +18,17 @@ export interface UserProfile {
     name: string;
     artistId: string;
 }
+export interface PodcastShow {
+    id: string;
+    podcastType: PodcastType;
+    title: string;
+    createdBy: Principal;
+    description: string;
+    artwork: ExternalBlob;
+    language: Language;
+    timestamp: Time;
+    category: PodcastCategory;
+}
 export interface ArtistProfile {
     isApproved: boolean;
     instagramLink: string;
@@ -53,6 +64,20 @@ export interface SubmitSongInput {
     releaseDate: Time;
     releaseType: string;
     featuredArtist: string;
+}
+export interface PodcastEpisodeInput {
+    isPromotional: boolean;
+    title: string;
+    isEighteenPlus: boolean;
+    thumbnail: ExternalBlob;
+    showId: string;
+    description: string;
+    artwork: ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: EpisodeType;
+    mediaFile: ExternalBlob;
+    isExplicit: boolean;
 }
 export interface BlogPostInput {
     media?: ExternalBlob;
@@ -100,6 +125,14 @@ export interface PreSaveInput {
     preSaveLink: string;
     songId: string;
 }
+export interface PodcastShowInput {
+    podcastType: PodcastType;
+    title: string;
+    description: string;
+    artwork: ExternalBlob;
+    language: Language;
+    category: PodcastCategory;
+}
 export interface CommunityMessageInput {
     content: string;
 }
@@ -145,6 +178,23 @@ export interface ShoppingItem {
     quantity: bigint;
     priceInCents: bigint;
     productDescription: string;
+}
+export interface PodcastEpisode {
+    id: string;
+    isPromotional: boolean;
+    title: string;
+    isEighteenPlus: boolean;
+    thumbnail: ExternalBlob;
+    showId: string;
+    createdBy: Principal;
+    description: string;
+    artwork: ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: EpisodeType;
+    mediaFile: ExternalBlob;
+    timestamp: Time;
+    isExplicit: boolean;
 }
 export interface VerificationRequestWithFullName {
     id: string;
@@ -203,6 +253,44 @@ export enum ApprovalStatus {
     approved = "approved",
     rejected = "rejected"
 }
+export enum EpisodeType {
+    full = "full",
+    trailer = "trailer",
+    bonus = "bonus"
+}
+export enum Language {
+    tamil = "tamil",
+    hindi = "hindi",
+    other = "other",
+    marathi = "marathi",
+    gujarati = "gujarati",
+    punjabi = "punjabi",
+    malayalam = "malayalam",
+    kannada = "kannada",
+    telugu = "telugu",
+    bengali = "bengali",
+    english = "english"
+}
+export enum PodcastCategory {
+    kidsFamily = "kidsFamily",
+    music = "music",
+    newsPolitics = "newsPolitics",
+    other = "other",
+    arts = "arts",
+    education = "education",
+    religionSpirituality = "religionSpirituality",
+    healthFitness = "healthFitness",
+    tvFilm = "tvFilm",
+    technology = "technology",
+    business = "business",
+    sports = "sports",
+    comedy = "comedy",
+    science = "science"
+}
+export enum PodcastType {
+    audio = "audio",
+    video = "video"
+}
 export enum SongStatus {
     pending = "pending",
     approved = "approved",
@@ -233,6 +321,8 @@ export interface backendInterface {
     cancelVerificationRequest(): Promise<void>;
     createBlogPost(input: BlogPostInput): Promise<string>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
+    createPodcastEpisode(input: PodcastEpisodeInput): Promise<string>;
+    createPodcastShow(input: PodcastShowInput): Promise<string>;
     createPreSave(input: PreSaveInput): Promise<string>;
     deleteBlogPost(id: string): Promise<void>;
     deletePreSaveLink(songId: string): Promise<void>;
@@ -244,6 +334,8 @@ export interface backendInterface {
     getAllArtists(): Promise<Array<ArtistProfile>>;
     getAllArtistsWithUserIds(): Promise<Array<[Principal, ArtistProfile]>>;
     getAllBlogPosts(): Promise<Array<BlogPost>>;
+    getAllEpisodes(): Promise<Array<PodcastEpisode>>;
+    getAllPodcasts(): Promise<Array<PodcastShow>>;
     getAllRSVPs(): Promise<Array<RSVP>>;
     getAllSubmissions(): Promise<Array<SongSubmission>>;
     getAllSubmissionsWithPreSaveLinks(): Promise<Array<SongSubmission>>;
@@ -265,6 +357,10 @@ export interface backendInterface {
     getDistributionFee(): Promise<bigint>;
     getInviteCodes(): Promise<Array<InviteCode>>;
     getNextBatchOfMessages(pageNumber: bigint): Promise<Array<CommunityMessage>>;
+    getPodcastEpisodesByShow(showId: string): Promise<Array<PodcastEpisode>>;
+    getPodcastEpisodesByUser(): Promise<Array<[PodcastShow, Array<PodcastEpisode>]>>;
+    getPodcastShow(showId: string): Promise<PodcastShow | null>;
+    getPodcastShowWithEpisodes(showId: string): Promise<[PodcastShow, Array<PodcastEpisode>] | null>;
     getPreSaveLink(songId: string): Promise<string | null>;
     getPreloadedCommunityMessages(): Promise<Array<CommunityMessage>>;
     getPublishedBlogPosts(): Promise<Array<BlogPost>>;

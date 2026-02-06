@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { CheckCircle, XCircle, Trash2, Edit2, Save, RotateCcw, Download } from 'lucide-react';
-import { useGetAllSubmissions, useUpdateSubmissionStatus, useDeleteSubmission, useAddSongComment, useGetAllVerificationRequests, useIsCurrentUserAdmin } from '../hooks/useQueries';
+import { useGetAllSubmissions, useUpdateSubmissionStatus, useDeleteSubmission, useAddSongComment, useGetAllVerificationRequests } from '../hooks/useQueries';
 import type { SongSubmission } from '../backend';
 import { SongStatus } from '../backend';
 import AdminEditSubmissionDialog from './AdminEditSubmissionDialog';
@@ -27,7 +27,6 @@ interface AdminSubmissionsListProps {
 export default function AdminSubmissionsList({ isTeamMember = false }: AdminSubmissionsListProps) {
   const { data: submissions, isLoading } = useGetAllSubmissions();
   const { data: verificationRequests } = useGetAllVerificationRequests();
-  const { data: isAdmin } = useIsCurrentUserAdmin();
   const updateStatus = useUpdateSubmissionStatus();
   const deleteSubmission = useDeleteSubmission();
   const addComment = useAddSongComment();
@@ -216,7 +215,7 @@ export default function AdminSubmissionsList({ isTeamMember = false }: AdminSubm
                     </div>
                   </div>
 
-                  {isAdmin && (
+                  {!isTeamMember && (
                     <div className="flex gap-2 flex-wrap">
                       <Button
                         size="sm"

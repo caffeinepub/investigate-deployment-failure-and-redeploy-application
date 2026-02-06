@@ -86,6 +86,66 @@ export const ShoppingItem = IDL.Record({
   'priceInCents' : IDL.Nat,
   'productDescription' : IDL.Text,
 });
+export const EpisodeType = IDL.Variant({
+  'full' : IDL.Null,
+  'trailer' : IDL.Null,
+  'bonus' : IDL.Null,
+});
+export const PodcastEpisodeInput = IDL.Record({
+  'isPromotional' : IDL.Bool,
+  'title' : IDL.Text,
+  'isEighteenPlus' : IDL.Bool,
+  'thumbnail' : ExternalBlob,
+  'showId' : IDL.Text,
+  'description' : IDL.Text,
+  'artwork' : ExternalBlob,
+  'seasonNumber' : IDL.Nat,
+  'episodeNumber' : IDL.Nat,
+  'episodeType' : EpisodeType,
+  'mediaFile' : ExternalBlob,
+  'isExplicit' : IDL.Bool,
+});
+export const PodcastType = IDL.Variant({
+  'audio' : IDL.Null,
+  'video' : IDL.Null,
+});
+export const Language = IDL.Variant({
+  'tamil' : IDL.Null,
+  'hindi' : IDL.Null,
+  'other' : IDL.Null,
+  'marathi' : IDL.Null,
+  'gujarati' : IDL.Null,
+  'punjabi' : IDL.Null,
+  'malayalam' : IDL.Null,
+  'kannada' : IDL.Null,
+  'telugu' : IDL.Null,
+  'bengali' : IDL.Null,
+  'english' : IDL.Null,
+});
+export const PodcastCategory = IDL.Variant({
+  'kidsFamily' : IDL.Null,
+  'music' : IDL.Null,
+  'newsPolitics' : IDL.Null,
+  'other' : IDL.Null,
+  'arts' : IDL.Null,
+  'education' : IDL.Null,
+  'religionSpirituality' : IDL.Null,
+  'healthFitness' : IDL.Null,
+  'tvFilm' : IDL.Null,
+  'technology' : IDL.Null,
+  'business' : IDL.Null,
+  'sports' : IDL.Null,
+  'comedy' : IDL.Null,
+  'science' : IDL.Null,
+});
+export const PodcastShowInput = IDL.Record({
+  'podcastType' : PodcastType,
+  'title' : IDL.Text,
+  'description' : IDL.Text,
+  'artwork' : ExternalBlob,
+  'language' : Language,
+  'category' : PodcastCategory,
+});
 export const PreSaveInput = IDL.Record({
   'preSaveLink' : IDL.Text,
   'songId' : IDL.Text,
@@ -98,6 +158,34 @@ export const BlogPost = IDL.Record({
   'content' : IDL.Text,
   'author' : IDL.Principal,
   'timestamp' : Time,
+});
+export const PodcastEpisode = IDL.Record({
+  'id' : IDL.Text,
+  'isPromotional' : IDL.Bool,
+  'title' : IDL.Text,
+  'isEighteenPlus' : IDL.Bool,
+  'thumbnail' : ExternalBlob,
+  'showId' : IDL.Text,
+  'createdBy' : IDL.Principal,
+  'description' : IDL.Text,
+  'artwork' : ExternalBlob,
+  'seasonNumber' : IDL.Nat,
+  'episodeNumber' : IDL.Nat,
+  'episodeType' : EpisodeType,
+  'mediaFile' : ExternalBlob,
+  'timestamp' : Time,
+  'isExplicit' : IDL.Bool,
+});
+export const PodcastShow = IDL.Record({
+  'id' : IDL.Text,
+  'podcastType' : PodcastType,
+  'title' : IDL.Text,
+  'createdBy' : IDL.Principal,
+  'description' : IDL.Text,
+  'artwork' : ExternalBlob,
+  'language' : Language,
+  'timestamp' : Time,
+  'category' : PodcastCategory,
 });
 export const RSVP = IDL.Record({
   'name' : IDL.Text,
@@ -260,6 +348,8 @@ export const idlService = IDL.Service({
       [IDL.Text],
       [],
     ),
+  'createPodcastEpisode' : IDL.Func([PodcastEpisodeInput], [IDL.Text], []),
+  'createPodcastShow' : IDL.Func([PodcastShowInput], [IDL.Text], []),
   'createPreSave' : IDL.Func([PreSaveInput], [IDL.Text], []),
   'deleteBlogPost' : IDL.Func([IDL.Text], [], []),
   'deletePreSaveLink' : IDL.Func([IDL.Text], [], []),
@@ -275,6 +365,8 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getAllBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
+  'getAllEpisodes' : IDL.Func([], [IDL.Vec(PodcastEpisode)], ['query']),
+  'getAllPodcasts' : IDL.Func([], [IDL.Vec(PodcastShow)], ['query']),
   'getAllRSVPs' : IDL.Func([], [IDL.Vec(RSVP)], ['query']),
   'getAllSubmissions' : IDL.Func([], [IDL.Vec(SongSubmission)], ['query']),
   'getAllSubmissionsWithPreSaveLinks' : IDL.Func(
@@ -318,6 +410,22 @@ export const idlService = IDL.Service({
   'getNextBatchOfMessages' : IDL.Func(
       [IDL.Nat],
       [IDL.Vec(CommunityMessage)],
+      ['query'],
+    ),
+  'getPodcastEpisodesByShow' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(PodcastEpisode)],
+      ['query'],
+    ),
+  'getPodcastEpisodesByUser' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(PodcastShow, IDL.Vec(PodcastEpisode)))],
+      ['query'],
+    ),
+  'getPodcastShow' : IDL.Func([IDL.Text], [IDL.Opt(PodcastShow)], ['query']),
+  'getPodcastShowWithEpisodes' : IDL.Func(
+      [IDL.Text],
+      [IDL.Opt(IDL.Tuple(PodcastShow, IDL.Vec(PodcastEpisode)))],
       ['query'],
     ),
   'getPreSaveLink' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], ['query']),
@@ -470,6 +578,63 @@ export const idlFactory = ({ IDL }) => {
     'priceInCents' : IDL.Nat,
     'productDescription' : IDL.Text,
   });
+  const EpisodeType = IDL.Variant({
+    'full' : IDL.Null,
+    'trailer' : IDL.Null,
+    'bonus' : IDL.Null,
+  });
+  const PodcastEpisodeInput = IDL.Record({
+    'isPromotional' : IDL.Bool,
+    'title' : IDL.Text,
+    'isEighteenPlus' : IDL.Bool,
+    'thumbnail' : ExternalBlob,
+    'showId' : IDL.Text,
+    'description' : IDL.Text,
+    'artwork' : ExternalBlob,
+    'seasonNumber' : IDL.Nat,
+    'episodeNumber' : IDL.Nat,
+    'episodeType' : EpisodeType,
+    'mediaFile' : ExternalBlob,
+    'isExplicit' : IDL.Bool,
+  });
+  const PodcastType = IDL.Variant({ 'audio' : IDL.Null, 'video' : IDL.Null });
+  const Language = IDL.Variant({
+    'tamil' : IDL.Null,
+    'hindi' : IDL.Null,
+    'other' : IDL.Null,
+    'marathi' : IDL.Null,
+    'gujarati' : IDL.Null,
+    'punjabi' : IDL.Null,
+    'malayalam' : IDL.Null,
+    'kannada' : IDL.Null,
+    'telugu' : IDL.Null,
+    'bengali' : IDL.Null,
+    'english' : IDL.Null,
+  });
+  const PodcastCategory = IDL.Variant({
+    'kidsFamily' : IDL.Null,
+    'music' : IDL.Null,
+    'newsPolitics' : IDL.Null,
+    'other' : IDL.Null,
+    'arts' : IDL.Null,
+    'education' : IDL.Null,
+    'religionSpirituality' : IDL.Null,
+    'healthFitness' : IDL.Null,
+    'tvFilm' : IDL.Null,
+    'technology' : IDL.Null,
+    'business' : IDL.Null,
+    'sports' : IDL.Null,
+    'comedy' : IDL.Null,
+    'science' : IDL.Null,
+  });
+  const PodcastShowInput = IDL.Record({
+    'podcastType' : PodcastType,
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+    'artwork' : ExternalBlob,
+    'language' : Language,
+    'category' : PodcastCategory,
+  });
   const PreSaveInput = IDL.Record({
     'preSaveLink' : IDL.Text,
     'songId' : IDL.Text,
@@ -482,6 +647,34 @@ export const idlFactory = ({ IDL }) => {
     'content' : IDL.Text,
     'author' : IDL.Principal,
     'timestamp' : Time,
+  });
+  const PodcastEpisode = IDL.Record({
+    'id' : IDL.Text,
+    'isPromotional' : IDL.Bool,
+    'title' : IDL.Text,
+    'isEighteenPlus' : IDL.Bool,
+    'thumbnail' : ExternalBlob,
+    'showId' : IDL.Text,
+    'createdBy' : IDL.Principal,
+    'description' : IDL.Text,
+    'artwork' : ExternalBlob,
+    'seasonNumber' : IDL.Nat,
+    'episodeNumber' : IDL.Nat,
+    'episodeType' : EpisodeType,
+    'mediaFile' : ExternalBlob,
+    'timestamp' : Time,
+    'isExplicit' : IDL.Bool,
+  });
+  const PodcastShow = IDL.Record({
+    'id' : IDL.Text,
+    'podcastType' : PodcastType,
+    'title' : IDL.Text,
+    'createdBy' : IDL.Principal,
+    'description' : IDL.Text,
+    'artwork' : ExternalBlob,
+    'language' : Language,
+    'timestamp' : Time,
+    'category' : PodcastCategory,
   });
   const RSVP = IDL.Record({
     'name' : IDL.Text,
@@ -638,6 +831,8 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Text],
         [],
       ),
+    'createPodcastEpisode' : IDL.Func([PodcastEpisodeInput], [IDL.Text], []),
+    'createPodcastShow' : IDL.Func([PodcastShowInput], [IDL.Text], []),
     'createPreSave' : IDL.Func([PreSaveInput], [IDL.Text], []),
     'deleteBlogPost' : IDL.Func([IDL.Text], [], []),
     'deletePreSaveLink' : IDL.Func([IDL.Text], [], []),
@@ -653,6 +848,8 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getAllBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
+    'getAllEpisodes' : IDL.Func([], [IDL.Vec(PodcastEpisode)], ['query']),
+    'getAllPodcasts' : IDL.Func([], [IDL.Vec(PodcastShow)], ['query']),
     'getAllRSVPs' : IDL.Func([], [IDL.Vec(RSVP)], ['query']),
     'getAllSubmissions' : IDL.Func([], [IDL.Vec(SongSubmission)], ['query']),
     'getAllSubmissionsWithPreSaveLinks' : IDL.Func(
@@ -700,6 +897,22 @@ export const idlFactory = ({ IDL }) => {
     'getNextBatchOfMessages' : IDL.Func(
         [IDL.Nat],
         [IDL.Vec(CommunityMessage)],
+        ['query'],
+      ),
+    'getPodcastEpisodesByShow' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(PodcastEpisode)],
+        ['query'],
+      ),
+    'getPodcastEpisodesByUser' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(PodcastShow, IDL.Vec(PodcastEpisode)))],
+        ['query'],
+      ),
+    'getPodcastShow' : IDL.Func([IDL.Text], [IDL.Opt(PodcastShow)], ['query']),
+    'getPodcastShowWithEpisodes' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(IDL.Tuple(PodcastShow, IDL.Vec(PodcastEpisode)))],
         ['query'],
       ),
     'getPreSaveLink' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], ['query']),

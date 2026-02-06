@@ -15,7 +15,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <img
-              src="/assets/generated/platform-logo-transparent.dim_200x200.png"
+              src="/assets/generated/itmp-home-logo-transparent.dim_200x200.png"
               alt="ITMP Logo"
               className="w-32 h-32 mx-auto mb-6"
             />
