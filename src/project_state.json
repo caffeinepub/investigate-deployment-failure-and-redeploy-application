@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [
+    "Deployment failed during build/deploy process (needs redeploy/investigation)."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-investigate-the-most-recent-build-deploy-failure-and-identify-the-root-cause-frontend-build-backend-canister-build-dfx-configuration-asset-canister-or-environment-canister-ids-then-apply-the-minimal-code-config-changes-needed-so-the-project-builds-successfully-end-to-end",
+      "title": "Investigate the most recent build/deploy failure and identify the root cause (frontend build, backend canister build, dfx configuration, asset canister, or environment/canister IDs), then apply the minimal code/config changes needed so the project builds successfully end-to-end.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-perform-a-clean-redeploy-after-applying-the-fix-ensuring-the-deployed-frontend-loads-and-can-communicate-with-the-backend-canister-anonymous-access-at-minimum-without-runtime-errors",
+      "title": "Perform a clean redeploy after applying the fix, ensuring the deployed frontend loads and can communicate with the backend canister (anonymous access at minimum) without runtime errors.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [],
+  "projectName": "Investigate deployment failure and redeploy application",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

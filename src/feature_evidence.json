@@ -1,0 +1,54 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-investigate-the-most-recent-build-deploy-failure-and-identify-the-root-cause-frontend-build-backend-canister-build-dfx-configuration-asset-canister-or-environment-canister-ids-then-apply-the-minimal-code-config-changes-needed-so-the-project-builds-successfully-end-to-end",
+      "featureTitle": "Investigate the most recent build/deploy failure and identify the root cause (frontend build, backend canister build, dfx configuration, asset canister, or environment/canister IDs), then apply the minimal code/config changes needed so the project builds successfully end-to-end.",
+      "files": [
+        "frontend/DEPLOYMENT.md",
+        "frontend/src/App.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-perform-a-clean-redeploy-after-applying-the-fix-ensuring-the-deployed-frontend-loads-and-can-communicate-with-the-backend-canister-anonymous-access-at-minimum-without-runtime-errors",
+      "featureTitle": "Perform a clean redeploy after applying the fix, ensuring the deployed frontend loads and can communicate with the backend canister (anonymous access at minimum) without runtime errors.",
+      "files": [
+        "frontend/src/pages/LandingPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "kind": "build_request",
+  "title": "Investigate deployment failure and redeploy application",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Investigate the most recent build/deploy failure and identify the root cause (frontend build, backend canister build, dfx configuration, asset canister, or environment/canister IDs), then apply the minimal code/config changes needed so the project builds successfully end-to-end.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1",
+          "msg-2",
+          "msg-3",
+          "msg-4"
+        ],
+        "quotes": [
+          "🙏 Something went wrong with the deployment",
+          "Deployment error",
+          "Re deploy it"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A clear root-cause summary is documented in the repo (e.g., in a short DEPLOYMENT.md note or similar) describing what failed and what was changed to fix it.",
+        "`dfx deploy` (or the platform’s equivalent deploy step) completes successfully without errors for all canisters.",
+        "Frontend production build completes successfully (TypeScript + bundler) with no build-stopping errors.",
+        "Backend canister compiles successfully (Motoko) with no build-stopping errors."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Perform a clean redeploy after applying the fix, ensuring the deployed frontend loads and can communicate with the backend canister (anonymous access at minimum) without runtime errors.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "Re deploy it"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Opening the deployed app in a browser shows the Landing page without a blank screen.",
+        "No critical runtime errors appear in the browser console on initial load.",
+        "The frontend can successfully create an actor and complete at least one basic query call (e.g., fetch user/profile state) without failing due to canister ID / agent / CORS / host misconfiguration."
+      ]
+    }
+  ],
+  "constraints": [
+    "Keep all Motoko backend logic within the single actor at backend/main.mo; only use backend/migration.mo if an upgrade requires state migration.",
+    "Do not modify any files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT.",
+    "Use English for any user-facing UI text."
+  ],
+  "nonGoals": [
+    "Adding new product features (e.g., new dashboards, payments, community functionality).",
+    "Refactoring unrelated frontend components or redesigning the UI beyond what is necessary to fix deployment/build issues.",
+    "Introducing external backend services or databases."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
