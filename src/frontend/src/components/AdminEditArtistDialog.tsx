@@ -4,20 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useAdminEditArtistProfile } from '../hooks/useQueries';
+import { useAdminEditArtistProfileById } from '../hooks/useQueries';
 import { ArtistProfile, ExternalBlob } from '../backend';
 import { Upload, User } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { Principal } from '@icp-sdk/core/principal';
 
 interface AdminEditArtistDialogProps {
   artistProfile: ArtistProfile;
-  artistPrincipal: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, open, onOpenChange }: AdminEditArtistDialogProps) {
+export default function AdminEditArtistDialog({ artistProfile, open, onOpenChange }: AdminEditArtistDialogProps) {
   const [formData, setFormData] = useState({
     fullName: artistProfile.fullName,
     stageName: artistProfile.stageName,
@@ -36,7 +34,7 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
   const [photoPreview, setPhotoPreview] = useState<string>(artistProfile.profilePhoto.getDirectURL());
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const editArtistProfile = useAdminEditArtistProfile();
+  const editArtistProfile = useAdminEditArtistProfileById();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -81,15 +79,15 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
         });
       }
 
-      const updatedProfile: ArtistProfile = {
-        ...artistProfile,
+      const profileInput = {
         ...formData,
         profilePhoto: profilePhotoBlob,
+        isApproved: artistProfile.isApproved,
       };
 
       await editArtistProfile.mutateAsync({
-        artist: Principal.fromText(artistPrincipal),
-        profile: updatedProfile,
+        id: artistProfile.id,
+        input: profileInput,
       });
 
       setUploadProgress(0);
@@ -274,11 +272,22 @@ export default function AdminEditArtistDialog({ artistProfile, artistPrincipal, 
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={editArtistProfile.isPending || isUploading}>
-              {editArtistProfile.isPending || isUploading ? 'Saving...' : 'Save Changes'}
+            <Button
+              type="submit"
+              disabled={isUploading || editArtistProfile.isPending}
+            >
+              {isUploading
+                ? `Uploading... ${uploadProgress}%`
+                : editArtistProfile.isPending
+                ? 'Saving...'
+                : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>

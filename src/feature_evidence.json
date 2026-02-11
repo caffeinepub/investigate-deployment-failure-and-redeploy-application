@@ -2,65 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-replace-the-homepage-hero-logo-image-on-the-public-landing-page-only-do-not-change-the-global-header-nav-logo-using-the-user-uploaded-logo-image",
-      "featureTitle": "Replace the homepage hero logo image on the public landing page only (do not change the global header/nav logo) using the user-uploaded logo image.",
+      "featureId": "feature-update-the-user-dashboard-ui-to-let-users-create-and-manage-multiple-artist-profiles-list-existing-profiles-allow-create-edit-and-delete",
+      "featureTitle": "Update the user dashboard UI to let users create and manage multiple artist profiles (list existing profiles; allow create, edit, and delete).",
       "files": [
-        "frontend/src/pages/LandingPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "invite-links@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "user-approval@3.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-new-submit-your-podcast-area-in-the-user-dashboard-that-lets-users-1-create-a-podcast-show-2-view-their-created-shows-and-3-add-multiple-episodes-per-show-using-a-dedicated-episode-form-with-the-specified-fields-and-file-uploads-audio-video",
-      "featureTitle": "Add a new \"Submit Your Podcast\" area in the user dashboard that lets users: (1) create a podcast show, (2) view their created shows, and (3) add multiple episodes per show using a dedicated episode form with the specified fields and file uploads (audio/video).",
-      "files": [
-        "frontend/src/components/PodcastEpisodeForm.tsx",
-        "frontend/src/components/PodcastShowForm.tsx",
-        "frontend/src/components/UserPodcastSubmissionSection.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/UserDashboard.tsx",
-        "frontend/src/utils/fileToExternalBlob.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "invite-links@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "user-approval@3.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-an-admin-dashboard-section-separate-from-music-submissions-that-displays-podcast-submissions-created-by-users-shows-and-their-episodes-and-allows-admins-to-browse-shows-and-inspect-episode-metadata-and-downloaded-assets-artwork-thumbnail-media",
-      "featureTitle": "Add an admin dashboard section (separate from music submissions) that displays podcast submissions created by users (shows and their episodes) and allows admins to browse shows and inspect episode metadata and downloaded assets (artwork/thumbnail/media).",
-      "files": [
-        "frontend/src/components/AdminPodcastSubmissions.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/AdminDashboard.tsx"
+        "frontend/src/components/ArtistSetupForm.tsx",
+        "frontend/src/components/UserArtistProfilesManager.tsx",
+        "frontend/src/pages/UserDashboard.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -77,6 +24,55 @@
       ],
       "testIds": [
         "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-admin-artist-panel-ui-to-display-all-user-created-artist-profiles-including-multiple-profiles-per-user-and-allow-searching-and-editing-them-so-profiles-created-in-the-user-dashboard-appear-automatically-in-the-admin-panel",
+      "featureTitle": "Update the admin artist panel UI to display all user-created artist profiles (including multiple profiles per user) and allow searching and editing them, so profiles created in the user dashboard appear automatically in the admin panel.",
+      "files": [
+        "frontend/src/components/AdminArtistManagement.tsx",
+        "frontend/src/components/AdminEditArtistDialog.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-extend-react-query-hooks-frontend-src-hooks-usequeries-ts-to-support-the-new-multi-artist-profile-apis-and-update-existing-queries-mutations-that-currently-assume-a-single-artist-profile-so-the-app-continues-to-function-with-multiple-profiles",
+      "featureTitle": "Extend React Query hooks (`frontend/src/hooks/useQueries.ts`) to support the new multi-artist-profile APIs and update existing queries/mutations that currently assume a single artist profile so the app continues to function with multiple profiles.",
+      "files": [
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
       ],
       "confidence": "high"
     }

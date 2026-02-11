@@ -20,7 +20,7 @@ export const _CaffeineStorageRefillResult = IDL.Record({
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
-export const ArtistProfile = IDL.Record({
+export const SaveArtistProfileInput = IDL.Record({
   'isApproved' : IDL.Bool,
   'instagramLink' : IDL.Text,
   'profilePhoto' : ExternalBlob,
@@ -32,52 +32,10 @@ export const ArtistProfile = IDL.Record({
   'appleProfile' : IDL.Text,
   'stageName' : IDL.Text,
 });
-export const SongStatus = IDL.Variant({
-  'pending' : IDL.Null,
-  'approved' : IDL.Null,
-  'rejected' : IDL.Null,
-  'draft' : IDL.Null,
-});
-export const Time = IDL.Int;
-export const ACRResult = IDL.Record({
-  'music' : IDL.Text,
-  'statusCode' : IDL.Text,
-});
-export const SongSubmission = IDL.Record({
-  'id' : IDL.Text,
-  'status' : SongStatus,
-  'title' : IDL.Text,
-  'preSaveLink' : IDL.Opt(IDL.Text),
-  'additionalDetails' : IDL.Text,
-  'lyricist' : IDL.Text,
-  'submitter' : IDL.Principal,
-  'discountCode' : IDL.Opt(IDL.Text),
-  'artworkFilename' : IDL.Text,
-  'audioFile' : ExternalBlob,
-  'artwork' : ExternalBlob,
-  'audioFilename' : IDL.Text,
-  'language' : IDL.Text,
-  'composer' : IDL.Text,
-  'adminComment' : IDL.Text,
-  'genre' : IDL.Text,
-  'timestamp' : Time,
-  'artist' : IDL.Text,
-  'acrResult' : IDL.Opt(ACRResult),
-  'producer' : IDL.Text,
-  'releaseDate' : Time,
-  'releaseType' : IDL.Text,
-  'adminRemarks' : IDL.Text,
-  'featuredArtist' : IDL.Text,
-});
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
   'guest' : IDL.Null,
-});
-export const BlogPostInput = IDL.Record({
-  'media' : IDL.Opt(ExternalBlob),
-  'title' : IDL.Text,
-  'content' : IDL.Text,
 });
 export const ShoppingItem = IDL.Record({
   'productName' : IDL.Text,
@@ -86,152 +44,30 @@ export const ShoppingItem = IDL.Record({
   'priceInCents' : IDL.Nat,
   'productDescription' : IDL.Text,
 });
-export const EpisodeType = IDL.Variant({
-  'full' : IDL.Null,
-  'trailer' : IDL.Null,
-  'bonus' : IDL.Null,
-});
-export const PodcastEpisodeInput = IDL.Record({
-  'isPromotional' : IDL.Bool,
-  'title' : IDL.Text,
-  'isEighteenPlus' : IDL.Bool,
-  'thumbnail' : ExternalBlob,
-  'showId' : IDL.Text,
-  'description' : IDL.Text,
-  'artwork' : ExternalBlob,
-  'seasonNumber' : IDL.Nat,
-  'episodeNumber' : IDL.Nat,
-  'episodeType' : EpisodeType,
-  'mediaFile' : ExternalBlob,
-  'isExplicit' : IDL.Bool,
-});
-export const PodcastType = IDL.Variant({
-  'audio' : IDL.Null,
-  'video' : IDL.Null,
-});
-export const Language = IDL.Variant({
-  'tamil' : IDL.Null,
-  'hindi' : IDL.Null,
-  'other' : IDL.Null,
-  'marathi' : IDL.Null,
-  'gujarati' : IDL.Null,
-  'punjabi' : IDL.Null,
-  'malayalam' : IDL.Null,
-  'kannada' : IDL.Null,
-  'telugu' : IDL.Null,
-  'bengali' : IDL.Null,
-  'english' : IDL.Null,
-});
-export const PodcastCategory = IDL.Variant({
-  'kidsFamily' : IDL.Null,
-  'music' : IDL.Null,
-  'newsPolitics' : IDL.Null,
-  'other' : IDL.Null,
-  'arts' : IDL.Null,
-  'education' : IDL.Null,
-  'religionSpirituality' : IDL.Null,
-  'healthFitness' : IDL.Null,
-  'tvFilm' : IDL.Null,
-  'technology' : IDL.Null,
-  'business' : IDL.Null,
-  'sports' : IDL.Null,
-  'comedy' : IDL.Null,
-  'science' : IDL.Null,
-});
-export const PodcastShowInput = IDL.Record({
-  'podcastType' : PodcastType,
-  'title' : IDL.Text,
-  'description' : IDL.Text,
-  'artwork' : ExternalBlob,
-  'language' : Language,
-  'category' : PodcastCategory,
-});
-export const PreSaveInput = IDL.Record({
-  'preSaveLink' : IDL.Text,
-  'songId' : IDL.Text,
-});
-export const BlogPost = IDL.Record({
+export const ArtistProfile = IDL.Record({
   'id' : IDL.Text,
-  'media' : IDL.Opt(ExternalBlob),
-  'status' : IDL.Variant({ 'published' : IDL.Null, 'draft' : IDL.Null }),
-  'title' : IDL.Text,
-  'content' : IDL.Text,
-  'author' : IDL.Principal,
-  'timestamp' : Time,
+  'isApproved' : IDL.Bool,
+  'instagramLink' : IDL.Text,
+  'owner' : IDL.Principal,
+  'profilePhoto' : ExternalBlob,
+  'fullName' : IDL.Text,
+  'mobileNumber' : IDL.Text,
+  'email' : IDL.Text,
+  'spotifyProfile' : IDL.Text,
+  'facebookLink' : IDL.Text,
+  'appleProfile' : IDL.Text,
+  'stageName' : IDL.Text,
 });
-export const PodcastEpisode = IDL.Record({
-  'id' : IDL.Text,
-  'isPromotional' : IDL.Bool,
-  'title' : IDL.Text,
-  'isEighteenPlus' : IDL.Bool,
-  'thumbnail' : ExternalBlob,
-  'showId' : IDL.Text,
-  'createdBy' : IDL.Principal,
-  'description' : IDL.Text,
-  'artwork' : ExternalBlob,
-  'seasonNumber' : IDL.Nat,
-  'episodeNumber' : IDL.Nat,
-  'episodeType' : EpisodeType,
-  'mediaFile' : ExternalBlob,
-  'timestamp' : Time,
-  'isExplicit' : IDL.Bool,
-});
-export const PodcastShow = IDL.Record({
-  'id' : IDL.Text,
-  'podcastType' : PodcastType,
-  'title' : IDL.Text,
-  'createdBy' : IDL.Principal,
-  'description' : IDL.Text,
-  'artwork' : ExternalBlob,
-  'language' : Language,
-  'timestamp' : Time,
-  'category' : PodcastCategory,
-});
+export const Time = IDL.Int;
 export const RSVP = IDL.Record({
   'name' : IDL.Text,
   'inviteCode' : IDL.Text,
   'timestamp' : Time,
   'attending' : IDL.Bool,
 });
-export const VerificationStatus = IDL.Variant({
-  'pending' : IDL.Null,
-  'approved' : IDL.Null,
-  'rejected' : IDL.Null,
-  'waiting' : IDL.Null,
-});
-export const VerificationRequestWithFullName = IDL.Record({
-  'id' : IDL.Text,
-  'status' : VerificationStatus,
-  'expiryExtensionDays' : IDL.Nat,
-  'user' : IDL.Principal,
-  'fullName' : IDL.Text,
-  'verificationApprovedTimestamp' : IDL.Opt(Time),
-  'timestamp' : Time,
-});
-export const VerificationRequest = IDL.Record({
-  'id' : IDL.Text,
-  'status' : VerificationStatus,
-  'expiryExtensionDays' : IDL.Nat,
-  'user' : IDL.Principal,
-  'verificationApprovedTimestamp' : IDL.Opt(Time),
-  'timestamp' : Time,
-});
-export const AppUserRole = IDL.Variant({
-  'admin' : IDL.Null,
-  'team' : IDL.Null,
-  'user' : IDL.Null,
-});
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'artistId' : IDL.Text,
-});
-export const CommunityMessage = IDL.Record({
-  'id' : IDL.Text,
-  'content' : IDL.Text,
-  'role' : IDL.Text,
-  'user' : IDL.Principal,
-  'fullName' : IDL.Text,
-  'timestamp' : Time,
 });
 export const InviteCode = IDL.Record({
   'created' : Time,
@@ -254,40 +90,9 @@ export const UserApprovalInfo = IDL.Record({
   'status' : ApprovalStatus,
   'principal' : IDL.Principal,
 });
-export const SaveArtistProfileInput = IDL.Record({
-  'isApproved' : IDL.Bool,
-  'instagramLink' : IDL.Text,
-  'profilePhoto' : ExternalBlob,
-  'fullName' : IDL.Text,
-  'mobileNumber' : IDL.Text,
-  'email' : IDL.Text,
-  'spotifyProfile' : IDL.Text,
-  'facebookLink' : IDL.Text,
-  'appleProfile' : IDL.Text,
-  'stageName' : IDL.Text,
-});
-export const CommunityMessageInput = IDL.Record({ 'content' : IDL.Text });
 export const StripeConfiguration = IDL.Record({
   'allowedCountries' : IDL.Vec(IDL.Text),
   'secretKey' : IDL.Text,
-});
-export const SubmitSongInput = IDL.Record({
-  'artworkBlob' : ExternalBlob,
-  'title' : IDL.Text,
-  'additionalDetails' : IDL.Text,
-  'lyricist' : IDL.Text,
-  'discountCode' : IDL.Opt(IDL.Text),
-  'artworkFilename' : IDL.Text,
-  'audioBlob' : ExternalBlob,
-  'audioFilename' : IDL.Text,
-  'language' : IDL.Text,
-  'composer' : IDL.Text,
-  'genre' : IDL.Text,
-  'artist' : IDL.Text,
-  'producer' : IDL.Text,
-  'releaseDate' : Time,
-  'releaseType' : IDL.Text,
-  'featuredArtist' : IDL.Text,
 });
 export const http_header = IDL.Record({
   'value' : IDL.Text,
@@ -336,168 +141,65 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-  'addSongComment' : IDL.Func([IDL.Text, IDL.Text], [], []),
-  'adminEditArtistProfile' : IDL.Func([IDL.Principal, ArtistProfile], [], []),
-  'adminEditSubmission' : IDL.Func([SongSubmission], [], []),
-  'applyForVerification' : IDL.Func([], [], []),
+  'adminDeleteArtistProfile' : IDL.Func([IDL.Text], [], []),
+  'adminEditArtistProfile' : IDL.Func(
+      [IDL.Text, SaveArtistProfileInput],
+      [],
+      [],
+    ),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'cancelVerificationRequest' : IDL.Func([], [], []),
-  'createBlogPost' : IDL.Func([BlogPostInput], [IDL.Text], []),
+  'createArtistProfile' : IDL.Func([SaveArtistProfileInput], [IDL.Text], []),
   'createCheckoutSession' : IDL.Func(
       [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
       [IDL.Text],
       [],
     ),
-  'createPodcastEpisode' : IDL.Func([PodcastEpisodeInput], [IDL.Text], []),
-  'createPodcastShow' : IDL.Func([PodcastShowInput], [IDL.Text], []),
-  'createPreSave' : IDL.Func([PreSaveInput], [IDL.Text], []),
-  'deleteBlogPost' : IDL.Func([IDL.Text], [], []),
-  'deletePreSaveLink' : IDL.Func([IDL.Text], [], []),
-  'deleteSubmission' : IDL.Func([IDL.Text], [], []),
-  'deleteUser' : IDL.Func([IDL.Principal], [], []),
-  'downgradeTeamToUser' : IDL.Func([IDL.Principal], [], []),
+  'deleteArtistProfile' : IDL.Func([IDL.Text], [], []),
   'generateInviteCode' : IDL.Func([], [IDL.Text], []),
-  'getAcrCloudResult' : IDL.Func([IDL.Text], [IDL.Opt(ACRResult)], ['query']),
-  'getAllArtists' : IDL.Func([], [IDL.Vec(ArtistProfile)], ['query']),
-  'getAllArtistsWithUserIds' : IDL.Func(
+  'getAllArtistProfileOwnersForAdmin' : IDL.Func(
       [],
-      [IDL.Vec(IDL.Tuple(IDL.Principal, ArtistProfile))],
+      [IDL.Vec(IDL.Principal)],
       ['query'],
     ),
-  'getAllBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
-  'getAllEpisodes' : IDL.Func([], [IDL.Vec(PodcastEpisode)], ['query']),
-  'getAllPodcasts' : IDL.Func([], [IDL.Vec(PodcastShow)], ['query']),
+  'getAllArtistProfilesForAdmin' : IDL.Func(
+      [],
+      [IDL.Vec(ArtistProfile)],
+      ['query'],
+    ),
   'getAllRSVPs' : IDL.Func([], [IDL.Vec(RSVP)], ['query']),
-  'getAllSubmissions' : IDL.Func([], [IDL.Vec(SongSubmission)], ['query']),
-  'getAllSubmissionsWithPreSaveLinks' : IDL.Func(
-      [],
-      [IDL.Vec(SongSubmission)],
-      ['query'],
-    ),
-  'getAllTeamMembers' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
-  'getAllVerificationRequests' : IDL.Func(
-      [],
-      [IDL.Vec(VerificationRequestWithFullName)],
-      ['query'],
-    ),
-  'getAllVerificationRequestsForMigration' : IDL.Func(
-      [],
-      [IDL.Vec(VerificationRequestWithFullName)],
-      ['query'],
-    ),
-  'getAllVerificationRequestsRaw' : IDL.Func(
-      [],
-      [IDL.Vec(VerificationRequest)],
-      ['query'],
-    ),
-  'getAnnouncement' : IDL.Func([], [IDL.Text], ['query']),
-  'getAnnualMaintenanceFee' : IDL.Func([], [IDL.Int], ['query']),
-  'getArtistProfile' : IDL.Func([], [IDL.Opt(ArtistProfile)], ['query']),
-  'getArtistProfileByUserId' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Opt(ArtistProfile)],
-      ['query'],
-    ),
   'getArtistProfileEditingAccessStatus' : IDL.Func([], [IDL.Bool], ['query']),
-  'getBlogPost' : IDL.Func([IDL.Text], [IDL.Opt(BlogPost)], ['query']),
-  'getCallerRole' : IDL.Func([], [AppUserRole], ['query']),
+  'getArtistProfilesByUserForAdmin' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(ArtistProfile)],
+      ['query'],
+    ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getCommunityMessages' : IDL.Func([], [IDL.Vec(CommunityMessage)], ['query']),
-  'getDashboardSummary' : IDL.Func([], [IDL.Text], ['query']),
-  'getDistributionFee' : IDL.Func([], [IDL.Int], ['query']),
   'getInviteCodes' : IDL.Func([], [IDL.Vec(InviteCode)], ['query']),
-  'getNextBatchOfMessages' : IDL.Func(
-      [IDL.Nat],
-      [IDL.Vec(CommunityMessage)],
-      ['query'],
-    ),
-  'getPodcastEpisodesByShow' : IDL.Func(
-      [IDL.Text],
-      [IDL.Vec(PodcastEpisode)],
-      ['query'],
-    ),
-  'getPodcastEpisodesByUser' : IDL.Func(
-      [],
-      [IDL.Vec(IDL.Tuple(PodcastShow, IDL.Vec(PodcastEpisode)))],
-      ['query'],
-    ),
-  'getPodcastShow' : IDL.Func([IDL.Text], [IDL.Opt(PodcastShow)], ['query']),
-  'getPodcastShowWithEpisodes' : IDL.Func(
-      [IDL.Text],
-      [IDL.Opt(IDL.Tuple(PodcastShow, IDL.Vec(PodcastEpisode)))],
-      ['query'],
-    ),
-  'getPreSaveLink' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], ['query']),
-  'getPreloadedCommunityMessages' : IDL.Func(
-      [],
-      [IDL.Vec(CommunityMessage)],
-      ['query'],
-    ),
-  'getPublishedBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
-  'getSongComment' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
+  'getMyArtistProfiles' : IDL.Func([], [IDL.Vec(ArtistProfile)], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
-  'getSubmission' : IDL.Func([IDL.Text], [SongSubmission], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
-  'getUserRole' : IDL.Func([IDL.Principal], [AppUserRole], ['query']),
-  'getUserSubmissions' : IDL.Func([], [IDL.Vec(SongSubmission)], ['query']),
-  'getVerificationStatus' : IDL.Func([], [VerificationStatus], ['query']),
-  'hasCompleteArtistProfile' : IDL.Func([], [IDL.Bool], ['query']),
   'isArtistProfileEditingEnabled' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerApproved' : IDL.Func([], [IDL.Bool], ['query']),
-  'isCallerTeamMember' : IDL.Func([], [IDL.Bool], ['query']),
   'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
-  'isUserVerificationBadgeActive' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Bool],
-      ['query'],
-    ),
-  'isVerificationBadgeActive' : IDL.Func([], [IDL.Bool], ['query']),
-  'isVerificationBadgeActiveWithExtensions' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Bool],
-      ['query'],
-    ),
   'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
-  'publishBlogPost' : IDL.Func([IDL.Text], [], []),
   'requestApproval' : IDL.Func([], [], []),
-  'saveArtistProfile' : IDL.Func([SaveArtistProfileInput], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'sendCommunityMessage' : IDL.Func([CommunityMessageInput], [IDL.Text], []),
-  'setAcrResult' : IDL.Func([IDL.Text, ACRResult], [], []),
-  'setAnnualMaintenanceFee' : IDL.Func([IDL.Int], [], []),
   'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
   'setArtistProfileEditingAccess' : IDL.Func([IDL.Bool], [], []),
-  'setDistributionFee' : IDL.Func([IDL.Int], [], []),
   'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
   'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
-  'submitSong' : IDL.Func([SubmitSongInput], [IDL.Text], []),
   'transform' : IDL.Func(
       [TransformationInput],
       [TransformationOutput],
       ['query'],
     ),
-  'updateAnnouncement' : IDL.Func([IDL.Text], [], []),
-  'updateBlogPost' : IDL.Func([IDL.Text, BlogPostInput], [], []),
-  'updateSongSubmission' : IDL.Func([SongSubmission], [], []),
-  'updateSubmissionStatus' : IDL.Func([IDL.Text, SongStatus, IDL.Text], [], []),
-  'updateVerificationExpiryDays' : IDL.Func([IDL.Principal, IDL.Nat], [], []),
-  'updateVerificationStatus' : IDL.Func(
-      [IDL.Principal, VerificationStatus],
-      [],
-      [],
-    ),
-  'updateVerificationStatusWithData' : IDL.Func(
-      [IDL.Text, VerificationStatus],
-      [],
-      [],
-    ),
-  'upgradeUserToTeam' : IDL.Func([IDL.Principal], [], []),
+  'updateArtistProfile' : IDL.Func([IDL.Text, SaveArtistProfileInput], [], []),
 });
 
 export const idlInitArgs = [];
@@ -515,7 +217,7 @@ export const idlFactory = ({ IDL }) => {
     'topped_up_amount' : IDL.Opt(IDL.Nat),
   });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
-  const ArtistProfile = IDL.Record({
+  const SaveArtistProfileInput = IDL.Record({
     'isApproved' : IDL.Bool,
     'instagramLink' : IDL.Text,
     'profilePhoto' : ExternalBlob,
@@ -527,49 +229,10 @@ export const idlFactory = ({ IDL }) => {
     'appleProfile' : IDL.Text,
     'stageName' : IDL.Text,
   });
-  const SongStatus = IDL.Variant({
-    'pending' : IDL.Null,
-    'approved' : IDL.Null,
-    'rejected' : IDL.Null,
-    'draft' : IDL.Null,
-  });
-  const Time = IDL.Int;
-  const ACRResult = IDL.Record({ 'music' : IDL.Text, 'statusCode' : IDL.Text });
-  const SongSubmission = IDL.Record({
-    'id' : IDL.Text,
-    'status' : SongStatus,
-    'title' : IDL.Text,
-    'preSaveLink' : IDL.Opt(IDL.Text),
-    'additionalDetails' : IDL.Text,
-    'lyricist' : IDL.Text,
-    'submitter' : IDL.Principal,
-    'discountCode' : IDL.Opt(IDL.Text),
-    'artworkFilename' : IDL.Text,
-    'audioFile' : ExternalBlob,
-    'artwork' : ExternalBlob,
-    'audioFilename' : IDL.Text,
-    'language' : IDL.Text,
-    'composer' : IDL.Text,
-    'adminComment' : IDL.Text,
-    'genre' : IDL.Text,
-    'timestamp' : Time,
-    'artist' : IDL.Text,
-    'acrResult' : IDL.Opt(ACRResult),
-    'producer' : IDL.Text,
-    'releaseDate' : Time,
-    'releaseType' : IDL.Text,
-    'adminRemarks' : IDL.Text,
-    'featuredArtist' : IDL.Text,
-  });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
-  });
-  const BlogPostInput = IDL.Record({
-    'media' : IDL.Opt(ExternalBlob),
-    'title' : IDL.Text,
-    'content' : IDL.Text,
   });
   const ShoppingItem = IDL.Record({
     'productName' : IDL.Text,
@@ -578,147 +241,28 @@ export const idlFactory = ({ IDL }) => {
     'priceInCents' : IDL.Nat,
     'productDescription' : IDL.Text,
   });
-  const EpisodeType = IDL.Variant({
-    'full' : IDL.Null,
-    'trailer' : IDL.Null,
-    'bonus' : IDL.Null,
-  });
-  const PodcastEpisodeInput = IDL.Record({
-    'isPromotional' : IDL.Bool,
-    'title' : IDL.Text,
-    'isEighteenPlus' : IDL.Bool,
-    'thumbnail' : ExternalBlob,
-    'showId' : IDL.Text,
-    'description' : IDL.Text,
-    'artwork' : ExternalBlob,
-    'seasonNumber' : IDL.Nat,
-    'episodeNumber' : IDL.Nat,
-    'episodeType' : EpisodeType,
-    'mediaFile' : ExternalBlob,
-    'isExplicit' : IDL.Bool,
-  });
-  const PodcastType = IDL.Variant({ 'audio' : IDL.Null, 'video' : IDL.Null });
-  const Language = IDL.Variant({
-    'tamil' : IDL.Null,
-    'hindi' : IDL.Null,
-    'other' : IDL.Null,
-    'marathi' : IDL.Null,
-    'gujarati' : IDL.Null,
-    'punjabi' : IDL.Null,
-    'malayalam' : IDL.Null,
-    'kannada' : IDL.Null,
-    'telugu' : IDL.Null,
-    'bengali' : IDL.Null,
-    'english' : IDL.Null,
-  });
-  const PodcastCategory = IDL.Variant({
-    'kidsFamily' : IDL.Null,
-    'music' : IDL.Null,
-    'newsPolitics' : IDL.Null,
-    'other' : IDL.Null,
-    'arts' : IDL.Null,
-    'education' : IDL.Null,
-    'religionSpirituality' : IDL.Null,
-    'healthFitness' : IDL.Null,
-    'tvFilm' : IDL.Null,
-    'technology' : IDL.Null,
-    'business' : IDL.Null,
-    'sports' : IDL.Null,
-    'comedy' : IDL.Null,
-    'science' : IDL.Null,
-  });
-  const PodcastShowInput = IDL.Record({
-    'podcastType' : PodcastType,
-    'title' : IDL.Text,
-    'description' : IDL.Text,
-    'artwork' : ExternalBlob,
-    'language' : Language,
-    'category' : PodcastCategory,
-  });
-  const PreSaveInput = IDL.Record({
-    'preSaveLink' : IDL.Text,
-    'songId' : IDL.Text,
-  });
-  const BlogPost = IDL.Record({
+  const ArtistProfile = IDL.Record({
     'id' : IDL.Text,
-    'media' : IDL.Opt(ExternalBlob),
-    'status' : IDL.Variant({ 'published' : IDL.Null, 'draft' : IDL.Null }),
-    'title' : IDL.Text,
-    'content' : IDL.Text,
-    'author' : IDL.Principal,
-    'timestamp' : Time,
+    'isApproved' : IDL.Bool,
+    'instagramLink' : IDL.Text,
+    'owner' : IDL.Principal,
+    'profilePhoto' : ExternalBlob,
+    'fullName' : IDL.Text,
+    'mobileNumber' : IDL.Text,
+    'email' : IDL.Text,
+    'spotifyProfile' : IDL.Text,
+    'facebookLink' : IDL.Text,
+    'appleProfile' : IDL.Text,
+    'stageName' : IDL.Text,
   });
-  const PodcastEpisode = IDL.Record({
-    'id' : IDL.Text,
-    'isPromotional' : IDL.Bool,
-    'title' : IDL.Text,
-    'isEighteenPlus' : IDL.Bool,
-    'thumbnail' : ExternalBlob,
-    'showId' : IDL.Text,
-    'createdBy' : IDL.Principal,
-    'description' : IDL.Text,
-    'artwork' : ExternalBlob,
-    'seasonNumber' : IDL.Nat,
-    'episodeNumber' : IDL.Nat,
-    'episodeType' : EpisodeType,
-    'mediaFile' : ExternalBlob,
-    'timestamp' : Time,
-    'isExplicit' : IDL.Bool,
-  });
-  const PodcastShow = IDL.Record({
-    'id' : IDL.Text,
-    'podcastType' : PodcastType,
-    'title' : IDL.Text,
-    'createdBy' : IDL.Principal,
-    'description' : IDL.Text,
-    'artwork' : ExternalBlob,
-    'language' : Language,
-    'timestamp' : Time,
-    'category' : PodcastCategory,
-  });
+  const Time = IDL.Int;
   const RSVP = IDL.Record({
     'name' : IDL.Text,
     'inviteCode' : IDL.Text,
     'timestamp' : Time,
     'attending' : IDL.Bool,
   });
-  const VerificationStatus = IDL.Variant({
-    'pending' : IDL.Null,
-    'approved' : IDL.Null,
-    'rejected' : IDL.Null,
-    'waiting' : IDL.Null,
-  });
-  const VerificationRequestWithFullName = IDL.Record({
-    'id' : IDL.Text,
-    'status' : VerificationStatus,
-    'expiryExtensionDays' : IDL.Nat,
-    'user' : IDL.Principal,
-    'fullName' : IDL.Text,
-    'verificationApprovedTimestamp' : IDL.Opt(Time),
-    'timestamp' : Time,
-  });
-  const VerificationRequest = IDL.Record({
-    'id' : IDL.Text,
-    'status' : VerificationStatus,
-    'expiryExtensionDays' : IDL.Nat,
-    'user' : IDL.Principal,
-    'verificationApprovedTimestamp' : IDL.Opt(Time),
-    'timestamp' : Time,
-  });
-  const AppUserRole = IDL.Variant({
-    'admin' : IDL.Null,
-    'team' : IDL.Null,
-    'user' : IDL.Null,
-  });
   const UserProfile = IDL.Record({ 'name' : IDL.Text, 'artistId' : IDL.Text });
-  const CommunityMessage = IDL.Record({
-    'id' : IDL.Text,
-    'content' : IDL.Text,
-    'role' : IDL.Text,
-    'user' : IDL.Principal,
-    'fullName' : IDL.Text,
-    'timestamp' : Time,
-  });
   const InviteCode = IDL.Record({
     'created' : Time,
     'code' : IDL.Text,
@@ -740,40 +284,9 @@ export const idlFactory = ({ IDL }) => {
     'status' : ApprovalStatus,
     'principal' : IDL.Principal,
   });
-  const SaveArtistProfileInput = IDL.Record({
-    'isApproved' : IDL.Bool,
-    'instagramLink' : IDL.Text,
-    'profilePhoto' : ExternalBlob,
-    'fullName' : IDL.Text,
-    'mobileNumber' : IDL.Text,
-    'email' : IDL.Text,
-    'spotifyProfile' : IDL.Text,
-    'facebookLink' : IDL.Text,
-    'appleProfile' : IDL.Text,
-    'stageName' : IDL.Text,
-  });
-  const CommunityMessageInput = IDL.Record({ 'content' : IDL.Text });
   const StripeConfiguration = IDL.Record({
     'allowedCountries' : IDL.Vec(IDL.Text),
     'secretKey' : IDL.Text,
-  });
-  const SubmitSongInput = IDL.Record({
-    'artworkBlob' : ExternalBlob,
-    'title' : IDL.Text,
-    'additionalDetails' : IDL.Text,
-    'lyricist' : IDL.Text,
-    'discountCode' : IDL.Opt(IDL.Text),
-    'artworkFilename' : IDL.Text,
-    'audioBlob' : ExternalBlob,
-    'audioFilename' : IDL.Text,
-    'language' : IDL.Text,
-    'composer' : IDL.Text,
-    'genre' : IDL.Text,
-    'artist' : IDL.Text,
-    'producer' : IDL.Text,
-    'releaseDate' : Time,
-    'releaseType' : IDL.Text,
-    'featuredArtist' : IDL.Text,
   });
   const http_header = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
   const http_request_result = IDL.Record({
@@ -819,176 +332,69 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-    'addSongComment' : IDL.Func([IDL.Text, IDL.Text], [], []),
-    'adminEditArtistProfile' : IDL.Func([IDL.Principal, ArtistProfile], [], []),
-    'adminEditSubmission' : IDL.Func([SongSubmission], [], []),
-    'applyForVerification' : IDL.Func([], [], []),
+    'adminDeleteArtistProfile' : IDL.Func([IDL.Text], [], []),
+    'adminEditArtistProfile' : IDL.Func(
+        [IDL.Text, SaveArtistProfileInput],
+        [],
+        [],
+      ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'cancelVerificationRequest' : IDL.Func([], [], []),
-    'createBlogPost' : IDL.Func([BlogPostInput], [IDL.Text], []),
+    'createArtistProfile' : IDL.Func([SaveArtistProfileInput], [IDL.Text], []),
     'createCheckoutSession' : IDL.Func(
         [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
         [IDL.Text],
         [],
       ),
-    'createPodcastEpisode' : IDL.Func([PodcastEpisodeInput], [IDL.Text], []),
-    'createPodcastShow' : IDL.Func([PodcastShowInput], [IDL.Text], []),
-    'createPreSave' : IDL.Func([PreSaveInput], [IDL.Text], []),
-    'deleteBlogPost' : IDL.Func([IDL.Text], [], []),
-    'deletePreSaveLink' : IDL.Func([IDL.Text], [], []),
-    'deleteSubmission' : IDL.Func([IDL.Text], [], []),
-    'deleteUser' : IDL.Func([IDL.Principal], [], []),
-    'downgradeTeamToUser' : IDL.Func([IDL.Principal], [], []),
+    'deleteArtistProfile' : IDL.Func([IDL.Text], [], []),
     'generateInviteCode' : IDL.Func([], [IDL.Text], []),
-    'getAcrCloudResult' : IDL.Func([IDL.Text], [IDL.Opt(ACRResult)], ['query']),
-    'getAllArtists' : IDL.Func([], [IDL.Vec(ArtistProfile)], ['query']),
-    'getAllArtistsWithUserIds' : IDL.Func(
+    'getAllArtistProfileOwnersForAdmin' : IDL.Func(
         [],
-        [IDL.Vec(IDL.Tuple(IDL.Principal, ArtistProfile))],
+        [IDL.Vec(IDL.Principal)],
         ['query'],
       ),
-    'getAllBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
-    'getAllEpisodes' : IDL.Func([], [IDL.Vec(PodcastEpisode)], ['query']),
-    'getAllPodcasts' : IDL.Func([], [IDL.Vec(PodcastShow)], ['query']),
+    'getAllArtistProfilesForAdmin' : IDL.Func(
+        [],
+        [IDL.Vec(ArtistProfile)],
+        ['query'],
+      ),
     'getAllRSVPs' : IDL.Func([], [IDL.Vec(RSVP)], ['query']),
-    'getAllSubmissions' : IDL.Func([], [IDL.Vec(SongSubmission)], ['query']),
-    'getAllSubmissionsWithPreSaveLinks' : IDL.Func(
-        [],
-        [IDL.Vec(SongSubmission)],
-        ['query'],
-      ),
-    'getAllTeamMembers' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
-    'getAllVerificationRequests' : IDL.Func(
-        [],
-        [IDL.Vec(VerificationRequestWithFullName)],
-        ['query'],
-      ),
-    'getAllVerificationRequestsForMigration' : IDL.Func(
-        [],
-        [IDL.Vec(VerificationRequestWithFullName)],
-        ['query'],
-      ),
-    'getAllVerificationRequestsRaw' : IDL.Func(
-        [],
-        [IDL.Vec(VerificationRequest)],
-        ['query'],
-      ),
-    'getAnnouncement' : IDL.Func([], [IDL.Text], ['query']),
-    'getAnnualMaintenanceFee' : IDL.Func([], [IDL.Int], ['query']),
-    'getArtistProfile' : IDL.Func([], [IDL.Opt(ArtistProfile)], ['query']),
-    'getArtistProfileByUserId' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Opt(ArtistProfile)],
-        ['query'],
-      ),
     'getArtistProfileEditingAccessStatus' : IDL.Func([], [IDL.Bool], ['query']),
-    'getBlogPost' : IDL.Func([IDL.Text], [IDL.Opt(BlogPost)], ['query']),
-    'getCallerRole' : IDL.Func([], [AppUserRole], ['query']),
+    'getArtistProfilesByUserForAdmin' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(ArtistProfile)],
+        ['query'],
+      ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getCommunityMessages' : IDL.Func(
-        [],
-        [IDL.Vec(CommunityMessage)],
-        ['query'],
-      ),
-    'getDashboardSummary' : IDL.Func([], [IDL.Text], ['query']),
-    'getDistributionFee' : IDL.Func([], [IDL.Int], ['query']),
     'getInviteCodes' : IDL.Func([], [IDL.Vec(InviteCode)], ['query']),
-    'getNextBatchOfMessages' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Vec(CommunityMessage)],
-        ['query'],
-      ),
-    'getPodcastEpisodesByShow' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(PodcastEpisode)],
-        ['query'],
-      ),
-    'getPodcastEpisodesByUser' : IDL.Func(
-        [],
-        [IDL.Vec(IDL.Tuple(PodcastShow, IDL.Vec(PodcastEpisode)))],
-        ['query'],
-      ),
-    'getPodcastShow' : IDL.Func([IDL.Text], [IDL.Opt(PodcastShow)], ['query']),
-    'getPodcastShowWithEpisodes' : IDL.Func(
-        [IDL.Text],
-        [IDL.Opt(IDL.Tuple(PodcastShow, IDL.Vec(PodcastEpisode)))],
-        ['query'],
-      ),
-    'getPreSaveLink' : IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], ['query']),
-    'getPreloadedCommunityMessages' : IDL.Func(
-        [],
-        [IDL.Vec(CommunityMessage)],
-        ['query'],
-      ),
-    'getPublishedBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
-    'getSongComment' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
+    'getMyArtistProfiles' : IDL.Func([], [IDL.Vec(ArtistProfile)], ['query']),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
-    'getSubmission' : IDL.Func([IDL.Text], [SongSubmission], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
-    'getUserRole' : IDL.Func([IDL.Principal], [AppUserRole], ['query']),
-    'getUserSubmissions' : IDL.Func([], [IDL.Vec(SongSubmission)], ['query']),
-    'getVerificationStatus' : IDL.Func([], [VerificationStatus], ['query']),
-    'hasCompleteArtistProfile' : IDL.Func([], [IDL.Bool], ['query']),
     'isArtistProfileEditingEnabled' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerApproved' : IDL.Func([], [IDL.Bool], ['query']),
-    'isCallerTeamMember' : IDL.Func([], [IDL.Bool], ['query']),
     'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
-    'isUserVerificationBadgeActive' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Bool],
-        ['query'],
-      ),
-    'isVerificationBadgeActive' : IDL.Func([], [IDL.Bool], ['query']),
-    'isVerificationBadgeActiveWithExtensions' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Bool],
-        ['query'],
-      ),
     'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
-    'publishBlogPost' : IDL.Func([IDL.Text], [], []),
     'requestApproval' : IDL.Func([], [], []),
-    'saveArtistProfile' : IDL.Func([SaveArtistProfileInput], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'sendCommunityMessage' : IDL.Func([CommunityMessageInput], [IDL.Text], []),
-    'setAcrResult' : IDL.Func([IDL.Text, ACRResult], [], []),
-    'setAnnualMaintenanceFee' : IDL.Func([IDL.Int], [], []),
     'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
     'setArtistProfileEditingAccess' : IDL.Func([IDL.Bool], [], []),
-    'setDistributionFee' : IDL.Func([IDL.Int], [], []),
     'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
     'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
-    'submitSong' : IDL.Func([SubmitSongInput], [IDL.Text], []),
     'transform' : IDL.Func(
         [TransformationInput],
         [TransformationOutput],
         ['query'],
       ),
-    'updateAnnouncement' : IDL.Func([IDL.Text], [], []),
-    'updateBlogPost' : IDL.Func([IDL.Text, BlogPostInput], [], []),
-    'updateSongSubmission' : IDL.Func([SongSubmission], [], []),
-    'updateSubmissionStatus' : IDL.Func(
-        [IDL.Text, SongStatus, IDL.Text],
+    'updateArtistProfile' : IDL.Func(
+        [IDL.Text, SaveArtistProfileInput],
         [],
         [],
       ),
-    'updateVerificationExpiryDays' : IDL.Func([IDL.Principal, IDL.Nat], [], []),
-    'updateVerificationStatus' : IDL.Func(
-        [IDL.Principal, VerificationStatus],
-        [],
-        [],
-      ),
-    'updateVerificationStatusWithData' : IDL.Func(
-        [IDL.Text, VerificationStatus],
-        [],
-        [],
-      ),
-    'upgradeUserToTeam' : IDL.Func([IDL.Principal], [], []),
   });
 };
 

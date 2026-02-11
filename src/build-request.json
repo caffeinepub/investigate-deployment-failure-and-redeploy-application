@@ -1,139 +1,162 @@
 {
   "kind": "build_request",
-  "title": "Homepage logo update and podcast shows + multi-episode uploads with admin review",
+  "title": "Support multiple artist profiles per user and surface them in the admin artist panel",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Replace the homepage hero logo image on the public landing page only (do not change the global header/nav logo) using the user-uploaded logo image.",
-      "target": "frontend",
+      "text": "Update the backend data model to support multiple artist profiles per user (each profile must have a stable unique ID and an owner Principal), replacing the current single `artistProfiles : Map<Principal, ArtistProfile>` storage.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "Replace logo only in home page"
+          "Allow users to create multi artist profile on their dashboard. The created artist profile should show in admin artist pannel"
         ]
       },
       "acceptanceCriteria": [
-        "Landing page hero logo uses the new uploaded logo asset.",
-        "Header/navbar logo remains unchanged across the rest of the site.",
-        "No broken image links in production build."
+        "A user can have 0..N artist profiles stored on the backend.",
+        "Each artist profile has a unique ID that can be used to reference it consistently across updates/deletes.",
+        "Existing stored single artist profile data is preserved via migration (no data loss)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add backend data models and actor methods to support creating podcast shows with fields: show title, podcast type (audio or video), description, podcast category, and language; shows must be owned by the creating user.",
+      "text": "Add backend APIs to create, list, update, and delete artist profiles for the currently authenticated user, operating on artist profile IDs (not by overwriting a single profile).",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "create a show should contain show title, podcast type (audio or video) , description, podcast category, language. Using this user can create podcast show."
+          "Allow users to create multi artist profile on their dashboard"
         ]
       },
       "acceptanceCriteria": [
-        "Authenticated users can create a podcast show with the specified fields.",
-        "Backend can return the caller’s podcast shows list.",
-        "Data persists across refresh/reload (stable storage)."
+        "There is an API to list the caller’s artist profiles (returns an array including each profile’s ID and fields).",
+        "There is an API to create a new artist profile for the caller (returns the new profile ID).",
+        "There is an API to update an existing artist profile by ID; only the owner (or admin/team if applicable) can update.",
+        "There is an API to delete an existing artist profile by ID; only the owner (or admin/team if applicable) can delete.",
+        "Authorization checks trap with an appropriate error for unauthenticated callers."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add backend data models and actor methods to support adding multiple episodes to a specific podcast show at any time, with episode fields: episode title, description, 18+ only toggle, explicit content toggle, promotional content toggle, episode type (trailer/full/bonus), season number, episode number, episode artwork image, thumbnail image, and an uploaded media file (audio or video).",
+      "text": "Update admin-facing backend APIs so admins/team can retrieve and manage all user-created artist profiles in a way that allows the admin UI to show every artist profile (not just one per user).",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "To create a episode for each show they need to fill this episode info is episode title, description ,18+ only (on /off button), Explicit content(on /off button), Promotional content (on /off button), episode type ( trailer, full, bonus),  season number,  episode number, episode art work image , thumbnail and file upload (both audio and video) ."
+          "The created artist profile should show in admin artist pannel"
         ]
       },
       "acceptanceCriteria": [
-        "Authenticated users can add an episode to one of their shows with all specified fields.",
-        "Backend enforces that only the show owner can add episodes to that show.",
-        "Backend can list episodes for a given show.",
-        "Uploaded episode artwork, thumbnail, and media file are stored and retrievable for display/download."
+        "Admin/team can query a list of all artist profiles across all users, including each profile’s ID and the owning user Principal.",
+        "Admin/team can edit an artist profile using its ID (and/or owner+ID) without ambiguity when a user has multiple profiles.",
+        "Non-admin/non-team callers cannot access the global list."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Add a new \"Submit Your Podcast\" area in the user dashboard that lets users: (1) create a podcast show, (2) view their created shows, and (3) add multiple episodes per show using a dedicated episode form with the specified fields and file uploads (audio/video).",
-      "target": "frontend",
+      "text": "Implement a conditional Motoko state migration so existing deployments with `artistProfiles : Map<Principal, ArtistProfile>` are upgraded to the new multi-profile storage while keeping the existing profile as a single entry for its owner.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "Submit your podcast should available in user dashboard",
-          "We need seperate form for create a podcast show and after Successful create podcast show user Can add multiple episode at any time as audio or video file"
+          "Allow users to create multi artist profile on their dashboard. The created artist profile should show in admin artist pannel"
         ]
       },
       "acceptanceCriteria": [
-        "User Dashboard contains a clearly labeled section/tab for podcast submission.",
-        "Show creation form contains: title, podcast type (audio/video), description, category, language.",
-        "After creating a show, user can add episodes to that show using a separate episode form with all required fields and file uploads.",
-        "User can see a list of their shows and navigate/select a show to add episodes.",
-        "All user-facing text for these new UI elements is in English."
+        "On upgrade, any existing per-user artist profile is converted into exactly one new artist profile entry owned by that Principal.",
+        "After upgrade, existing users still see their pre-upgrade artist profile in the UI (now as one item in a list).",
+        "A fresh install (no prior state) does not require migration logic to run."
       ]
     },
     {
       "id": "REQ-5",
-      "text": "Add an admin dashboard section (separate from music submissions) that displays podcast submissions created by users (shows and their episodes) and allows admins to browse shows and inspect episode metadata and downloaded assets (artwork/thumbnail/media).",
-      "target": "both",
+      "text": "Update the user dashboard UI to let users create and manage multiple artist profiles (list existing profiles; allow create, edit, and delete).",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "if anything submit their podcast it will display in admin dashboard in submission column"
+          "Allow users to create multi artist profile on their dashboard"
         ]
       },
       "acceptanceCriteria": [
-        "Admin Dashboard includes a dedicated podcasts/podcast submissions area.",
-        "Admin can see a list of podcast shows submitted by users.",
-        "Admin can expand/open a show to view its episodes and metadata.",
-        "Admin can download episode assets (artwork, thumbnail, and audio/video file) from the admin UI.",
-        "Non-admin users cannot access admin podcast submissions views."
+        "User dashboard no longer assumes only a single `artistProfile`; it shows a list of profiles for the logged-in user.",
+        "User can create a new artist profile from the dashboard (using the existing form fields and photo upload).",
+        "User can edit an existing artist profile selected from the list.",
+        "User can delete an artist profile after confirming the action.",
+        "User-facing text is in English."
       ]
     },
     {
       "id": "REQ-6",
-      "text": "If adding new stable state for podcast shows/episodes changes the backend stable schema, implement a conditional state migration to preserve existing app data and initialize new podcast-related storage safely.",
-      "target": "backend",
+      "text": "Update the admin artist panel UI to display all user-created artist profiles (including multiple profiles per user) and allow searching and editing them, so profiles created in the user dashboard appear automatically in the admin panel.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "User need to create a podcast show to Upload episodes of podcast"
+          "The created artist profile should show in admin artist pannel"
         ]
       },
       "acceptanceCriteria": [
-        "Upgrade path does not wipe existing stored data (e.g., existing song submissions, profiles, etc.).",
-        "New podcast storage initializes correctly on upgrade.",
-        "Canister upgrade completes without trapping due to incompatible stable state."
+        "Admin artist management view shows every artist profile, not just one per Principal.",
+        "Search works across stage name/full name and owner Principal text (and still functions when multiple profiles share an owner).",
+        "Admin edit flow opens and saves updates for the selected artist profile unambiguously when a user has multiple profiles.",
+        "After a user creates a new artist profile, it appears in the admin list after refresh (or via React Query invalidation)."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Extend React Query hooks (`frontend/src/hooks/useQueries.ts`) to support the new multi-artist-profile APIs and update existing queries/mutations that currently assume a single artist profile so the app continues to function with multiple profiles.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "Allow users to create multi artist profile on their dashboard. The created artist profile should show in admin artist pannel"
+        ]
+      },
+      "acceptanceCriteria": [
+        "There is a query hook to fetch the current user’s list of artist profiles.",
+        "There are mutation hooks to create/update/delete an artist profile and they invalidate the correct query keys so UI updates immediately.",
+        "Admin hooks fetch the full list of all artist profiles and invalidate appropriately after admin edits."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
-    "Do not edit frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
-    "Store and serve user-uploaded podcast assets using existing Internet Computer patterns already used for artwork/audio uploads (no external storage providers).",
-    "Use English for any user-facing text added."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit files under frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Implementing third-party authentication providers (only Internet Identity is supported).",
-    "Adding real-time features (websockets/chat/live updates).",
-    "Adding payments/subscriptions specifically for podcasts.",
-    "Public podcast directory/search/listen pages (not requested)."
+    "Redesigning the song submission workflow to select artists/featured artists from profiles (not requested in the last user message).",
+    "Adding third-party authentication providers beyond Internet Identity.",
+    "Adding external databases or non-Motoko backend components."
   ],
   "imageRequirements": {
     "required": [],
-    "edits": [
-      "Convert/resize the uploaded logo for web usage (Picsart_26-01-29_16-52-47-900.png > itmp-home-logo-transparent.dim_200x200.png)"
-    ]
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

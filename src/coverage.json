@@ -1,85 +1,89 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T17:08:38.052Z",
+  "generatedAt": "2026-02-11T00:33:41.460Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 6,
+    "total": 7,
     "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Replace the homepage hero logo image on the public landing page only (do not change the global header/nav logo) using the user-uploaded logo image.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/public/assets/generated/itmp-home-logo-transparent.dim_200x200.png",
-          "frontend/src/pages/LandingPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/public/assets/generated/itmp-home-logo-transparent.dim_200x200.png",
-          "frontend/src/pages/LandingPage.tsx"
-        ]
+        "summary": "Update the backend data model to support multiple artist profiles per user (each profile must have a stable unique ID and an owner Principal), replacing the current single `artistProfiles : Map<Principal, ArtistProfile>` storage.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Add backend data models and actor methods to support creating podcast shows with fields: show title, podcast type (audio or video), description, podcast category, and language; shows must be owned by the creating user.",
+        "summary": "Add backend APIs to create, list, update, and delete artist profiles for the currently authenticated user, operating on artist profile IDs (not by overwriting a single profile).",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Add backend data models and actor methods to support adding multiple episodes to a specific podcast show at any time, with episode fields: episode title, description, 18+ only toggle, explicit content toggle, promotional content toggle, episode type (trailer/full/bonus), season number, episode number, episode artwork image, thumbnail image, and an uploaded media file (audio or video).",
+        "summary": "Update admin-facing backend APIs so admins/team can retrieve and manage all user-created artist profiles in a way that allows the admin UI to show every artist profile (not just one per user).",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-4",
-        "summary": "Add a new \"Submit Your Podcast\" area in the user dashboard that lets users: (1) create a podcast show, (2) view their created shows, and (3) add multiple episodes per show using a dedicated episode form with the specified fields and file uploads (audio/video).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/utils/fileToExternalBlob.ts",
-          "frontend/src/components/PodcastShowForm.tsx",
-          "frontend/src/components/PodcastEpisodeForm.tsx",
-          "frontend/src/components/UserPodcastSubmissionSection.tsx",
-          "frontend/src/pages/UserDashboard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/utils/fileToExternalBlob.ts",
-          "frontend/src/components/PodcastShowForm.tsx",
-          "frontend/src/components/PodcastEpisodeForm.tsx",
-          "frontend/src/components/UserPodcastSubmissionSection.tsx",
-          "frontend/src/pages/UserDashboard.tsx"
-        ]
+        "summary": "Implement a conditional Motoko state migration so existing deployments with `artistProfiles : Map<Principal, ArtistProfile>` are upgraded to the new multi-profile storage while keeping the existing profile as a single entry for its owner.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-5",
-        "summary": "Add an admin dashboard section (separate from music submissions) that displays podcast submissions created by users (shows and their episodes) and allows admins to browse shows and inspect episode metadata and downloaded assets (artwork/thumbnail/media).",
+        "summary": "Update the user dashboard UI to let users create and manage multiple artist profiles (list existing profiles; allow create, edit, and delete).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/AdminPodcastSubmissions.tsx",
-          "frontend/src/pages/AdminDashboard.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/pages/UserDashboard.tsx",
+          "frontend/src/components/ArtistSetupForm.tsx",
+          "frontend/src/components/UserArtistProfilesManager.tsx",
+          "frontend/src/pages/UserDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/AdminPodcastSubmissions.tsx",
-          "frontend/src/pages/AdminDashboard.tsx"
+          "frontend/src/pages/UserDashboard.tsx",
+          "frontend/src/components/ArtistSetupForm.tsx",
+          "frontend/src/components/UserArtistProfilesManager.tsx",
+          "frontend/src/pages/UserDashboard.tsx"
         ]
       },
       {
         "id": "REQ-6",
-        "summary": "If adding new stable state for podcast shows/episodes changes the backend stable schema, implement a conditional state migration to preserve existing app data and initialize new podcast-related storage safely.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Update the admin artist panel UI to display all user-created artist profiles (including multiple profiles per user) and allow searching and editing them, so profiles created in the user dashboard appear automatically in the admin panel.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdminArtistManagement.tsx",
+          "frontend/src/components/AdminEditArtistDialog.tsx",
+          "frontend/src/components/AdminArtistManagement.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdminArtistManagement.tsx",
+          "frontend/src/components/AdminEditArtistDialog.tsx",
+          "frontend/src/components/AdminArtistManagement.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Extend React Query hooks (`frontend/src/hooks/useQueries.ts`) to support the new multi-artist-profile APIs and update existing queries/mutations that currently assume a single artist profile so the app continues to function with multiple profiles.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useQueries.ts"
+        ]
       }
     ]
   },
@@ -87,31 +91,54 @@
     "backend/main.mo",
     "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/itmp-home-logo-transparent.dim_200x200.png",
+    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
+    "frontend/src/components/AdminAnnouncementSection.tsx",
     "frontend/src/components/AdminArtistManagement.tsx",
+    "frontend/src/components/AdminBlogManagement.tsx",
     "frontend/src/components/AdminEditArtistDialog.tsx",
+    "frontend/src/components/AdminEditSubmissionDialog.tsx",
     "frontend/src/components/AdminFeeManagement.tsx",
     "frontend/src/components/AdminPodcastSubmissions.tsx",
+    "frontend/src/components/AdminProfileEditingControl.tsx",
+    "frontend/src/components/AdminStats.tsx",
     "frontend/src/components/AdminSubmissionsList.tsx",
+    "frontend/src/components/AdminSupportRequestsManagement.tsx",
     "frontend/src/components/AdminUserRoleManagement.tsx",
     "frontend/src/components/AdminVerificationManagement.tsx",
+    "frontend/src/components/AlbumTracksEditor.tsx",
+    "frontend/src/components/AnnouncementPopup.tsx",
     "frontend/src/components/ArtistSetupForm.tsx",
+    "frontend/src/components/ClaimYouTubeCopyrightDialog.tsx",
+    "frontend/src/components/ConnectInstagramProfileDialog.tsx",
+    "frontend/src/components/DashboardPublishedBlogList.tsx",
+    "frontend/src/components/GeneralSupportTab.tsx",
+    "frontend/src/components/Header.tsx",
     "frontend/src/components/PodcastEpisodeForm.tsx",
     "frontend/src/components/PodcastShowForm.tsx",
+    "frontend/src/components/SongSubmissionForm.tsx",
+    "frontend/src/components/SupportRequestsList.tsx",
+    "frontend/src/components/UserArtistProfilesManager.tsx",
+    "frontend/src/components/UserEditSubmissionDialog.tsx",
     "frontend/src/components/UserPodcastSubmissionSection.tsx",
+    "frontend/src/components/UserSubmissionsList.tsx",
+    "frontend/src/components/VerificationBenefitsPopup.tsx",
+    "frontend/src/components/VerifiedBadge.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
     "frontend/src/pages/AdminDashboard.tsx",
+    "frontend/src/pages/BlogPage.tsx",
+    "frontend/src/pages/BlogPostPage.tsx",
     "frontend/src/pages/LandingPage.tsx",
+    "frontend/src/pages/TeamDashboard.tsx",
+    "frontend/src/pages/ThankYouPage.tsx",
     "frontend/src/pages/UserDashboard.tsx",
-    "frontend/src/utils/fileToExternalBlob.ts",
+    "frontend/src/pages/VerificationSubscriptionPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

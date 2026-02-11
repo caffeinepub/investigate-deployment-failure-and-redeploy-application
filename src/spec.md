@@ -1,14 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Update the public landing page hero logo and add podcast show + multi-episode submission flows with admin review.
+**Goal:** Support multiple artist profiles per user and ensure all created profiles are visible and manageable in the admin artist panel.
 
 **Planned changes:**
-- Replace the homepage/landing-page hero logo image only (do not change the global header/navbar logo) using the provided uploaded logo asset.
-- Add backend models and methods for podcast shows owned by the creating user (title, podcast type audio/video, description, category, language) and listing a user’s shows.
-- Add backend models and methods for podcast episodes within a show, supporting multi-episode uploads over time with fields (title, description, 18+ toggle, explicit toggle, promotional toggle, episode type trailer/full/bonus, season number, episode number) plus uploads for artwork, thumbnail, and audio/video media file; enforce that only the show owner can add episodes.
-- Add a "Submit Your Podcast" section in the user dashboard with a show creation form, shows list, and a separate episode form per show (English UI text only).
-- Add an admin dashboard section dedicated to podcast submissions (separate from music submissions) to browse shows and episodes and download episode assets (artwork/thumbnail/media), restricted to admins only.
-- If stable storage schema changes, add a conditional backend state migration to preserve existing stored data and safely initialize podcast storage.
+- Replace the backend’s single `artistProfiles : Map<Principal, ArtistProfile>` storage with a multi-profile model where each artist profile has a stable unique ID and an owner Principal.
+- Add backend APIs for the authenticated user to create, list, update, and delete artist profiles by profile ID with authorization checks.
+- Update admin/team backend APIs to list and manage all artist profiles across all users (including multiple profiles per user) with appropriate access control.
+- Implement Motoko upgrade migration to preserve existing single-profile data by converting it into a single entry in the new multi-profile storage.
+- Update the user dashboard UI to list artist profiles and allow create/edit/delete actions using the existing fields and photo upload.
+- Update the admin artist panel UI to show every artist profile, support search across name fields and owner Principal, and edit profiles unambiguously by ID.
+- Extend React Query hooks to support the new list/create/update/delete APIs for users and the global list/edit flows for admins, including correct cache invalidation.
 
-**User-visible outcome:** Users can create podcast shows from their dashboard and upload multiple audio/video episodes (with metadata and assets) at any time, while admins can review podcast submissions and download episode files; the landing page hero logo displays the updated uploaded logo.
+**User-visible outcome:** Users can manage multiple artist profiles from their dashboard, and admins can see, search, and edit every artist profile (including multiple profiles per user) in the admin artist panel.
