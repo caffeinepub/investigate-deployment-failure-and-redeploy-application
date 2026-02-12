@@ -89,12 +89,47 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface ArtistProfile {
+    id: string;
+    isApproved: boolean;
+    instagramLink: string;
+    owner: Principal;
+    profilePhoto: ExternalBlob;
+    fullName: string;
+    mobileNumber: string;
+    email: string;
+    spotifyProfile: string;
+    facebookLink: string;
+    appleProfile: string;
+    stageName: string;
+}
 export interface TransformationOutput {
     status: bigint;
     body: Uint8Array;
     headers: Array<http_header>;
 }
 export type Time = bigint;
+export interface SubmitSongInput {
+    artworkBlob: ExternalBlob;
+    albumTracks?: Array<TrackMetadata>;
+    title: string;
+    additionalDetails: string;
+    lyricist: string;
+    publicLink?: string;
+    discountCode?: string;
+    artworkFilename: string;
+    audioBlob: ExternalBlob;
+    liveStreamLink?: string;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    genre: string;
+    artist: string;
+    producer: string;
+    releaseDate: Time;
+    releaseType: string;
+    featuredArtist: string;
+}
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
 }
@@ -149,6 +184,20 @@ export interface TransformationInput {
     context: Uint8Array;
     response: http_request_result;
 }
+export interface ACRResult {
+    music: string;
+    statusCode: string;
+}
+export interface TrackMetadata {
+    title: string;
+    lyricist: string;
+    audioFile: ExternalBlob;
+    audioFilename: string;
+    composer: string;
+    artist: string;
+    producer: string;
+    featuredArtist: string;
+}
 export type StripeSessionStatus = {
     __kind__: "completed";
     completed: {
@@ -165,19 +214,34 @@ export interface StripeConfiguration {
     allowedCountries: Array<string>;
     secretKey: string;
 }
-export interface ArtistProfile {
+export interface SongSubmission {
     id: string;
-    isApproved: boolean;
-    instagramLink: string;
-    owner: Principal;
-    profilePhoto: ExternalBlob;
-    fullName: string;
-    mobileNumber: string;
-    email: string;
-    spotifyProfile: string;
-    facebookLink: string;
-    appleProfile: string;
-    stageName: string;
+    status: SongStatus;
+    albumTracks?: Array<TrackMetadata>;
+    title: string;
+    preSaveLink?: string;
+    additionalDetails: string;
+    lyricist: string;
+    publicLink?: string;
+    submitter: Principal;
+    discountCode?: string;
+    artworkFilename: string;
+    audioFile: ExternalBlob;
+    liveStreamLink?: string;
+    artwork: ExternalBlob;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    adminComment: string;
+    genre: string;
+    timestamp: Time;
+    artist: string;
+    acrResult?: ACRResult;
+    producer: string;
+    releaseDate: Time;
+    releaseType: string;
+    adminRemarks: string;
+    featuredArtist: string;
 }
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
@@ -191,6 +255,13 @@ export enum ApprovalStatus {
     pending = "pending",
     approved = "approved",
     rejected = "rejected"
+}
+export enum SongStatus {
+    pending = "pending",
+    live = "live",
+    approved = "approved",
+    rejected = "rejected",
+    draft = "draft"
 }
 export enum UserRole {
     admin = "admin",
@@ -206,7 +277,9 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     adminDeleteArtistProfile(id: string): Promise<void>;
+    adminDeleteSubmission(id: string): Promise<void>;
     adminEditArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
+    adminUpdateSubmission(id: string, status: SongStatus, adminRemarks: string, adminComment: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createArtistProfile(input: SaveArtistProfileInput): Promise<string>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
@@ -215,12 +288,14 @@ export interface backendInterface {
     getAllArtistProfileOwnersForAdmin(): Promise<Array<Principal>>;
     getAllArtistProfilesForAdmin(): Promise<Array<ArtistProfile>>;
     getAllRSVPs(): Promise<Array<RSVP>>;
+    getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
     getArtistProfileEditingAccessStatus(): Promise<boolean>;
     getArtistProfilesByUserForAdmin(user: Principal): Promise<Array<ArtistProfile>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getInviteCodes(): Promise<Array<InviteCode>>;
     getMyArtistProfiles(): Promise<Array<ArtistProfile>>;
+    getMySubmissions(): Promise<Array<SongSubmission>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isArtistProfileEditingEnabled(): Promise<boolean>;
@@ -234,10 +309,11 @@ export interface backendInterface {
     setArtistProfileEditingAccess(enabled: boolean): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     submitRSVP(name: string, attending: boolean, inviteCode: string): Promise<void>;
+    submitSong(input: SubmitSongInput): Promise<string>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     updateArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
 }
-import type { ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, ExternalBlob as _ExternalBlob, SaveArtistProfileInput as _SaveArtistProfileInput, StripeSessionStatus as _StripeSessionStatus, UserApprovalInfo as _UserApprovalInfo, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, ExternalBlob as _ExternalBlob, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, StripeSessionStatus as _StripeSessionStatus, SubmitSongInput as _SubmitSongInput, Time as _Time, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -352,6 +428,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async adminDeleteSubmission(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminDeleteSubmission(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminDeleteSubmission(arg0);
+            return result;
+        }
+    }
     async adminEditArtistProfile(arg0: string, arg1: SaveArtistProfileInput): Promise<void> {
         if (this.processError) {
             try {
@@ -366,17 +456,31 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
+    async adminUpdateSubmission(arg0: string, arg1: SongStatus, arg2: string, arg3: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n11(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.adminUpdateSubmission(arg0, to_candid_SongStatus_n11(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n11(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.adminUpdateSubmission(arg0, to_candid_SongStatus_n11(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+            return result;
+        }
+    }
+    async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n13(this._uploadFile, this._downloadFile, arg1));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n13(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
@@ -454,14 +558,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getAllArtistProfilesForAdmin();
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getAllArtistProfilesForAdmin();
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
         }
     }
     async getAllRSVPs(): Promise<Array<RSVP>> {
@@ -476,6 +580,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getAllRSVPs();
             return result;
+        }
+    }
+    async getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllSubmissionsForAdmin();
+                return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllSubmissionsForAdmin();
+            return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
         }
     }
     async getArtistProfileEditingAccessStatus(): Promise<boolean> {
@@ -496,42 +614,42 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getArtistProfilesByUserForAdmin(arg0);
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getArtistProfilesByUserForAdmin(arg0);
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserProfile(): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n18(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n31(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n18(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n31(this._uploadFile, this._downloadFile, result);
         }
     }
     async getInviteCodes(): Promise<Array<InviteCode>> {
@@ -552,42 +670,56 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getMyArtistProfiles();
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getMyArtistProfiles();
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMySubmissions(): Promise<Array<SongSubmission>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMySubmissions();
+                return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMySubmissions();
+            return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
         }
     }
     async getStripeSessionStatus(arg0: string): Promise<StripeSessionStatus> {
         if (this.processError) {
             try {
                 const result = await this.actor.getStripeSessionStatus(arg0);
-                return from_candid_StripeSessionStatus_n20(this._uploadFile, this._downloadFile, result);
+                return from_candid_StripeSessionStatus_n33(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getStripeSessionStatus(arg0);
-            return from_candid_StripeSessionStatus_n20(this._uploadFile, this._downloadFile, result);
+            return from_candid_StripeSessionStatus_n33(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
         }
     }
     async isArtistProfileEditingEnabled(): Promise<boolean> {
@@ -650,14 +782,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.listApprovals();
-                return from_candid_vec_n24(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.listApprovals();
-            return from_candid_vec_n24(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
         }
     }
     async requestApproval(): Promise<void> {
@@ -691,14 +823,14 @@ export class Backend implements backendInterface {
     async setApproval(arg0: Principal, arg1: ApprovalStatus): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n29(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n41(this._uploadFile, this._downloadFile, arg1));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n29(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n41(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
@@ -744,6 +876,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async submitSong(arg0: SubmitSongInput): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitSong(await to_candid_SubmitSongInput_n43(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitSong(await to_candid_SubmitSongInput_n43(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
     async transform(arg0: TransformationInput): Promise<TransformationOutput> {
         if (this.processError) {
             try {
@@ -773,31 +919,46 @@ export class Backend implements backendInterface {
         }
     }
 }
-function from_candid_ApprovalStatus_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ApprovalStatus): ApprovalStatus {
-    return from_candid_variant_n28(_uploadFile, _downloadFile, value);
+function from_candid_ApprovalStatus_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ApprovalStatus): ApprovalStatus {
+    return from_candid_variant_n40(_uploadFile, _downloadFile, value);
 }
-async function from_candid_ArtistProfile_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ArtistProfile): Promise<ArtistProfile> {
-    return await from_candid_record_n15(_uploadFile, _downloadFile, value);
+async function from_candid_ArtistProfile_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ArtistProfile): Promise<ArtistProfile> {
+    return await from_candid_record_n17(_uploadFile, _downloadFile, value);
 }
-async function from_candid_ExternalBlob_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
+async function from_candid_ExternalBlob_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
     return await _downloadFile(value);
 }
-function from_candid_StripeSessionStatus_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StripeSessionStatus): StripeSessionStatus {
-    return from_candid_variant_n21(_uploadFile, _downloadFile, value);
+function from_candid_SongStatus_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SongStatus): SongStatus {
+    return from_candid_variant_n23(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserApprovalInfo_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserApprovalInfo): UserApprovalInfo {
-    return from_candid_record_n26(_uploadFile, _downloadFile, value);
+async function from_candid_SongSubmission_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SongSubmission): Promise<SongSubmission> {
+    return await from_candid_record_n21(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n19(_uploadFile, _downloadFile, value);
+function from_candid_StripeSessionStatus_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StripeSessionStatus): StripeSessionStatus {
+    return from_candid_variant_n34(_uploadFile, _downloadFile, value);
+}
+async function from_candid_TrackMetadata_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _TrackMetadata): Promise<TrackMetadata> {
+    return await from_candid_record_n27(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserApprovalInfo_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserApprovalInfo): UserApprovalInfo {
+    return from_candid_record_n38(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserRole_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n32(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+async function from_candid_opt_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [Array<_TrackMetadata>]): Promise<Array<TrackMetadata> | null> {
+    return value.length === 0 ? null : await from_candid_vec_n25(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+function from_candid_opt_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ACRResult]): ACRResult | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
@@ -806,7 +967,7 @@ function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
 }
-async function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: string;
     isApproved: boolean;
     instagramLink: string;
@@ -838,7 +999,7 @@ async function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promi
         isApproved: value.isApproved,
         instagramLink: value.instagramLink,
         owner: value.owner,
-        profilePhoto: await from_candid_ExternalBlob_n16(_uploadFile, _downloadFile, value.profilePhoto),
+        profilePhoto: await from_candid_ExternalBlob_n18(_uploadFile, _downloadFile, value.profilePhoto),
         fullName: value.fullName,
         mobileNumber: value.mobileNumber,
         email: value.email,
@@ -848,7 +1009,124 @@ async function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promi
         stageName: value.stageName
     };
 }
-function from_candid_record_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: string;
+    status: _SongStatus;
+    albumTracks: [] | [Array<_TrackMetadata>];
+    title: string;
+    preSaveLink: [] | [string];
+    additionalDetails: string;
+    lyricist: string;
+    publicLink: [] | [string];
+    submitter: Principal;
+    discountCode: [] | [string];
+    artworkFilename: string;
+    audioFile: _ExternalBlob;
+    liveStreamLink: [] | [string];
+    artwork: _ExternalBlob;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    adminComment: string;
+    genre: string;
+    timestamp: _Time;
+    artist: string;
+    acrResult: [] | [_ACRResult];
+    producer: string;
+    releaseDate: _Time;
+    releaseType: string;
+    adminRemarks: string;
+    featuredArtist: string;
+}): Promise<{
+    id: string;
+    status: SongStatus;
+    albumTracks?: Array<TrackMetadata>;
+    title: string;
+    preSaveLink?: string;
+    additionalDetails: string;
+    lyricist: string;
+    publicLink?: string;
+    submitter: Principal;
+    discountCode?: string;
+    artworkFilename: string;
+    audioFile: ExternalBlob;
+    liveStreamLink?: string;
+    artwork: ExternalBlob;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    adminComment: string;
+    genre: string;
+    timestamp: Time;
+    artist: string;
+    acrResult?: ACRResult;
+    producer: string;
+    releaseDate: Time;
+    releaseType: string;
+    adminRemarks: string;
+    featuredArtist: string;
+}> {
+    return {
+        id: value.id,
+        status: from_candid_SongStatus_n22(_uploadFile, _downloadFile, value.status),
+        albumTracks: record_opt_to_undefined(await from_candid_opt_n24(_uploadFile, _downloadFile, value.albumTracks)),
+        title: value.title,
+        preSaveLink: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.preSaveLink)),
+        additionalDetails: value.additionalDetails,
+        lyricist: value.lyricist,
+        publicLink: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.publicLink)),
+        submitter: value.submitter,
+        discountCode: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.discountCode)),
+        artworkFilename: value.artworkFilename,
+        audioFile: await from_candid_ExternalBlob_n18(_uploadFile, _downloadFile, value.audioFile),
+        liveStreamLink: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.liveStreamLink)),
+        artwork: await from_candid_ExternalBlob_n18(_uploadFile, _downloadFile, value.artwork),
+        audioFilename: value.audioFilename,
+        language: value.language,
+        composer: value.composer,
+        adminComment: value.adminComment,
+        genre: value.genre,
+        timestamp: value.timestamp,
+        artist: value.artist,
+        acrResult: record_opt_to_undefined(from_candid_opt_n29(_uploadFile, _downloadFile, value.acrResult)),
+        producer: value.producer,
+        releaseDate: value.releaseDate,
+        releaseType: value.releaseType,
+        adminRemarks: value.adminRemarks,
+        featuredArtist: value.featuredArtist
+    };
+}
+async function from_candid_record_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    title: string;
+    lyricist: string;
+    audioFile: _ExternalBlob;
+    audioFilename: string;
+    composer: string;
+    artist: string;
+    producer: string;
+    featuredArtist: string;
+}): Promise<{
+    title: string;
+    lyricist: string;
+    audioFile: ExternalBlob;
+    audioFilename: string;
+    composer: string;
+    artist: string;
+    producer: string;
+    featuredArtist: string;
+}> {
+    return {
+        title: value.title,
+        lyricist: value.lyricist,
+        audioFile: await from_candid_ExternalBlob_n18(_uploadFile, _downloadFile, value.audioFile),
+        audioFilename: value.audioFilename,
+        composer: value.composer,
+        artist: value.artist,
+        producer: value.producer,
+        featuredArtist: value.featuredArtist
+    };
+}
+function from_candid_record_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     userPrincipal: [] | [string];
     response: string;
 }): {
@@ -856,11 +1134,11 @@ function from_candid_record_n22(_uploadFile: (file: ExternalBlob) => Promise<Uin
     response: string;
 } {
     return {
-        userPrincipal: record_opt_to_undefined(from_candid_opt_n23(_uploadFile, _downloadFile, value.userPrincipal)),
+        userPrincipal: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.userPrincipal)),
         response: value.response
     };
 }
-function from_candid_record_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     status: _ApprovalStatus;
     principal: Principal;
 }): {
@@ -868,7 +1146,7 @@ function from_candid_record_n26(_uploadFile: (file: ExternalBlob) => Promise<Uin
     principal: Principal;
 } {
     return {
-        status: from_candid_ApprovalStatus_n27(_uploadFile, _downloadFile, value.status),
+        status: from_candid_ApprovalStatus_n39(_uploadFile, _downloadFile, value.status),
         principal: value.principal
     };
 }
@@ -884,7 +1162,20 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
         topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
     };
 }
-function from_candid_variant_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    pending: null;
+} | {
+    live: null;
+} | {
+    approved: null;
+} | {
+    rejected: null;
+} | {
+    draft: null;
+}): SongStatus {
+    return "pending" in value ? SongStatus.pending : "live" in value ? SongStatus.live : "approved" in value ? SongStatus.approved : "rejected" in value ? SongStatus.rejected : "draft" in value ? SongStatus.draft : value;
+}
+function from_candid_variant_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -893,7 +1184,7 @@ function from_candid_variant_n19(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function from_candid_variant_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     completed: {
         userPrincipal: [] | [string];
         response: string;
@@ -916,13 +1207,13 @@ function from_candid_variant_n21(_uploadFile: (file: ExternalBlob) => Promise<Ui
 } {
     return "completed" in value ? {
         __kind__: "completed",
-        completed: from_candid_record_n22(_uploadFile, _downloadFile, value.completed)
+        completed: from_candid_record_n35(_uploadFile, _downloadFile, value.completed)
     } : "failed" in value ? {
         __kind__: "failed",
         failed: value.failed
     } : value;
 }
-function from_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     pending: null;
 } | {
     approved: null;
@@ -931,14 +1222,20 @@ function from_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): ApprovalStatus {
     return "pending" in value ? ApprovalStatus.pending : "approved" in value ? ApprovalStatus.approved : "rejected" in value ? ApprovalStatus.rejected : value;
 }
-async function from_candid_vec_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ArtistProfile>): Promise<Array<ArtistProfile>> {
-    return await Promise.all(value.map(async (x)=>await from_candid_ArtistProfile_n14(_uploadFile, _downloadFile, x)));
+async function from_candid_vec_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ArtistProfile>): Promise<Array<ArtistProfile>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_ArtistProfile_n16(_uploadFile, _downloadFile, x)));
 }
-function from_candid_vec_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserApprovalInfo>): Array<UserApprovalInfo> {
-    return value.map((x)=>from_candid_UserApprovalInfo_n25(_uploadFile, _downloadFile, x));
+async function from_candid_vec_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_SongSubmission>): Promise<Array<SongSubmission>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_SongSubmission_n20(_uploadFile, _downloadFile, x)));
 }
-function to_candid_ApprovalStatus_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): _ApprovalStatus {
-    return to_candid_variant_n30(_uploadFile, _downloadFile, value);
+async function from_candid_vec_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_TrackMetadata>): Promise<Array<TrackMetadata>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_TrackMetadata_n26(_uploadFile, _downloadFile, x)));
+}
+function from_candid_vec_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserApprovalInfo>): Array<UserApprovalInfo> {
+    return value.map((x)=>from_candid_UserApprovalInfo_n37(_uploadFile, _downloadFile, x));
+}
+function to_candid_ApprovalStatus_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): _ApprovalStatus {
+    return to_candid_variant_n42(_uploadFile, _downloadFile, value);
 }
 async function to_candid_ExternalBlob_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await _uploadFile(value);
@@ -946,8 +1243,17 @@ async function to_candid_ExternalBlob_n10(_uploadFile: (file: ExternalBlob) => P
 async function to_candid_SaveArtistProfileInput_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SaveArtistProfileInput): Promise<_SaveArtistProfileInput> {
     return await to_candid_record_n9(_uploadFile, _downloadFile, value);
 }
-function to_candid_UserRole_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
+function to_candid_SongStatus_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongStatus): _SongStatus {
     return to_candid_variant_n12(_uploadFile, _downloadFile, value);
+}
+async function to_candid_SubmitSongInput_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubmitSongInput): Promise<_SubmitSongInput> {
+    return await to_candid_record_n44(_uploadFile, _downloadFile, value);
+}
+async function to_candid_TrackMetadata_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TrackMetadata): Promise<_TrackMetadata> {
+    return await to_candid_record_n47(_uploadFile, _downloadFile, value);
+}
+function to_candid_UserRole_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
+    return to_candid_variant_n14(_uploadFile, _downloadFile, value);
 }
 function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation): __CaffeineStorageRefillInformation {
     return to_candid_record_n3(_uploadFile, _downloadFile, value);
@@ -962,6 +1268,99 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
 } {
     return {
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
+    };
+}
+async function to_candid_record_n44(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    artworkBlob: ExternalBlob;
+    albumTracks?: Array<TrackMetadata>;
+    title: string;
+    additionalDetails: string;
+    lyricist: string;
+    publicLink?: string;
+    discountCode?: string;
+    artworkFilename: string;
+    audioBlob: ExternalBlob;
+    liveStreamLink?: string;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    genre: string;
+    artist: string;
+    producer: string;
+    releaseDate: Time;
+    releaseType: string;
+    featuredArtist: string;
+}): Promise<{
+    artworkBlob: _ExternalBlob;
+    albumTracks: [] | [Array<_TrackMetadata>];
+    title: string;
+    additionalDetails: string;
+    lyricist: string;
+    publicLink: [] | [string];
+    discountCode: [] | [string];
+    artworkFilename: string;
+    audioBlob: _ExternalBlob;
+    liveStreamLink: [] | [string];
+    audioFilename: string;
+    language: string;
+    composer: string;
+    genre: string;
+    artist: string;
+    producer: string;
+    releaseDate: _Time;
+    releaseType: string;
+    featuredArtist: string;
+}> {
+    return {
+        artworkBlob: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.artworkBlob),
+        albumTracks: value.albumTracks ? candid_some(await to_candid_vec_n45(_uploadFile, _downloadFile, value.albumTracks)) : candid_none(),
+        title: value.title,
+        additionalDetails: value.additionalDetails,
+        lyricist: value.lyricist,
+        publicLink: value.publicLink ? candid_some(value.publicLink) : candid_none(),
+        discountCode: value.discountCode ? candid_some(value.discountCode) : candid_none(),
+        artworkFilename: value.artworkFilename,
+        audioBlob: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.audioBlob),
+        liveStreamLink: value.liveStreamLink ? candid_some(value.liveStreamLink) : candid_none(),
+        audioFilename: value.audioFilename,
+        language: value.language,
+        composer: value.composer,
+        genre: value.genre,
+        artist: value.artist,
+        producer: value.producer,
+        releaseDate: value.releaseDate,
+        releaseType: value.releaseType,
+        featuredArtist: value.featuredArtist
+    };
+}
+async function to_candid_record_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    title: string;
+    lyricist: string;
+    audioFile: ExternalBlob;
+    audioFilename: string;
+    composer: string;
+    artist: string;
+    producer: string;
+    featuredArtist: string;
+}): Promise<{
+    title: string;
+    lyricist: string;
+    audioFile: _ExternalBlob;
+    audioFilename: string;
+    composer: string;
+    artist: string;
+    producer: string;
+    featuredArtist: string;
+}> {
+    return {
+        title: value.title,
+        lyricist: value.lyricist,
+        audioFile: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.audioFile),
+        audioFilename: value.audioFilename,
+        composer: value.composer,
+        artist: value.artist,
+        producer: value.producer,
+        featuredArtist: value.featuredArtist
     };
 }
 async function to_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -1000,7 +1399,30 @@ async function to_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<
         stageName: value.stageName
     };
 }
-function to_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
+function to_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongStatus): {
+    pending: null;
+} | {
+    live: null;
+} | {
+    approved: null;
+} | {
+    rejected: null;
+} | {
+    draft: null;
+} {
+    return value == SongStatus.pending ? {
+        pending: null
+    } : value == SongStatus.live ? {
+        live: null
+    } : value == SongStatus.approved ? {
+        approved: null
+    } : value == SongStatus.rejected ? {
+        rejected: null
+    } : value == SongStatus.draft ? {
+        draft: null
+    } : value;
+}
+function to_candid_variant_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
     admin: null;
 } | {
     user: null;
@@ -1015,7 +1437,7 @@ function to_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint
         guest: null
     } : value;
 }
-function to_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): {
+function to_candid_variant_n42(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): {
     pending: null;
 } | {
     approved: null;
@@ -1029,6 +1451,9 @@ function to_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint
     } : value == ApprovalStatus.rejected ? {
         rejected: null
     } : value;
+}
+async function to_candid_vec_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TrackMetadata>): Promise<Array<_TrackMetadata>> {
+    return await Promise.all(value.map(async (x)=>await to_candid_TrackMetadata_n46(_uploadFile, _downloadFile, x)));
 }
 export interface CreateActorOptions {
     agent?: Agent;

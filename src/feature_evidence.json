@@ -2,12 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-user-dashboard-ui-to-let-users-create-and-manage-multiple-artist-profiles-list-existing-profiles-allow-create-edit-and-delete",
-      "featureTitle": "Update the user dashboard UI to let users create and manage multiple artist profiles (list existing profiles; allow create, edit, and delete).",
+      "featureId": "feature-fix-frontend-post-login-navigation-so-that-admins-are-routed-to-admin-dashboard-instead-of-always-being-routed-to-user-dashboard",
+      "featureTitle": "Fix frontend post-login navigation so that admins are routed to \"/admin-dashboard\" instead of always being routed to \"/user-dashboard\".",
       "files": [
-        "frontend/src/components/ArtistSetupForm.tsx",
-        "frontend/src/components/UserArtistProfilesManager.tsx",
-        "frontend/src/pages/UserDashboard.tsx"
+        "frontend/src/pages/LandingPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,16 +21,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-5"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-admin-artist-panel-ui-to-display-all-user-created-artist-profiles-including-multiple-profiles-per-user-and-allow-searching-and-editing-them-so-profiles-created-in-the-user-dashboard-appear-automatically-in-the-admin-panel",
-      "featureTitle": "Update the admin artist panel UI to display all user-created artist profiles (including multiple profiles per user) and allow searching and editing them, so profiles created in the user dashboard appear automatically in the admin panel.",
+      "featureId": "feature-add-frontend-route-protection-for-the-admin-dashboard-page-so-that-non-admin-users-who-navigate-to-admin-dashboard-are-redirected-to-user-dashboard-and-are-shown-a-clear-english-error-toast-message-indicating-they-are-not-authorized",
+      "featureTitle": "Add frontend route protection for the Admin Dashboard page so that non-admin users who navigate to \"/admin-dashboard\" are redirected to \"/user-dashboard\" (and are shown a clear English error/toast message indicating they are not authorized).",
       "files": [
-        "frontend/src/components/AdminArtistManagement.tsx",
-        "frontend/src/components/AdminEditArtistDialog.tsx"
+        "frontend/src/pages/AdminDashboard.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -48,31 +45,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-extend-react-query-hooks-frontend-src-hooks-usequeries-ts-to-support-the-new-multi-artist-profile-apis-and-update-existing-queries-mutations-that-currently-assume-a-single-artist-profile-so-the-app-continues-to-function-with-multiple-profiles",
-      "featureTitle": "Extend React Query hooks (`frontend/src/hooks/useQueries.ts`) to support the new multi-artist-profile APIs and update existing queries/mutations that currently assume a single artist profile so the app continues to function with multiple profiles.",
-      "files": [
-        "frontend/src/hooks/useQueries.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "invite-links@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "user-approval@3.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
+        "REQ-3"
       ],
       "confidence": "high"
     }

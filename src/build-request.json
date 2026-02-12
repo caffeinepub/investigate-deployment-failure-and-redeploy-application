@@ -1,149 +1,73 @@
 {
   "kind": "build_request",
-  "title": "Support multiple artist profiles per user and surface them in the admin artist panel",
-  "priority": "normal",
+  "title": "Fix admin login routing and restore admin privileges for yeetmusictamil@gmail.com",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the backend data model to support multiple artist profiles per user (each profile must have a stable unique ID and an owner Principal), replacing the current single `artistProfiles : Map<Principal, ArtistProfile>` storage.",
+      "text": "Restore administrator recognition for the account associated with the email address \"yeetmusictamil@gmail.com\" so that this account is treated as an admin by the backend authorization layer (i.e., AccessControl.isAdmin returns true for that user’s Principal after they authenticate).",
       "target": "backend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-2",
+          "msg-6"
         ],
         "quotes": [
-          "Allow users to create multi artist profile on their dashboard. The created artist profile should show in admin artist pannel"
+          "it direct me to user dashboard",
+          "yeetmusictamil@gmail.com this is the email id"
         ]
       },
       "acceptanceCriteria": [
-        "A user can have 0..N artist profiles stored on the backend.",
-        "Each artist profile has a unique ID that can be used to reference it consistently across updates/deletes.",
-        "Existing stored single artist profile data is preserved via migration (no data loss)."
+        "After the user logs in with Internet Identity using the account that owns/uses email \"yeetmusictamil@gmail.com\", backend calls guarded by admin checks (e.g., getAllSubmissionsForAdmin / getAllArtistProfilesForAdmin) succeed for that user.",
+        "The backend exposes/keeps a reliable way to determine admin status for the caller (e.g., isCallerAdmin) and it returns true for the restored admin account.",
+        "Admin status persists across canister upgrades; if an upgrade would otherwise drop the admin assignment, add conditional migration logic in backend/migration.mo to preserve/restore it."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add backend APIs to create, list, update, and delete artist profiles for the currently authenticated user, operating on artist profile IDs (not by overwriting a single profile).",
-      "target": "backend",
+      "text": "Fix frontend post-login navigation so that admins are routed to \"/admin-dashboard\" instead of always being routed to \"/user-dashboard\".",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-2"
         ],
         "quotes": [
-          "Allow users to create multi artist profile on their dashboard"
+          "it direct me to user dashboard"
         ]
       },
       "acceptanceCriteria": [
-        "There is an API to list the caller’s artist profiles (returns an array including each profile’s ID and fields).",
-        "There is an API to create a new artist profile for the caller (returns the new profile ID).",
-        "There is an API to update an existing artist profile by ID; only the owner (or admin/team if applicable) can update.",
-        "There is an API to delete an existing artist profile by ID; only the owner (or admin/team if applicable) can delete.",
-        "Authorization checks trap with an appropriate error for unauthenticated callers."
+        "From the Landing Page, when the authenticated user is an admin, clicking the primary CTA (or any automatic post-login routing implemented) navigates to \"/admin-dashboard\".",
+        "When the authenticated user is not an admin, navigation continues to go to \"/user-dashboard\".",
+        "No changes are made to frontend immutable paths listed in SYSTEM_CONTEXT."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update admin-facing backend APIs so admins/team can retrieve and manage all user-created artist profiles in a way that allows the admin UI to show every artist profile (not just one per user).",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "The created artist profile should show in admin artist pannel"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin/team can query a list of all artist profiles across all users, including each profile’s ID and the owning user Principal.",
-        "Admin/team can edit an artist profile using its ID (and/or owner+ID) without ambiguity when a user has multiple profiles.",
-        "Non-admin/non-team callers cannot access the global list."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Implement a conditional Motoko state migration so existing deployments with `artistProfiles : Map<Principal, ArtistProfile>` are upgraded to the new multi-profile storage while keeping the existing profile as a single entry for its owner.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "Allow users to create multi artist profile on their dashboard. The created artist profile should show in admin artist pannel"
-        ]
-      },
-      "acceptanceCriteria": [
-        "On upgrade, any existing per-user artist profile is converted into exactly one new artist profile entry owned by that Principal.",
-        "After upgrade, existing users still see their pre-upgrade artist profile in the UI (now as one item in a list).",
-        "A fresh install (no prior state) does not require migration logic to run."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Update the user dashboard UI to let users create and manage multiple artist profiles (list existing profiles; allow create, edit, and delete).",
+      "text": "Add frontend route protection for the Admin Dashboard page so that non-admin users who navigate to \"/admin-dashboard\" are redirected to \"/user-dashboard\" (and are shown a clear English error/toast message indicating they are not authorized).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-2"
         ],
         "quotes": [
-          "Allow users to create multi artist profile on their dashboard"
+          "it direct me to user dashboard"
         ]
       },
       "acceptanceCriteria": [
-        "User dashboard no longer assumes only a single `artistProfile`; it shows a list of profiles for the logged-in user.",
-        "User can create a new artist profile from the dashboard (using the existing form fields and photo upload).",
-        "User can edit an existing artist profile selected from the list.",
-        "User can delete an artist profile after confirming the action.",
-        "User-facing text is in English."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Update the admin artist panel UI to display all user-created artist profiles (including multiple profiles per user) and allow searching and editing them, so profiles created in the user dashboard appear automatically in the admin panel.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "The created artist profile should show in admin artist pannel"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin artist management view shows every artist profile, not just one per Principal.",
-        "Search works across stage name/full name and owner Principal text (and still functions when multiple profiles share an owner).",
-        "Admin edit flow opens and saves updates for the selected artist profile unambiguously when a user has multiple profiles.",
-        "After a user creates a new artist profile, it appears in the admin list after refresh (or via React Query invalidation)."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Extend React Query hooks (`frontend/src/hooks/useQueries.ts`) to support the new multi-artist-profile APIs and update existing queries/mutations that currently assume a single artist profile so the app continues to function with multiple profiles.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "Allow users to create multi artist profile on their dashboard. The created artist profile should show in admin artist pannel"
-        ]
-      },
-      "acceptanceCriteria": [
-        "There is a query hook to fetch the current user’s list of artist profiles.",
-        "There are mutation hooks to create/update/delete an artist profile and they invalidate the correct query keys so UI updates immediately.",
-        "Admin hooks fetch the full list of all artist profiles and invalidate appropriately after admin edits."
+        "If a non-admin user manually visits \"/admin-dashboard\", they are redirected to \"/user-dashboard\" and see an authorization error message in English.",
+        "If an admin visits \"/admin-dashboard\", the page renders normally and admin data queries execute without authorization traps."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit files under frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
-    "Use English for any user-facing text."
+    "Backend must remain a single Motoko actor in backend/main.mo; only add backend/migration.mo changes if required for state upgrades.",
+    "Do not edit any files under frontend/src/components/ui or any paths listed in frontend.immutablePaths in SYSTEM_CONTEXT.",
+    "Use English for all user-facing UI text."
   ],
   "nonGoals": [
-    "Redesigning the song submission workflow to select artists/featured artists from profiles (not requested in the last user message).",
-    "Adding third-party authentication providers beyond Internet Identity.",
-    "Adding external databases or non-Motoko backend components."
+    "Implementing a new authentication provider (only Internet Identity is used).",
+    "Adding new admin features beyond fixing admin recognition and routing.",
+    "Adding external databases or third-party role-management services."
   ],
   "imageRequirements": {
     "required": [],

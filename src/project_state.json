@@ -1,35 +1,26 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Build a music-platform dashboard workflow where users can create/manage multiple artist profiles, and those profiles are visible to admins; additionally support admin logo management and improved song submission artist selection using artist-profile IDs.",
-  "architectural_notes": [
-    "Store artist profiles as records with unique artist IDs; song submissions reference artist IDs (not free-text) to ensure data integrity.",
-    "Maintain backward compatibility by supporting legacy submissions with typed artist names and providing a mapping/migration strategy as needed."
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [
+    "Admin login redirects to user dashboard for admin account (admin role/permissions not recognized); requires restoring admin privileges for yeetmusictamil@gmail.com and rebuilding/redeploying."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-user-dashboard-ui-to-let-users-create-and-manage-multiple-artist-profiles-list-existing-profiles-allow-create-edit-and-delete",
-      "title": "Update the user dashboard UI to let users create and manage multiple artist profiles (list existing profiles; allow create, edit, and delete).",
+      "id": "feature-fix-frontend-post-login-navigation-so-that-admins-are-routed-to-admin-dashboard-instead-of-always-being-routed-to-user-dashboard",
+      "title": "Fix frontend post-login navigation so that admins are routed to \"/admin-dashboard\" instead of always being routed to \"/user-dashboard\".",
       "reqIds": [
-        "REQ-5"
+        "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-admin-artist-panel-ui-to-display-all-user-created-artist-profiles-including-multiple-profiles-per-user-and-allow-searching-and-editing-them-so-profiles-created-in-the-user-dashboard-appear-automatically-in-the-admin-panel",
-      "title": "Update the admin artist panel UI to display all user-created artist profiles (including multiple profiles per user) and allow searching and editing them, so profiles created in the user dashboard appear automatically in the admin panel.",
+      "id": "feature-add-frontend-route-protection-for-the-admin-dashboard-page-so-that-non-admin-users-who-navigate-to-admin-dashboard-are-redirected-to-user-dashboard-and-are-shown-a-clear-english-error-toast-message-indicating-they-are-not-authorized",
+      "title": "Add frontend route protection for the Admin Dashboard page so that non-admin users who navigate to \"/admin-dashboard\" are redirected to \"/user-dashboard\" (and are shown a clear English error/toast message indicating they are not authorized).",
       "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-extend-react-query-hooks-frontend-src-hooks-usequeries-ts-to-support-the-new-multi-artist-profile-apis-and-update-existing-queries-mutations-that-currently-assume-a-single-artist-profile-so-the-app-continues-to-function-with-multiple-profiles",
-      "title": "Extend React Query hooks (`frontend/src/hooks/useQueries.ts`) to support the new multi-artist-profile APIs and update existing queries/mutations that currently assume a single artist profile so the app continues to function with multiple profiles.",
-      "reqIds": [
-        "REQ-7"
+        "REQ-3"
       ],
       "version": 1
     }
@@ -37,62 +28,14 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Allow users to create and manage multiple artist profiles from their user dashboard.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Show user-created artist profiles in the admin artist panel (admin can view/manage them).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Update song submission forms (user and admin) to select Artist/Featured Artist from created artist profiles (support multi-select), using unique artist IDs and backward compatibility for typed legacy entries.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Add admin dashboard controls to change or remove the website logo; store logo in backend; allow uploading any image file.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Update the backend data model to support multiple artist profiles per user (each profile must have a stable unique ID and an owner Principal), replacing the current single `artistProfiles : Map<Principal, ArtistProfile>` storage.",
+      "summary": "Restore administrator recognition for the account associated with the email address \"yeetmusictamil@gmail.com\" so that this account is treated as an admin by the backend authorization layer (i.e., AccessControl.isAdmin returns true for that user’s Principal after they authenticate).",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Add backend APIs to create, list, update, and delete artist profiles for the currently authenticated user, operating on artist profile IDs (not by overwriting a single profile).",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Update admin-facing backend APIs so admins/team can retrieve and manage all user-created artist profiles in a way that allows the admin UI to show every artist profile (not just one per user).",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-8",
-      "summary": "Implement a conditional Motoko state migration so existing deployments with `artistProfiles : Map<Principal, ArtistProfile>` are upgraded to the new multi-profile storage while keeping the existing profile as a single entry for its owner.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "status": "pending"
     }
   ],
-  "projectName": "Support multiple artist profiles per user and surface them in the admin artist panel",
+  "projectName": "Fix admin login routing and restore admin privileges for yeetmusictamil@gmail.com",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

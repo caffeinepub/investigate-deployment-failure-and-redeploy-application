@@ -1,102 +1,25 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T00:33:41.457Z",
-  "summary": "The diff clearly adds a Motoko migration module for converting the old single-profile-per-user map into a new ID-based artist profile map, and updates frontend admin/user components to work with lists of profiles (including admin search by owner principal and profile ID display). However, the diff summary is truncated/omitted for key files (notably backend API functions and React Query hooks), so several requirements cannot be confirmed as implemented from the provided evidence.",
+  "generatedAt": "2026-02-12T16:28:13.513Z",
+  "summary": "Frontend changes implement admin-aware post-login routing from the Landing Page and add route protection on the Admin Dashboard with an English toast + redirect. Backend changes are present but the provided diff excerpt for backend/main.mo does not contain evidence of restoring admin privileges for the specified account or ensuring persistence across upgrades.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Replace the current single `artistProfiles : Map<Principal, ArtistProfile>` backend storage with a multi-profile model (0..N per user) where each profile has a stable unique ID and an owner Principal.",
-      "reason": "While `ArtistProfile` now includes `id` and `owner` and a migration module creates a `Map<Text, NewArtistProfile>`, the diff snippet for `backend/main.mo` is truncated before showing the actual stable storage variable(s) and how profiles are stored/indexed post-migration, so the required storage replacement (and 0..N per user semantics) cannot be verified from the evidence provided.",
+      "requirement": "Restore administrator recognition for the account associated with the email address \"yeetmusictamil@gmail.com\" so that this account is treated as an admin by the backend authorization layer (and admin status persists across upgrades, with migration if needed).",
+      "reason": "backend/main.mo is modified but the truncated snippet only shows imports and type definitions; there is no visible change demonstrating that AccessControl.isAdmin (or equivalent) is restored for the target Principal, nor any visible upgrade-persistence or migration logic.",
       "evidence": [
-        "backend/main.mo (truncated: shows ArtistProfile has id/owner but not the storage definition)",
-        "backend/migration.mo (defines NewActor.artistProfiles : Map<Text, NewArtistProfile>)"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "Add backend APIs to create, list, update, and delete artist profiles for the authenticated user, operating by artist profile ID with proper authorization (including trapping for unauthenticated callers).",
-      "reason": "The diff summary does not show any new/updated public actor methods implementing create/list/update/delete by profile ID or the required auth checks; `backend/main.mo` content is truncated before any such functions would appear.",
-      "evidence": [
-        "backend/main.mo (truncated; no CRUD API methods shown)"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Update admin/team backend APIs to retrieve and manage all artist profiles across all users, including profile ID and owner Principal, with access restricted to admin/team.",
-      "reason": "Frontend admin UI now expects a global list hook, but the diff summary provides no evidence of the corresponding backend admin/team API methods (global list and admin edit by ID) or access control enforcement in `backend/main.mo` due to truncation/omission.",
-      "evidence": [
-        "backend/main.mo (truncated; no admin global list/edit APIs shown)",
-        "frontend/src/components/AdminArtistManagement.tsx (uses useGetAllArtistProfilesForAdmin)"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "requirement": "Update the user dashboard UI to list/create/edit/delete multiple artist profiles (with confirmation on delete) and stop assuming a single profile.",
-      "reason": "A new `UserArtistProfilesManager` component exists and includes delete confirmation handling, but the diff summary does not show that the actual User Dashboard page was updated to render this manager and remove any single-profile assumptions (the relevant dashboard/page files are not included in the shown diff content).",
-      "evidence": [
-        "frontend/src/components/UserArtistProfilesManager.tsx (added)",
-        "Omitted files due to limits: modified=23 (could include UserDashboard wiring, but not shown)"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "requirement": "Extend React Query hooks in `frontend/src/hooks/useQueries.ts` for the new multi-profile APIs (user list + create/update/delete, admin global list + admin edit), with correct query invalidation.",
-      "reason": "Multiple components reference new hooks (e.g., `useGetMyArtistProfiles`, `useDeleteArtistProfile`, `useGetAllArtistProfilesForAdmin`, `useAdminEditArtistProfileById`), but the diff summary does not include any changes to `frontend/src/hooks/useQueries.ts`, so the hook implementations and invalidation behavior cannot be verified.",
-      "evidence": [
-        "frontend/src/components/UserArtistProfilesManager.tsx (imports useGetMyArtistProfiles/useDeleteArtistProfile)",
-        "frontend/src/components/AdminArtistManagement.tsx (imports useGetAllArtistProfilesForAdmin)",
-        "frontend/src/components/AdminEditArtistDialog.tsx (imports useAdminEditArtistProfileById)"
+        "backend/main.mo"
       ]
     }
   ],
   "hallucinated_features": [],
-  "confidence": 0.58,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/AdminAnnouncementSection.tsx",
-    "frontend/src/components/AdminArtistManagement.tsx",
-    "frontend/src/components/AdminBlogManagement.tsx",
-    "frontend/src/components/AdminEditArtistDialog.tsx",
-    "frontend/src/components/AdminEditSubmissionDialog.tsx",
-    "frontend/src/components/AdminFeeManagement.tsx",
-    "frontend/src/components/AdminPodcastSubmissions.tsx",
-    "frontend/src/components/AdminProfileEditingControl.tsx",
-    "frontend/src/components/AdminStats.tsx",
-    "frontend/src/components/AdminSubmissionsList.tsx",
-    "frontend/src/components/AdminSupportRequestsManagement.tsx",
-    "frontend/src/components/AdminUserRoleManagement.tsx",
-    "frontend/src/components/AdminVerificationManagement.tsx",
-    "frontend/src/components/AlbumTracksEditor.tsx",
-    "frontend/src/components/AnnouncementPopup.tsx",
-    "frontend/src/components/ArtistSetupForm.tsx",
-    "frontend/src/components/ClaimYouTubeCopyrightDialog.tsx",
-    "frontend/src/components/ConnectInstagramProfileDialog.tsx",
-    "frontend/src/components/DashboardPublishedBlogList.tsx",
-    "frontend/src/components/GeneralSupportTab.tsx",
-    "frontend/src/components/Header.tsx",
-    "frontend/src/components/PodcastEpisodeForm.tsx",
-    "frontend/src/components/PodcastShowForm.tsx",
-    "frontend/src/components/SongSubmissionForm.tsx",
-    "frontend/src/components/SupportRequestsList.tsx",
-    "frontend/src/components/UserArtistProfilesManager.tsx",
-    "frontend/src/components/UserEditSubmissionDialog.tsx",
-    "frontend/src/components/UserPodcastSubmissionSection.tsx",
-    "frontend/src/components/UserSubmissionsList.tsx",
-    "frontend/src/components/VerificationBenefitsPopup.tsx",
-    "frontend/src/components/VerifiedBadge.tsx",
-    "frontend/src/hooks/useQueries.ts",
     "frontend/src/pages/AdminDashboard.tsx",
-    "frontend/src/pages/BlogPage.tsx",
-    "frontend/src/pages/BlogPostPage.tsx",
     "frontend/src/pages/LandingPage.tsx",
-    "frontend/src/pages/TeamDashboard.tsx",
-    "frontend/src/pages/ThankYouPage.tsx",
-    "frontend/src/pages/UserDashboard.tsx",
-    "frontend/src/pages/VerificationSubscriptionPage.tsx",
     "project_state.json"
   ]
 }

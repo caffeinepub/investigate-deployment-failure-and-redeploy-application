@@ -16,10 +16,10 @@ import InviteLinksModule "invite-links/invite-links-module";
 import Stripe "stripe/stripe";
 import OutCall "http-outcalls/outcall";
 import UserApproval "user-approval/approval";
-import Migration "migration";
+
 
 // Use migration function via "with" clause
-(with migration = Migration.run)
+
 actor {
   public type SongStatus = {
     #pending;
@@ -454,6 +454,98 @@ actor {
     url.startsWith(#text "http://") or url.startsWith(#text "https://");
   };
 
+  // Song Submission APIs
+
+  // Save a new song submission
+  public shared ({ caller }) func submitSong(input : SubmitSongInput) : async Text {
+    requireUser(caller);
+
+    let blob = await Random.blob();
+    let submissionId = InviteLinksModule.generateUUID(blob);
+
+    let submission : SongSubmission = {
+      id = submissionId;
+      title = input.title;
+      releaseType = input.releaseType;
+      genre = input.genre;
+      language = input.language;
+      releaseDate = input.releaseDate;
+      artwork = input.artworkBlob;
+      artworkFilename = input.artworkFilename;
+      artist = input.artist;
+      featuredArtist = input.featuredArtist;
+      composer = input.composer;
+      producer = input.producer;
+      lyricist = input.lyricist;
+      audioFile = input.audioBlob;
+      audioFilename = input.audioFilename;
+      additionalDetails = input.additionalDetails;
+      status = #pending;
+      adminRemarks = "";
+      adminComment = "";
+      submitter = caller;
+      timestamp = Time.now();
+      discountCode = input.discountCode;
+      acrResult = null;
+      preSaveLink = null;
+      liveStreamLink = input.liveStreamLink;
+      albumTracks = input.albumTracks;
+      publicLink = input.publicLink;
+    };
+
+    submissions.add(submissionId, submission);
+    submissionId;
+  };
+
+  // Get all submissions for the current user
+  public query ({ caller }) func getMySubmissions() : async [SongSubmission] {
+    requireUser(caller);
+
+    submissions.values().toArray().filter(
+      func(submission) { submission.submitter == caller }
+    );
+  };
+
+  // Admin/Team can retrieve all submissions
+  public query ({ caller }) func getAllSubmissionsForAdmin() : async [SongSubmission] {
+    requireAdminOrTeam(caller);
+    submissions.values().toArray();
+  };
+
+  // Admin/Team can update the status and comments of a submission
+  public shared ({ caller }) func adminUpdateSubmission(id : Text, status : SongStatus, adminRemarks : Text, adminComment : Text) : async () {
+    requireAdminOrTeam(caller);
+
+    switch (submissions.get(id)) {
+      case (null) {
+        Runtime.trap("Submission not found");
+      };
+      case (?submission) {
+        let updatedSubmission = {
+          submission with
+          status;
+          adminRemarks;
+          adminComment;
+        };
+        submissions.add(id, updatedSubmission);
+      };
+    };
+  };
+
+  // Admin/Team can delete a submission
+  public shared ({ caller }) func adminDeleteSubmission(id : Text) : async () {
+    requireAdminOrTeam(caller);
+
+    if (not submissions.containsKey(id)) {
+      Runtime.trap("Submission not found");
+    };
+    submissions.remove(id);
+  };
+
+  // ================================
+  // ARTIST PROFILE MANAGEMENT
+  // ================================
+
   // New backend APIs to support multiple artist profiles per user
 
   // Backend API to create a new artist profile
@@ -634,7 +726,8 @@ actor {
     code;
   };
 
-  public shared func submitRSVP(name : Text, attending : Bool, inviteCode : Text) : async () {
+  public shared ({ caller }) func submitRSVP(name : Text, attending : Bool, inviteCode : Text) : async () {
+    requireUser(caller);
     InviteLinksModule.submitRSVP(inviteState, name, attending, inviteCode);
   };
 
@@ -664,11 +757,13 @@ actor {
     };
   };
 
-  public func getStripeSessionStatus(sessionId : Text) : async Stripe.StripeSessionStatus {
+  public shared ({ caller }) func getStripeSessionStatus(sessionId : Text) : async Stripe.StripeSessionStatus {
+    requireUser(caller);
     await Stripe.getSessionStatus(getStripeConfiguration(), sessionId, transform);
   };
 
   public shared ({ caller }) func createCheckoutSession(items : [Stripe.ShoppingItem], successUrl : Text, cancelUrl : Text) : async Text {
+    requireUser(caller);
     await Stripe.createCheckoutSession(getStripeConfiguration(), caller, items, successUrl, cancelUrl, transform);
   };
 

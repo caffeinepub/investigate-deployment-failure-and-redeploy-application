@@ -32,6 +32,13 @@ export const SaveArtistProfileInput = IDL.Record({
   'appleProfile' : IDL.Text,
   'stageName' : IDL.Text,
 });
+export const SongStatus = IDL.Variant({
+  'pending' : IDL.Null,
+  'live' : IDL.Null,
+  'approved' : IDL.Null,
+  'rejected' : IDL.Null,
+  'draft' : IDL.Null,
+});
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
@@ -65,6 +72,49 @@ export const RSVP = IDL.Record({
   'timestamp' : Time,
   'attending' : IDL.Bool,
 });
+export const TrackMetadata = IDL.Record({
+  'title' : IDL.Text,
+  'lyricist' : IDL.Text,
+  'audioFile' : ExternalBlob,
+  'audioFilename' : IDL.Text,
+  'composer' : IDL.Text,
+  'artist' : IDL.Text,
+  'producer' : IDL.Text,
+  'featuredArtist' : IDL.Text,
+});
+export const ACRResult = IDL.Record({
+  'music' : IDL.Text,
+  'statusCode' : IDL.Text,
+});
+export const SongSubmission = IDL.Record({
+  'id' : IDL.Text,
+  'status' : SongStatus,
+  'albumTracks' : IDL.Opt(IDL.Vec(TrackMetadata)),
+  'title' : IDL.Text,
+  'preSaveLink' : IDL.Opt(IDL.Text),
+  'additionalDetails' : IDL.Text,
+  'lyricist' : IDL.Text,
+  'publicLink' : IDL.Opt(IDL.Text),
+  'submitter' : IDL.Principal,
+  'discountCode' : IDL.Opt(IDL.Text),
+  'artworkFilename' : IDL.Text,
+  'audioFile' : ExternalBlob,
+  'liveStreamLink' : IDL.Opt(IDL.Text),
+  'artwork' : ExternalBlob,
+  'audioFilename' : IDL.Text,
+  'language' : IDL.Text,
+  'composer' : IDL.Text,
+  'adminComment' : IDL.Text,
+  'genre' : IDL.Text,
+  'timestamp' : Time,
+  'artist' : IDL.Text,
+  'acrResult' : IDL.Opt(ACRResult),
+  'producer' : IDL.Text,
+  'releaseDate' : Time,
+  'releaseType' : IDL.Text,
+  'adminRemarks' : IDL.Text,
+  'featuredArtist' : IDL.Text,
+});
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'artistId' : IDL.Text,
@@ -93,6 +143,27 @@ export const UserApprovalInfo = IDL.Record({
 export const StripeConfiguration = IDL.Record({
   'allowedCountries' : IDL.Vec(IDL.Text),
   'secretKey' : IDL.Text,
+});
+export const SubmitSongInput = IDL.Record({
+  'artworkBlob' : ExternalBlob,
+  'albumTracks' : IDL.Opt(IDL.Vec(TrackMetadata)),
+  'title' : IDL.Text,
+  'additionalDetails' : IDL.Text,
+  'lyricist' : IDL.Text,
+  'publicLink' : IDL.Opt(IDL.Text),
+  'discountCode' : IDL.Opt(IDL.Text),
+  'artworkFilename' : IDL.Text,
+  'audioBlob' : ExternalBlob,
+  'liveStreamLink' : IDL.Opt(IDL.Text),
+  'audioFilename' : IDL.Text,
+  'language' : IDL.Text,
+  'composer' : IDL.Text,
+  'genre' : IDL.Text,
+  'artist' : IDL.Text,
+  'producer' : IDL.Text,
+  'releaseDate' : Time,
+  'releaseType' : IDL.Text,
+  'featuredArtist' : IDL.Text,
 });
 export const http_header = IDL.Record({
   'value' : IDL.Text,
@@ -142,8 +213,14 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'adminDeleteArtistProfile' : IDL.Func([IDL.Text], [], []),
+  'adminDeleteSubmission' : IDL.Func([IDL.Text], [], []),
   'adminEditArtistProfile' : IDL.Func(
       [IDL.Text, SaveArtistProfileInput],
+      [],
+      [],
+    ),
+  'adminUpdateSubmission' : IDL.Func(
+      [IDL.Text, SongStatus, IDL.Text, IDL.Text],
       [],
       [],
     ),
@@ -167,6 +244,11 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getAllRSVPs' : IDL.Func([], [IDL.Vec(RSVP)], ['query']),
+  'getAllSubmissionsForAdmin' : IDL.Func(
+      [],
+      [IDL.Vec(SongSubmission)],
+      ['query'],
+    ),
   'getArtistProfileEditingAccessStatus' : IDL.Func([], [IDL.Bool], ['query']),
   'getArtistProfilesByUserForAdmin' : IDL.Func(
       [IDL.Principal],
@@ -177,6 +259,7 @@ export const idlService = IDL.Service({
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getInviteCodes' : IDL.Func([], [IDL.Vec(InviteCode)], ['query']),
   'getMyArtistProfiles' : IDL.Func([], [IDL.Vec(ArtistProfile)], ['query']),
+  'getMySubmissions' : IDL.Func([], [IDL.Vec(SongSubmission)], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
@@ -194,6 +277,7 @@ export const idlService = IDL.Service({
   'setArtistProfileEditingAccess' : IDL.Func([IDL.Bool], [], []),
   'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
   'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
+  'submitSong' : IDL.Func([SubmitSongInput], [IDL.Text], []),
   'transform' : IDL.Func(
       [TransformationInput],
       [TransformationOutput],
@@ -229,6 +313,13 @@ export const idlFactory = ({ IDL }) => {
     'appleProfile' : IDL.Text,
     'stageName' : IDL.Text,
   });
+  const SongStatus = IDL.Variant({
+    'pending' : IDL.Null,
+    'live' : IDL.Null,
+    'approved' : IDL.Null,
+    'rejected' : IDL.Null,
+    'draft' : IDL.Null,
+  });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
@@ -262,6 +353,46 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : Time,
     'attending' : IDL.Bool,
   });
+  const TrackMetadata = IDL.Record({
+    'title' : IDL.Text,
+    'lyricist' : IDL.Text,
+    'audioFile' : ExternalBlob,
+    'audioFilename' : IDL.Text,
+    'composer' : IDL.Text,
+    'artist' : IDL.Text,
+    'producer' : IDL.Text,
+    'featuredArtist' : IDL.Text,
+  });
+  const ACRResult = IDL.Record({ 'music' : IDL.Text, 'statusCode' : IDL.Text });
+  const SongSubmission = IDL.Record({
+    'id' : IDL.Text,
+    'status' : SongStatus,
+    'albumTracks' : IDL.Opt(IDL.Vec(TrackMetadata)),
+    'title' : IDL.Text,
+    'preSaveLink' : IDL.Opt(IDL.Text),
+    'additionalDetails' : IDL.Text,
+    'lyricist' : IDL.Text,
+    'publicLink' : IDL.Opt(IDL.Text),
+    'submitter' : IDL.Principal,
+    'discountCode' : IDL.Opt(IDL.Text),
+    'artworkFilename' : IDL.Text,
+    'audioFile' : ExternalBlob,
+    'liveStreamLink' : IDL.Opt(IDL.Text),
+    'artwork' : ExternalBlob,
+    'audioFilename' : IDL.Text,
+    'language' : IDL.Text,
+    'composer' : IDL.Text,
+    'adminComment' : IDL.Text,
+    'genre' : IDL.Text,
+    'timestamp' : Time,
+    'artist' : IDL.Text,
+    'acrResult' : IDL.Opt(ACRResult),
+    'producer' : IDL.Text,
+    'releaseDate' : Time,
+    'releaseType' : IDL.Text,
+    'adminRemarks' : IDL.Text,
+    'featuredArtist' : IDL.Text,
+  });
   const UserProfile = IDL.Record({ 'name' : IDL.Text, 'artistId' : IDL.Text });
   const InviteCode = IDL.Record({
     'created' : Time,
@@ -287,6 +418,27 @@ export const idlFactory = ({ IDL }) => {
   const StripeConfiguration = IDL.Record({
     'allowedCountries' : IDL.Vec(IDL.Text),
     'secretKey' : IDL.Text,
+  });
+  const SubmitSongInput = IDL.Record({
+    'artworkBlob' : ExternalBlob,
+    'albumTracks' : IDL.Opt(IDL.Vec(TrackMetadata)),
+    'title' : IDL.Text,
+    'additionalDetails' : IDL.Text,
+    'lyricist' : IDL.Text,
+    'publicLink' : IDL.Opt(IDL.Text),
+    'discountCode' : IDL.Opt(IDL.Text),
+    'artworkFilename' : IDL.Text,
+    'audioBlob' : ExternalBlob,
+    'liveStreamLink' : IDL.Opt(IDL.Text),
+    'audioFilename' : IDL.Text,
+    'language' : IDL.Text,
+    'composer' : IDL.Text,
+    'genre' : IDL.Text,
+    'artist' : IDL.Text,
+    'producer' : IDL.Text,
+    'releaseDate' : Time,
+    'releaseType' : IDL.Text,
+    'featuredArtist' : IDL.Text,
   });
   const http_header = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
   const http_request_result = IDL.Record({
@@ -333,8 +485,14 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'adminDeleteArtistProfile' : IDL.Func([IDL.Text], [], []),
+    'adminDeleteSubmission' : IDL.Func([IDL.Text], [], []),
     'adminEditArtistProfile' : IDL.Func(
         [IDL.Text, SaveArtistProfileInput],
+        [],
+        [],
+      ),
+    'adminUpdateSubmission' : IDL.Func(
+        [IDL.Text, SongStatus, IDL.Text, IDL.Text],
         [],
         [],
       ),
@@ -358,6 +516,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getAllRSVPs' : IDL.Func([], [IDL.Vec(RSVP)], ['query']),
+    'getAllSubmissionsForAdmin' : IDL.Func(
+        [],
+        [IDL.Vec(SongSubmission)],
+        ['query'],
+      ),
     'getArtistProfileEditingAccessStatus' : IDL.Func([], [IDL.Bool], ['query']),
     'getArtistProfilesByUserForAdmin' : IDL.Func(
         [IDL.Principal],
@@ -368,6 +531,7 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getInviteCodes' : IDL.Func([], [IDL.Vec(InviteCode)], ['query']),
     'getMyArtistProfiles' : IDL.Func([], [IDL.Vec(ArtistProfile)], ['query']),
+    'getMySubmissions' : IDL.Func([], [IDL.Vec(SongSubmission)], ['query']),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
@@ -385,6 +549,7 @@ export const idlFactory = ({ IDL }) => {
     'setArtistProfileEditingAccess' : IDL.Func([IDL.Bool], [], []),
     'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
     'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
+    'submitSong' : IDL.Func([SubmitSongInput], [IDL.Text], []),
     'transform' : IDL.Func(
         [TransformationInput],
         [TransformationOutput],

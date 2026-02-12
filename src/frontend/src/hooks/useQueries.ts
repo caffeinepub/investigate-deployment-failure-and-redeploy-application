@@ -5,8 +5,122 @@ import {
   SaveArtistProfileInput,
   UserProfile,
   InviteCode,
+  SongSubmission,
+  SubmitSongInput,
+  SongStatus,
 } from '../backend';
 import { toast } from 'sonner';
+
+// Song Submission Management
+export function useSubmitSong() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: SubmitSongInput) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.submitSong(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['allSubmissionsForAdmin'] });
+      toast.success('Song submitted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to submit song');
+    },
+  });
+}
+
+export function useGetMySubmissions() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<SongSubmission[]>({
+    queryKey: ['mySubmissions'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMySubmissions();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// Admin Song Submission Management
+export function useGetAllSubmissionsForAdmin() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<SongSubmission[]>({
+    queryKey: ['allSubmissionsForAdmin'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllSubmissionsForAdmin();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAdminUpdateSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+      adminRemarks,
+      adminComment,
+    }: {
+      id: string;
+      status: SongStatus;
+      adminRemarks: string;
+      adminComment: string;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.adminUpdateSubmission(id, status, adminRemarks, adminComment);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allSubmissionsForAdmin'] });
+      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
+      toast.success('Submission updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update submission');
+    },
+  });
+}
+
+export function useAdminDeleteSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.adminDeleteSubmission(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allSubmissionsForAdmin'] });
+      toast.success('Submission deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete submission');
+    },
+  });
+}
+
+// Check if current user is admin
+export function useIsCurrentUserAdmin() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ['isCurrentUserAdmin'],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerAdmin();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
 
 // Multi-Artist Profile Management
 export function useGetMyArtistProfiles() {

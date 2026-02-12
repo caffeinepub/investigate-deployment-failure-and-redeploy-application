@@ -10,6 +10,7 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface ACRResult { 'music' : string, 'statusCode' : string }
 export type ApprovalStatus = { 'pending' : null } |
   { 'approved' : null } |
   { 'rejected' : null };
@@ -58,6 +59,40 @@ export interface ShoppingItem {
   'priceInCents' : bigint,
   'productDescription' : string,
 }
+export type SongStatus = { 'pending' : null } |
+  { 'live' : null } |
+  { 'approved' : null } |
+  { 'rejected' : null } |
+  { 'draft' : null };
+export interface SongSubmission {
+  'id' : string,
+  'status' : SongStatus,
+  'albumTracks' : [] | [Array<TrackMetadata>],
+  'title' : string,
+  'preSaveLink' : [] | [string],
+  'additionalDetails' : string,
+  'lyricist' : string,
+  'publicLink' : [] | [string],
+  'submitter' : Principal,
+  'discountCode' : [] | [string],
+  'artworkFilename' : string,
+  'audioFile' : ExternalBlob,
+  'liveStreamLink' : [] | [string],
+  'artwork' : ExternalBlob,
+  'audioFilename' : string,
+  'language' : string,
+  'composer' : string,
+  'adminComment' : string,
+  'genre' : string,
+  'timestamp' : Time,
+  'artist' : string,
+  'acrResult' : [] | [ACRResult],
+  'producer' : string,
+  'releaseDate' : Time,
+  'releaseType' : string,
+  'adminRemarks' : string,
+  'featuredArtist' : string,
+}
 export interface StripeConfiguration {
   'allowedCountries' : Array<string>,
   'secretKey' : string,
@@ -66,7 +101,38 @@ export type StripeSessionStatus = {
     'completed' : { 'userPrincipal' : [] | [string], 'response' : string }
   } |
   { 'failed' : { 'error' : string } };
+export interface SubmitSongInput {
+  'artworkBlob' : ExternalBlob,
+  'albumTracks' : [] | [Array<TrackMetadata>],
+  'title' : string,
+  'additionalDetails' : string,
+  'lyricist' : string,
+  'publicLink' : [] | [string],
+  'discountCode' : [] | [string],
+  'artworkFilename' : string,
+  'audioBlob' : ExternalBlob,
+  'liveStreamLink' : [] | [string],
+  'audioFilename' : string,
+  'language' : string,
+  'composer' : string,
+  'genre' : string,
+  'artist' : string,
+  'producer' : string,
+  'releaseDate' : Time,
+  'releaseType' : string,
+  'featuredArtist' : string,
+}
 export type Time = bigint;
+export interface TrackMetadata {
+  'title' : string,
+  'lyricist' : string,
+  'audioFile' : ExternalBlob,
+  'audioFilename' : string,
+  'composer' : string,
+  'artist' : string,
+  'producer' : string,
+  'featuredArtist' : string,
+}
 export interface TransformationInput {
   'context' : Uint8Array,
   'response' : http_request_result,
@@ -119,8 +185,13 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'adminDeleteArtistProfile' : ActorMethod<[string], undefined>,
+  'adminDeleteSubmission' : ActorMethod<[string], undefined>,
   'adminEditArtistProfile' : ActorMethod<
     [string, SaveArtistProfileInput],
+    undefined
+  >,
+  'adminUpdateSubmission' : ActorMethod<
+    [string, SongStatus, string, string],
     undefined
   >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
@@ -134,6 +205,7 @@ export interface _SERVICE {
   'getAllArtistProfileOwnersForAdmin' : ActorMethod<[], Array<Principal>>,
   'getAllArtistProfilesForAdmin' : ActorMethod<[], Array<ArtistProfile>>,
   'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
+  'getAllSubmissionsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
   'getArtistProfileEditingAccessStatus' : ActorMethod<[], boolean>,
   'getArtistProfilesByUserForAdmin' : ActorMethod<
     [Principal],
@@ -143,6 +215,7 @@ export interface _SERVICE {
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getInviteCodes' : ActorMethod<[], Array<InviteCode>>,
   'getMyArtistProfiles' : ActorMethod<[], Array<ArtistProfile>>,
+  'getMySubmissions' : ActorMethod<[], Array<SongSubmission>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isArtistProfileEditingEnabled' : ActorMethod<[], boolean>,
@@ -156,6 +229,7 @@ export interface _SERVICE {
   'setArtistProfileEditingAccess' : ActorMethod<[boolean], undefined>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
   'submitRSVP' : ActorMethod<[string, boolean, string], undefined>,
+  'submitSong' : ActorMethod<[SubmitSongInput], string>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'updateArtistProfile' : ActorMethod<
     [string, SaveArtistProfileInput],

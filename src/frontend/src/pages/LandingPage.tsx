@@ -1,21 +1,51 @@
+import { useEffect, useState } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Music, Users, Headphones, LogIn } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
+import { useIsCurrentUserAdmin } from '../hooks/useQueries';
 
 export default function LandingPage() {
   const { login, loginStatus, identity } = useInternetIdentity();
   const navigate = useNavigate();
   const isAuthenticated = !!identity;
   const isLoggingIn = loginStatus === 'logging-in';
+  
+  const { data: isAdmin, isLoading: isAdminLoading, isFetched: isAdminFetched } = useIsCurrentUserAdmin();
+  const [redirectIntent, setRedirectIntent] = useState(false);
+
+  // Handle post-login navigation based on admin status
+  useEffect(() => {
+    if (redirectIntent && isAuthenticated && isAdminFetched && !isAdminLoading) {
+      if (isAdmin) {
+        navigate({ to: '/admin-dashboard' });
+      } else {
+        navigate({ to: '/user-dashboard' });
+      }
+      setRedirectIntent(false);
+    }
+  }, [redirectIntent, isAuthenticated, isAdmin, isAdminFetched, isAdminLoading, navigate]);
 
   const handleGetStarted = async () => {
     if (isAuthenticated) {
-      navigate({ to: '/user-dashboard' });
+      // User is already logged in, check admin status and navigate
+      if (isAdminFetched && !isAdminLoading) {
+        if (isAdmin) {
+          navigate({ to: '/admin-dashboard' });
+        } else {
+          navigate({ to: '/user-dashboard' });
+        }
+      } else {
+        // Admin status not yet loaded, set intent to redirect once loaded
+        setRedirectIntent(true);
+      }
     } else {
+      // User needs to log in first
       try {
         await login();
+        // After successful login, set redirect intent
+        setRedirectIntent(true);
       } catch (error: any) {
         console.error('Login error:', error);
       }
@@ -36,11 +66,11 @@ export default function LandingPage() {
           <Button
             size="lg"
             onClick={handleGetStarted}
-            disabled={isLoggingIn}
+            disabled={isLoggingIn || (redirectIntent && isAdminLoading)}
             className="bg-white text-purple-600 hover:bg-gray-100 text-lg px-8 py-6"
           >
-            {isLoggingIn ? (
-              'Logging in...'
+            {isLoggingIn || (redirectIntent && isAdminLoading) ? (
+              'Loading...'
             ) : isAuthenticated ? (
               <>
                 Go to Dashboard
@@ -122,11 +152,11 @@ export default function LandingPage() {
           <Button
             size="lg"
             onClick={handleGetStarted}
-            disabled={isLoggingIn}
+            disabled={isLoggingIn || (redirectIntent && isAdminLoading)}
             className="text-lg px-8 py-6"
           >
-            {isLoggingIn ? (
-              'Logging in...'
+            {isLoggingIn || (redirectIntent && isAdminLoading) ? (
+              'Loading...'
             ) : isAuthenticated ? (
               'Go to Dashboard'
             ) : (

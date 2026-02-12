@@ -1,91 +1,36 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Multi-artist profiles UI: user dashboard + admin artist panel",
+  "title": "Admin-aware post-login routing and Admin Dashboard route protection",
   "requirements": [
     {
-      "id": "REQ-5",
-      "summary": "Update the user dashboard UI to let users create and manage multiple artist profiles (list/create/edit/delete with photo upload).",
+      "id": "REQ-2",
+      "summary": "Route authenticated admins to /admin-dashboard instead of always /user-dashboard after login/CTA.",
       "acceptanceCriteria": [
-        "User dashboard no longer assumes only a single `artistProfile`; it shows a list of profiles for the logged-in user.",
-        "User can create a new artist profile from the dashboard (using the existing form fields and photo upload).",
-        "User can edit an existing artist profile selected from the list.",
-        "User can delete an artist profile after confirming the action.",
-        "User-facing text is in English."
+        "From the Landing Page, when the authenticated user is an admin, clicking the primary CTA (or any automatic post-login routing implemented) navigates to \"/admin-dashboard\".",
+        "When the authenticated user is not an admin, navigation continues to go to \"/user-dashboard\".",
+        "No changes are made to frontend immutable paths listed in SYSTEM_CONTEXT."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/UserDashboard.tsx",
+          "path": "frontend/src/pages/LandingPage.tsx",
           "operation": "modify",
-          "description": "Replace single-profile dashboard logic (useGetArtistProfile + single create/edit dialogs) with a multi-profile section powered by a list query (e.g., useGetMyArtistProfiles). Render a list of the caller’s artist profiles with per-item Edit/Delete actions, and a Create Profile action. Ensure gating for submission/podcasts checks for presence of at least one profile. Keep all user-facing text in English."
-        },
-        {
-          "path": "frontend/src/components/ArtistSetupForm.tsx",
-          "operation": "modify",
-          "description": "Refactor the form so it can be used for both creating a new artist profile and editing an existing profile by ID (accept an optional artistProfileId / initialData.id). Wire submit to the new React Query create/update mutations and ensure photo upload continues to use the blob-storage ExternalBlob flow. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/UserArtistProfilesManager.tsx",
-          "operation": "create",
-          "description": "Create a focused dashboard subcomponent that renders the user’s artist profile list, handles selection, and opens create/edit dialogs using ArtistSetupForm. Include a delete confirmation UI and call the delete mutation by profile ID. Keep user-facing text in English."
-        },
-        {
-          "path": "frontend/src/pages/UserDashboard.tsx",
-          "operation": "modify",
-          "description": "Wire the new UserArtistProfilesManager component into the existing dashboard layout (no new routes). Ensure it is not orphaned and replaces the previous single-profile card + dialogs."
+          "description": "Update post-login CTA routing to branch by admin status: use the authorization component’s admin-check capability via the existing `useIsCurrentUserAdmin` hook (calls backend `isCallerAdmin`) to navigate admins to `/admin-dashboard` and non-admins to `/user-dashboard`. Handle the case where the user just logged in (identity becomes available after `login()`): implement a small redirect-intent state/effect so navigation occurs once the admin check query has resolved. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-6",
-      "summary": "Update the admin artist panel UI to show and search all artist profiles (including multiple per user) and edit them by profile ID.",
+      "id": "REQ-3",
+      "summary": "Protect /admin-dashboard so non-admin users are redirected to /user-dashboard with a clear English authorization message.",
       "acceptanceCriteria": [
-        "Admin artist management view shows every artist profile, not just one per Principal.",
-        "Search works across stage name/full name and owner Principal text (and still functions when multiple profiles share an owner).",
-        "Admin edit flow opens and saves updates for the selected artist profile unambiguously when a user has multiple profiles.",
-        "After a user creates a new artist profile, it appears in the admin list after refresh (or via React Query invalidation)."
+        "If a non-admin user manually visits \"/admin-dashboard\", they are redirected to \"/user-dashboard\" and see an authorization error message in English.",
+        "If an admin visits \"/admin-dashboard\", the page renders normally and admin data queries execute without authorization traps."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/AdminArtistManagement.tsx",
+          "path": "frontend/src/pages/AdminDashboard.tsx",
           "operation": "modify",
-          "description": "Switch admin artist list data source to the new admin multi-profile query (e.g., useGetAllArtistProfilesForAdmin) that returns every ArtistProfile with id + owner. Update filtering/search to match across stageName, fullName, and owner Principal text. Ensure list rendering uses a stable key per profile (profile.id), not per owner principal."
-        },
-        {
-          "path": "frontend/src/components/AdminEditArtistDialog.tsx",
-          "operation": "modify",
-          "description": "Update the edit dialog to save changes via an admin edit mutation that targets a specific artist profile by ID (and uses SaveArtistProfileInput). Preserve photo update support using blob-storage ExternalBlob. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/AdminArtistManagement.tsx",
-          "operation": "modify",
-          "description": "Update the edit flow wiring so selecting an item opens AdminEditArtistDialog for that specific profile.id, ensuring unambiguous edits when an owner has multiple profiles. Ensure React Query invalidation refreshes the admin list after save."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Extend React Query hooks to support multi-artist-profile APIs and update existing hooks that assume a single profile.",
-      "acceptanceCriteria": [
-        "There is a query hook to fetch the current user’s list of artist profiles.",
-        "There are mutation hooks to create/update/delete an artist profile and they invalidate the correct query keys so UI updates immediately.",
-        "Admin hooks fetch the full list of all artist profiles and invalidate appropriately after admin edits."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add new hooks for multi-profile support using the backend interface methods: user list (getMyArtistProfiles), create (createArtistProfile), update (updateArtistProfile by id), delete (deleteArtistProfile by id). Ensure mutations invalidate the user profiles list query key(s) so the dashboard updates immediately."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add/adjust admin hooks for multi-profile management: fetch all profiles (getAllArtistProfilesForAdmin), edit by profile id (adminEditArtistProfile), and optionally delete by profile id (adminDeleteArtistProfile if used by UI). Ensure admin mutations invalidate the admin list query key(s) so the admin panel updates after edits."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Deprecate or adapt existing single-profile hooks/usages (e.g., useGetArtistProfile/useSaveArtistProfile and admin tuple-based hooks) so the app no longer assumes one profile per user. Update query keys to avoid collisions between legacy single-profile keys and new list-based keys, and ensure authorization-related errors from the authorization system are surfaced with clear English toasts/messages. Verify the component's usage instructions before implementing."
+          "description": "Add an admin guard at the Admin Dashboard page level using the authorization component’s admin-check capability via `useIsCurrentUserAdmin`. While the admin check is loading, render a minimal loading state to avoid firing admin-only queries. If the resolved admin flag is false, trigger a Sonner toast with a clear English message (e.g., not authorized) and redirect to `/user-dashboard`. If true, render the existing admin tabs normally. Verify the component's usage instructions before implementing."
         }
       ]
     }
