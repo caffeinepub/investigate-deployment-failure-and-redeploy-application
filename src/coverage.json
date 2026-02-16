@@ -1,41 +1,120 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-12T16:28:13.516Z",
+  "generatedAt": "2026-02-15T02:30:25.822Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 2,
+    "total": 9,
+    "implemented": 6,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Restore administrator recognition for the account associated with the email address \"yeetmusictamil@gmail.com\" so that this account is treated as an admin by the backend authorization layer (i.e., AccessControl.isAdmin returns true for that user’s Principal after they authenticate).",
+        "summary": "Implement backend data model and APIs for Verified Artist (Pro) status that is admin-activated, lasts 30 days from activation, auto-expires after 30 days, and supports admin extension of the expiry date.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Fix frontend post-login navigation so that admins are routed to \"/admin-dashboard\" instead of always being routed to \"/user-dashboard\".",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/LandingPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/LandingPage.tsx"
-        ]
+        "summary": "Implement backend workflow for user 'Apply for verification' requests and admin visibility, including returning the applicant's full name in the admin list.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Add frontend route protection for the Admin Dashboard page so that non-admin users who navigate to \"/admin-dashboard\" are redirected to \"/user-dashboard\" (and are shown a clear English error/toast message indicating they are not authorized).",
+        "summary": "Restrict podcast submission to Verified Artist (Pro) users only, enforced on the backend for both podcast show creation and episode creation.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Prioritize Pro (Verified Artist) users' song submissions to appear first in the Admin song submission list, while keeping existing sorting stable for submissions within the same priority group.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/components/AdminSubmissionsList.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdminSubmissionsList.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Add a user dashboard section that displays 'Verified Artist benefits' only for non-verified users, includes the informational monthly charge (₹200), lists the benefits in English, and provides an 'Apply for verification' button under the benefits section.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/VerificationBenefitsSection.tsx",
+          "frontend/src/pages/UserDashboard.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/VerificationBenefitsSection.tsx",
+          "frontend/src/pages/UserDashboard.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "When a user's Verified Artist status is expired, show a 'Renew Verified Artist' message and a 'Renew' button in the user dashboard; the Renew action should create/refresh a verification request for admin review (no payment integration).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/VerificationRenewalSection.tsx",
+          "frontend/src/pages/UserDashboard.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/VerificationRenewalSection.tsx",
+          "frontend/src/pages/UserDashboard.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Add an Admin Dashboard panel/tab for 'Verification List' that (a) shows all users who applied for verification with their full name and request details, and (b) provides an in-dashboard notification/alert when there are pending requests.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdminVerificationList.tsx",
+          "frontend/src/pages/AdminDashboard.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdminVerificationList.tsx",
+          "frontend/src/pages/AdminDashboard.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-8",
+        "summary": "Update the verified badge UI so the current green verified badge becomes a blue verified badge for verified users, and ensure verified users are visually differentiated as Pro users in user-facing surfaces where the badge is shown.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png",
+          "frontend/src/components/GreenBadge.tsx",
+          "frontend/src/components/VerifiedBadge.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png",
+          "frontend/src/components/VerifiedBadge.tsx"
+        ]
+      },
+      {
+        "id": "REQ-9",
+        "summary": "Add frontend React Query hooks and UI state wiring for Verified Artist status + verification requests (user and admin), following the existing query-key + invalidation patterns used for submissions and podcast features.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/UserDashboard.tsx",
           "frontend/src/pages/AdminDashboard.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/UserDashboard.tsx",
           "frontend/src/pages/AdminDashboard.tsx"
         ]
       }
@@ -43,12 +122,20 @@
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png",
+    "frontend/src/components/AdminSubmissionsList.tsx",
+    "frontend/src/components/AdminVerificationList.tsx",
+    "frontend/src/components/VerificationBenefitsSection.tsx",
+    "frontend/src/components/VerificationRenewalSection.tsx",
+    "frontend/src/components/VerifiedBadge.tsx",
+    "frontend/src/hooks/useQueries.ts",
     "frontend/src/pages/AdminDashboard.tsx",
-    "frontend/src/pages/LandingPage.tsx",
+    "frontend/src/pages/UserDashboard.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

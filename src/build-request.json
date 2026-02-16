@@ -1,86 +1,199 @@
 {
   "kind": "build_request",
-  "title": "Fix admin login routing and restore admin privileges for yeetmusictamil@gmail.com",
-  "priority": "high",
+  "title": "Admin-controlled Verified Artist (Pro) benefits with verification requests, expiry, badge, and podcast gating",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Restore administrator recognition for the account associated with the email address \"yeetmusictamil@gmail.com\" so that this account is treated as an admin by the backend authorization layer (i.e., AccessControl.isAdmin returns true for that user’s Principal after they authenticate).",
+      "text": "Implement backend data model and APIs for Verified Artist (Pro) status that is admin-activated, lasts 30 days from activation, auto-expires after 30 days, and supports admin extension of the expiry date.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-2",
-          "msg-6"
+          "msg-1"
         ],
         "quotes": [
-          "it direct me to user dashboard",
-          "yeetmusictamil@gmail.com this is the email id"
+          "Verified status lasts 30 days from activation date.\n\nAdmin can manually extend expiry date.\n\nVerified status automatically expire after 30 days"
         ]
       },
       "acceptanceCriteria": [
-        "After the user logs in with Internet Identity using the account that owns/uses email \"yeetmusictamil@gmail.com\", backend calls guarded by admin checks (e.g., getAllSubmissionsForAdmin / getAllArtistProfilesForAdmin) succeed for that user.",
-        "The backend exposes/keeps a reliable way to determine admin status for the caller (e.g., isCallerAdmin) and it returns true for the restored admin account.",
-        "Admin status persists across canister upgrades; if an upgrade would otherwise drop the admin assignment, add conditional migration logic in backend/migration.mo to preserve/restore it."
+        "Backend stores Verified Artist activation timestamp and expiry calculation (30 days + admin extension days) per user.",
+        "There is a backend API for admin to activate Verified Artist for a given user and set the activation time to 'now'.",
+        "There is a backend API for admin to extend a user's expiry by a specified number of days.",
+        "There is a backend API for a user (and/or frontend) to query current Verified Artist state, including whether it is active, expired, and the expiry date/time.",
+        "Expired status is enforced by backend logic (i.e., status becomes inactive after the computed expiry, without requiring manual admin action)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix frontend post-login navigation so that admins are routed to \"/admin-dashboard\" instead of always being routed to \"/user-dashboard\".",
-      "target": "frontend",
+      "text": "Implement backend workflow for user 'Apply for verification' requests and admin visibility, including returning the applicant's full name in the admin list.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "it direct me to user dashboard"
+          "When user click apply for verification button. In admin dashboard admin should get notified and the applyed users full name should display in admin dashboard as seperate panel named as verification list"
         ]
       },
       "acceptanceCriteria": [
-        "From the Landing Page, when the authenticated user is an admin, clicking the primary CTA (or any automatic post-login routing implemented) navigates to \"/admin-dashboard\".",
-        "When the authenticated user is not an admin, navigation continues to go to \"/user-dashboard\".",
-        "No changes are made to frontend immutable paths listed in SYSTEM_CONTEXT."
+        "There is a backend API for an authenticated user to submit an 'apply for verification' request.",
+        "Repeated applies are handled safely (either prevented when already pending/active, or idempotent), without creating duplicate active requests for the same user.",
+        "There is a backend API for admin/team to list verification requests including: request id, user principal, status, timestamp, and the applicant full name (derived from existing artist profile data, matching the current `getUserFullName` behavior).",
+        "There is a backend API for admin/team to update a request status as needed for admin workflow (at minimum: pending/approved/rejected, consistent with existing `VerificationStatus` types)."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add frontend route protection for the Admin Dashboard page so that non-admin users who navigate to \"/admin-dashboard\" are redirected to \"/user-dashboard\" (and are shown a clear English error/toast message indicating they are not authorized).",
-      "target": "frontend",
+      "text": "Restrict podcast submission to Verified Artist (Pro) users only, enforced on the backend for both podcast show creation and episode creation.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "it direct me to user dashboard"
+          "Only verified users can submit podcasts",
+          "It means the podcast is added in latest update of the website."
         ]
       },
       "acceptanceCriteria": [
-        "If a non-admin user manually visits \"/admin-dashboard\", they are redirected to \"/user-dashboard\" and see an authorization error message in English.",
-        "If an admin visits \"/admin-dashboard\", the page renders normally and admin data queries execute without authorization traps."
+        "Backend rejects `createPodcastShow` if caller is not currently Verified Artist (active and not expired), with a clear error message.",
+        "Backend rejects `createPodcastEpisode` if caller is not currently Verified Artist (active and not expired), with a clear error message.",
+        "If a user's verified status expires, subsequent podcast submissions are rejected until re-activated by admin."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Prioritize Pro (Verified Artist) users' song submissions to appear first in the Admin song submission list, while keeping existing sorting stable for submissions within the same priority group.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Pro users’ song submissions must appear first in Admin submission list"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin song submissions UI shows submissions from currently Verified Artist users before submissions from non-verified users.",
+        "Within the Pro group and within the non-Pro group, the order remains consistent with the existing behavior (no random reordering).",
+        "This priority is derived from backend Verified Artist state (not a frontend-only toggle)."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add a user dashboard section that displays 'Verified Artist benefits' only for non-verified users, includes the informational monthly charge (₹200), lists the benefits in English, and provides an 'Apply for verification' button under the benefits section.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "In user dashboard for non verified users show button apply for verification this should appear below the verification benefit.",
+          "2.yes under verified artist benefits section"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Non-verified users see a 'Verified Artist benefits' section in the user dashboard with monthly charge shown as '₹200' and the benefits list.",
+        "The section includes an 'Apply for verification' button under the benefits list.",
+        "Clicking 'Apply for verification' calls the backend apply API and updates the UI state (e.g., shows 'Applied / Pending review' and disables the button to prevent rapid re-submission).",
+        "Verified users do not see the benefits section (it disappears once verified is active)."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "When a user's Verified Artist status is expired, show a 'Renew Verified Artist' message and a 'Renew' button in the user dashboard; the Renew action should create/refresh a verification request for admin review (no payment integration).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "When expired, user must see Renew Verified Artist message.",
+          "3.both",
+          "1.it just informational with no real payment integration"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If the backend reports the user's verified status is expired, the user dashboard shows an English message indicating verification has expired and includes a Renew button.",
+        "Clicking Renew triggers the same backend flow as applying (or an explicit renew API if implemented) and results in the admin being able to see the renewed request in the verification list.",
+        "No Stripe/payment checkout flow is added; the monthly charge remains informational only."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Add an Admin Dashboard panel/tab for 'Verification List' that (a) shows all users who applied for verification with their full name and request details, and (b) provides an in-dashboard notification/alert when there are pending requests.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "In admin dashboard admin should get notified and the applyed users full name should display in admin dashboard as seperate panel named as verification list",
+          "2.both"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin dashboard includes a dedicated tab/panel labeled 'Verification List'.",
+        "The panel lists verification requests and displays each applicant full name plus request status and timestamp.",
+        "Admins can take relevant actions from the UI to support the backend workflow (at minimum: approve/activate verified benefits; optionally reject).",
+        "Admin dashboard shows an additional in-dashboard notification/alert indicating there are pending verification requests (e.g., badge count on the tab and/or a visible alert at top of panel)."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Update the verified badge UI so the current green verified badge becomes a blue verified badge for verified users, and ensure verified users are visually differentiated as Pro users in user-facing surfaces where the badge is shown.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Green Verified badge must change to Blue Verified badge",
+          "Mark verified users as Pro Users"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Where the app currently renders the green tick badge for artist verification, it renders a blue badge instead for verified users.",
+        "The badge alt text and tooltip text are in English and clearly indicate verified/pro status (e.g., 'Verified Artist' / 'Pro User').",
+        "The new badge asset is loaded from frontend static assets (not via backend)."
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Add frontend React Query hooks and UI state wiring for Verified Artist status + verification requests (user and admin), following the existing query-key + invalidation patterns used for submissions and podcast features.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "This features should be add in the website.",
+          "admin should get notified",
+          "apply for verification"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Frontend has React Query queries for: current user's verified status; admin list of verification requests.",
+        "Frontend has React Query mutations for: user apply/renew; admin activate verified; admin extend expiry (and any request status updates used by the UI).",
+        "After apply/renew/admin actions, relevant queries are invalidated so user/admin dashboards update without a hard refresh."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; only add backend/migration.mo changes if required for state upgrades.",
-    "Do not edit any files under frontend/src/components/ui or any paths listed in frontend.immutablePaths in SYSTEM_CONTEXT.",
-    "Use English for all user-facing UI text."
+    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
+    "Only Internet Identity authentication is allowed; no third-party auth providers.",
+    "Do not edit files under frontend/src/components/ui or any path listed in frontend.immutablePaths (compose existing components instead).",
+    "Monthly charge ₹200 is informational only; do not add Stripe checkout/payment flow for verification/renewal."
   ],
   "nonGoals": [
-    "Implementing a new authentication provider (only Internet Identity is used).",
-    "Adding new admin features beyond fixing admin recognition and routing.",
-    "Adding external databases or third-party role-management services."
+    "Implementing actual payment collection or subscription billing for Verified Artist.",
+    "Email/SMS/push notifications; admin 'notification' must be in-dashboard UI only.",
+    "Adding new podcast features beyond restricting access to existing podcast submission workflows."
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Blue verified tick badge, transparent background (blue-tick-badge-transparent.dim_24x24.png)"
+    ],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

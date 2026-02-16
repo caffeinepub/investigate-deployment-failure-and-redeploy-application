@@ -24,16 +24,105 @@ export interface ArtistProfile {
   'mobileNumber' : string,
   'email' : string,
   'spotifyProfile' : string,
+  'youtubeChannelLink' : string,
   'facebookLink' : string,
   'appleProfile' : string,
+  'profilePhotoFilename' : string,
   'stageName' : string,
 }
+export type EpisodeType = { 'full' : null } |
+  { 'trailer' : null } |
+  { 'bonus' : null };
 export type ExternalBlob = Uint8Array;
 export interface InviteCode {
   'created' : Time,
   'code' : string,
   'used' : boolean,
 }
+export type Language = { 'tamil' : null } |
+  { 'hindi' : null } |
+  { 'other' : null } |
+  { 'marathi' : null } |
+  { 'gujarati' : null } |
+  { 'punjabi' : null } |
+  { 'malayalam' : null } |
+  { 'kannada' : null } |
+  { 'telugu' : null } |
+  { 'bengali' : null } |
+  { 'english' : null };
+export type PodcastCategory = { 'kidsFamily' : null } |
+  { 'music' : null } |
+  { 'newsPolitics' : null } |
+  { 'other' : null } |
+  { 'arts' : null } |
+  { 'education' : null } |
+  { 'religionSpirituality' : null } |
+  { 'healthFitness' : null } |
+  { 'tvFilm' : null } |
+  { 'technology' : null } |
+  { 'business' : null } |
+  { 'sports' : null } |
+  { 'comedy' : null } |
+  { 'science' : null };
+export interface PodcastEpisode {
+  'id' : string,
+  'isPromotional' : boolean,
+  'title' : string,
+  'isEighteenPlus' : boolean,
+  'thumbnail' : ExternalBlob,
+  'showId' : string,
+  'createdBy' : Principal,
+  'description' : string,
+  'artwork' : ExternalBlob,
+  'seasonNumber' : bigint,
+  'episodeNumber' : bigint,
+  'episodeType' : EpisodeType,
+  'moderationStatus' : PodcastModerationStatus,
+  'mediaFile' : ExternalBlob,
+  'timestamp' : Time,
+  'isExplicit' : boolean,
+}
+export interface PodcastEpisodeInput {
+  'isPromotional' : boolean,
+  'title' : string,
+  'isEighteenPlus' : boolean,
+  'thumbnail' : ExternalBlob,
+  'showId' : string,
+  'description' : string,
+  'artwork' : ExternalBlob,
+  'seasonNumber' : bigint,
+  'episodeNumber' : bigint,
+  'episodeType' : EpisodeType,
+  'mediaFile' : ExternalBlob,
+  'isExplicit' : boolean,
+}
+export type PodcastModerationStatus = { 'pending' : null } |
+  { 'live' : null } |
+  { 'approved' : null } |
+  { 'rejected' : null };
+export interface PodcastShow {
+  'id' : string,
+  'podcastType' : PodcastType,
+  'title' : string,
+  'createdBy' : Principal,
+  'description' : string,
+  'artwork' : ExternalBlob,
+  'language' : Language,
+  'moderationStatus' : PodcastModerationStatus,
+  'timestamp' : Time,
+  'category' : PodcastCategory,
+  'liveLink' : [] | [string],
+}
+export interface PodcastShowInput {
+  'podcastType' : PodcastType,
+  'title' : string,
+  'description' : string,
+  'artwork' : ExternalBlob,
+  'language' : Language,
+  'category' : PodcastCategory,
+}
+export type PodcastType = { 'audio' : null } |
+  { 'video' : null };
 export interface RSVP {
   'name' : string,
   'inviteCode' : string,
@@ -48,8 +137,10 @@ export interface SaveArtistProfileInput {
   'mobileNumber' : string,
   'email' : string,
   'spotifyProfile' : string,
+  'youtubeChannelLink' : string,
   'facebookLink' : string,
   'appleProfile' : string,
+  'profilePhotoFilename' : string,
   'stageName' : string,
 }
 export interface ShoppingItem {
@@ -68,6 +159,7 @@ export interface SongSubmission {
   'id' : string,
   'status' : SongStatus,
   'albumTracks' : [] | [Array<TrackMetadata>],
+  'adminLiveLink' : [] | [string],
   'title' : string,
   'preSaveLink' : [] | [string],
   'additionalDetails' : string,
@@ -84,13 +176,56 @@ export interface SongSubmission {
   'composer' : string,
   'adminComment' : string,
   'genre' : string,
+  'musicVideoLink' : [] | [string],
   'timestamp' : Time,
   'artist' : string,
   'acrResult' : [] | [ACRResult],
   'producer' : string,
   'releaseDate' : Time,
+  'isManuallyRejected' : boolean,
   'releaseType' : string,
   'adminRemarks' : string,
+  'featuredArtist' : string,
+}
+export interface SongSubmissionEditInput {
+  'artworkBlob' : ExternalBlob,
+  'albumTracks' : [] | [Array<TrackMetadata>],
+  'title' : string,
+  'additionalDetails' : string,
+  'lyricist' : string,
+  'discountCode' : [] | [string],
+  'songSubmissionId' : string,
+  'artworkFilename' : string,
+  'audioFile' : ExternalBlob,
+  'audioFilename' : string,
+  'language' : string,
+  'composer' : string,
+  'genre' : string,
+  'musicVideoLink' : [] | [string],
+  'artist' : string,
+  'producer' : string,
+  'releaseDate' : Time,
+  'releaseType' : string,
+  'featuredArtist' : string,
+}
+export interface SongSubmissionInput {
+  'artworkBlob' : ExternalBlob,
+  'albumTracks' : [] | [Array<TrackMetadata>],
+  'title' : string,
+  'additionalDetails' : string,
+  'lyricist' : string,
+  'discountCode' : [] | [string],
+  'artworkFilename' : string,
+  'audioBlob' : ExternalBlob,
+  'audioFilename' : string,
+  'language' : string,
+  'composer' : string,
+  'genre' : string,
+  'musicVideoLink' : [] | [string],
+  'artist' : string,
+  'producer' : string,
+  'releaseDate' : Time,
+  'releaseType' : string,
   'featuredArtist' : string,
 }
 export interface StripeConfiguration {
@@ -101,27 +236,6 @@ export type StripeSessionStatus = {
     'completed' : { 'userPrincipal' : [] | [string], 'response' : string }
   } |
   { 'failed' : { 'error' : string } };
-export interface SubmitSongInput {
-  'artworkBlob' : ExternalBlob,
-  'albumTracks' : [] | [Array<TrackMetadata>],
-  'title' : string,
-  'additionalDetails' : string,
-  'lyricist' : string,
-  'publicLink' : [] | [string],
-  'discountCode' : [] | [string],
-  'artworkFilename' : string,
-  'audioBlob' : ExternalBlob,
-  'liveStreamLink' : [] | [string],
-  'audioFilename' : string,
-  'language' : string,
-  'composer' : string,
-  'genre' : string,
-  'artist' : string,
-  'producer' : string,
-  'releaseDate' : Time,
-  'releaseType' : string,
-  'featuredArtist' : string,
-}
 export type Time = bigint;
 export interface TrackMetadata {
   'title' : string,
@@ -190,22 +304,40 @@ export interface _SERVICE {
     [string, SaveArtistProfileInput],
     undefined
   >,
+  'adminEditSubmission' : ActorMethod<[SongSubmissionEditInput], undefined>,
+  'adminSetSubmissionLive' : ActorMethod<
+    [string, string, string, string],
+    undefined
+  >,
   'adminUpdateSubmission' : ActorMethod<
     [string, SongStatus, string, string],
     undefined
   >,
+  'approveEpisode' : ActorMethod<[string], undefined>,
+  'approvePodcast' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'blockUser' : ActorMethod<[Principal], undefined>,
   'createArtistProfile' : ActorMethod<[SaveArtistProfileInput], string>,
   'createCheckoutSession' : ActorMethod<
     [Array<ShoppingItem>, string, string],
     string
   >,
+  'createPodcastEpisode' : ActorMethod<[PodcastEpisodeInput], string>,
+  'createPodcastShow' : ActorMethod<[PodcastShowInput], string>,
   'deleteArtistProfile' : ActorMethod<[string], undefined>,
+  'downgradeTeamMember' : ActorMethod<[Principal], undefined>,
+  'editSongSubmission' : ActorMethod<[SongSubmissionEditInput], undefined>,
   'generateInviteCode' : ActorMethod<[], string>,
   'getAllArtistProfileOwnersForAdmin' : ActorMethod<[], Array<Principal>>,
   'getAllArtistProfilesForAdmin' : ActorMethod<[], Array<ArtistProfile>>,
+  'getAllBlockedUsers' : ActorMethod<[], Array<Principal>>,
+  'getAllEpisodes' : ActorMethod<[], Array<PodcastEpisode>>,
+  'getAllPendingEpisodes' : ActorMethod<[], Array<PodcastEpisode>>,
+  'getAllPendingPodcasts' : ActorMethod<[], Array<PodcastShow>>,
+  'getAllPodcasts' : ActorMethod<[], Array<PodcastShow>>,
   'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
   'getAllSubmissionsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
+  'getAllTeamMembers' : ActorMethod<[], Array<Principal>>,
   'getArtistProfileEditingAccessStatus' : ActorMethod<[], boolean>,
   'getArtistProfilesByUserForAdmin' : ActorMethod<
     [Principal],
@@ -213,28 +345,43 @@ export interface _SERVICE {
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getEpisodesByShowId' : ActorMethod<[string], Array<PodcastEpisode>>,
   'getInviteCodes' : ActorMethod<[], Array<InviteCode>>,
   'getMyArtistProfiles' : ActorMethod<[], Array<ArtistProfile>>,
+  'getMyEpisodes' : ActorMethod<[string], Array<PodcastEpisode>>,
+  'getMyPodcastShows' : ActorMethod<[], Array<PodcastShow>>,
   'getMySubmissions' : ActorMethod<[], Array<SongSubmission>>,
+  'getPodcastsByCategory' : ActorMethod<[PodcastCategory], Array<PodcastShow>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getWebsiteLogo' : ActorMethod<[], [] | [ExternalBlob]>,
   'isArtistProfileEditingEnabled' : ActorMethod<[], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCallerApproved' : ActorMethod<[], boolean>,
   'isStripeConfigured' : ActorMethod<[], boolean>,
+  'isUserBlocked' : ActorMethod<[Principal], boolean>,
+  'isUserTeamMember' : ActorMethod<[Principal], boolean>,
   'listApprovals' : ActorMethod<[], Array<UserApprovalInfo>>,
+  'markEpisodeLive' : ActorMethod<[string], undefined>,
+  'markPodcastLive' : ActorMethod<[string, string], undefined>,
+  'rejectEpisode' : ActorMethod<[string], undefined>,
+  'rejectPodcast' : ActorMethod<[string], undefined>,
+  'removeWebsiteLogo' : ActorMethod<[], undefined>,
   'requestApproval' : ActorMethod<[], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'setApproval' : ActorMethod<[Principal, ApprovalStatus], undefined>,
   'setArtistProfileEditingAccess' : ActorMethod<[boolean], undefined>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
+  'setWebsiteLogo' : ActorMethod<[ExternalBlob], undefined>,
   'submitRSVP' : ActorMethod<[string, boolean, string], undefined>,
-  'submitSong' : ActorMethod<[SubmitSongInput], string>,
+  'submitSong' : ActorMethod<[SongSubmissionInput], string>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
+  'unblockUser' : ActorMethod<[Principal], undefined>,
   'updateArtistProfile' : ActorMethod<
     [string, SaveArtistProfileInput],
     undefined
   >,
+  'upgradeUserToTeamMember' : ActorMethod<[Principal], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

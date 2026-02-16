@@ -1,34 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSubmitSong } from '../hooks/useQueries';
+import { useSubmitSong, useGetMyArtistProfiles, useIsUserBlocked } from '../hooks/useQueries';
 import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { SubmitSongInput, TrackMetadata } from '../backend';
-import { Loader2, Upload, Music } from 'lucide-react';
+import { SongSubmissionInput, TrackMetadata } from '../backend';
+import { Loader2, Upload, Music, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from '@tanstack/react-router';
 import AlbumTracksEditor from './AlbumTracksEditor';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function SongSubmissionForm() {
   const submitSong = useSubmitSong();
+  const navigate = useNavigate();
+  const { data: artistProfiles, isLoading: profilesLoading } = useGetMyArtistProfiles();
+  const { data: isBlocked, isLoading: blockCheckLoading } = useIsUserBlocked();
 
   const [title, setTitle] = useState('');
   const [language, setLanguage] = useState('');
   const [releaseDate, setReleaseDate] = useState('');
   const [releaseType, setReleaseType] = useState('');
   const [genre, setGenre] = useState('');
-  const [artist, setArtist] = useState('');
-  const [featuredArtist, setFeaturedArtist] = useState('');
+  const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
+  const [selectedFeaturedArtists, setSelectedFeaturedArtists] = useState<string[]>([]);
   const [composer, setComposer] = useState('');
   const [producer, setProducer] = useState('');
   const [lyricist, setLyricist] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [discountCode, setDiscountCode] = useState('');
-  const [liveStreamLink, setLiveStreamLink] = useState('');
-  const [publicLink, setPublicLink] = useState('');
+  const [musicVideoLink, setMusicVideoLink] = useState('');
 
   const [artworkFile, setArtworkFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -37,11 +41,64 @@ export default function SongSubmissionForm() {
   const [artworkProgress, setArtworkProgress] = useState(0);
   const [audioProgress, setAudioProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [artworkError, setArtworkError] = useState('');
 
   const isAlbum = releaseType === 'Album';
 
+  // Validate artwork dimensions and format
+  const validateArtwork = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      
+      if (!validTypes.includes(file.type)) {
+        setArtworkError('Artwork must be JPG or PNG format');
+        resolve(false);
+        return;
+      }
+
+      const img = new Image();
+      img.onload = () => {
+        if (img.width === 3000 && img.height === 3000) {
+          setArtworkError('');
+          resolve(true);
+        } else {
+          setArtworkError(`Artwork must be exactly 3000×3000 pixels. Current: ${img.width}×${img.height}`);
+          resolve(false);
+        }
+      };
+      img.onerror = () => {
+        setArtworkError('Failed to load image');
+        resolve(false);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleArtworkChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const isValid = await validateArtwork(file);
+      if (isValid) {
+        setArtworkFile(file);
+      } else {
+        setArtworkFile(null);
+        e.target.value = '';
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isBlocked) {
+      toast.error('Your account has been blocked. You cannot submit songs.');
+      return;
+    }
+
+    if (!artistProfiles || artistProfiles.length === 0) {
+      toast.error('Please create an artist profile before submitting a song');
+      return;
+    }
 
     // Validation
     if (!title.trim()) {
@@ -64,8 +121,8 @@ export default function SongSubmissionForm() {
       toast.error('Genre is required');
       return;
     }
-    if (!artist.trim()) {
-      toast.error('Artist name is required');
+    if (selectedArtists.length === 0) {
+      toast.error('At least one artist must be selected');
       return;
     }
     if (!composer.trim()) {
@@ -82,6 +139,10 @@ export default function SongSubmissionForm() {
     }
     if (!artworkFile) {
       toast.error('Artwork is required');
+      return;
+    }
+    if (artworkError) {
+      toast.error(artworkError);
       return;
     }
 
@@ -128,7 +189,17 @@ export default function SongSubmissionForm() {
         audioBlob = await fileToExternalBlob(new Blob(['dummy']), () => {});
       }
 
-      const input: SubmitSongInput = {
+      const artistNames = selectedArtists
+        .map((id) => artistProfiles?.find((p) => p.id === id)?.stageName)
+        .filter(Boolean)
+        .join(', ');
+
+      const featuredNames = selectedFeaturedArtists
+        .map((id) => artistProfiles?.find((p) => p.id === id)?.stageName)
+        .filter(Boolean)
+        .join(', ');
+
+      const input: SongSubmissionInput = {
         title,
         language,
         releaseDate: BigInt(new Date(releaseDate).getTime()) * BigInt(1000000),
@@ -136,8 +207,8 @@ export default function SongSubmissionForm() {
         genre,
         artworkBlob,
         artworkFilename: artworkFile.name,
-        artist,
-        featuredArtist,
+        artist: artistNames,
+        featuredArtist: featuredNames,
         composer,
         producer,
         lyricist,
@@ -145,9 +216,8 @@ export default function SongSubmissionForm() {
         audioFilename: audioFile?.name || 'album.mp3',
         additionalDetails,
         discountCode: discountCode.trim() ? discountCode : undefined,
-        liveStreamLink: liveStreamLink.trim() ? liveStreamLink : undefined,
         albumTracks: isAlbum && albumTracks.length > 0 ? albumTracks : undefined,
-        publicLink: publicLink.trim() ? publicLink : undefined,
+        musicVideoLink: musicVideoLink.trim() ? musicVideoLink : undefined,
       };
 
       await submitSong.mutateAsync(input);
@@ -158,26 +228,97 @@ export default function SongSubmissionForm() {
       setReleaseDate('');
       setReleaseType('');
       setGenre('');
-      setArtist('');
-      setFeaturedArtist('');
+      setSelectedArtists([]);
+      setSelectedFeaturedArtists([]);
       setComposer('');
       setProducer('');
       setLyricist('');
       setAdditionalDetails('');
       setDiscountCode('');
-      setLiveStreamLink('');
-      setPublicLink('');
+      setMusicVideoLink('');
       setArtworkFile(null);
       setAudioFile(null);
       setAlbumTracks([]);
       setArtworkProgress(0);
       setAudioProgress(0);
+      setArtworkError('');
+
+      // Navigate to thank you page
+      navigate({ to: '/thank-you' });
     } catch (error: any) {
       console.error('Submission error:', error);
+      if (error.message?.includes('blocked')) {
+        toast.error('Your account has been blocked. You cannot submit songs.');
+      }
     } finally {
       setIsUploading(false);
     }
   };
+
+  const toggleArtistSelection = (profileId: string) => {
+    setSelectedArtists((prev) =>
+      prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
+    );
+  };
+
+  const toggleFeaturedArtistSelection = (profileId: string) => {
+    setSelectedFeaturedArtists((prev) =>
+      prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
+    );
+  };
+
+  if (blockCheckLoading || profilesLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="w-5 h-5" />
+            Account Blocked
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>
+              Your account has been blocked. You cannot submit songs at this time. Please contact support for assistance.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!artistProfiles || artistProfiles.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Music className="w-5 h-5" />
+            Submit New Song
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertCircle className="w-4 h-4" />
+            <AlertDescription>
+              You must create at least one artist profile before submitting a song. Please go to the "Artist Profiles" tab to create your profile.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -266,27 +407,49 @@ export default function SongSubmissionForm() {
             </Select>
           </div>
 
-          {/* Artist */}
+          {/* Artist Selection */}
           <div>
-            <Label htmlFor="artist">Artist *</Label>
-            <Input
-              id="artist"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              placeholder="Primary artist name"
-              required
-            />
+            <Label>Artist(s) *</Label>
+            <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
+              {artistProfiles.map((profile) => (
+                <div key={profile.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`artist-${profile.id}`}
+                    checked={selectedArtists.includes(profile.id)}
+                    onChange={() => toggleArtistSelection(profile.id)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <label htmlFor={`artist-${profile.id}`} className="text-sm cursor-pointer flex-1">
+                    {profile.stageName} ({profile.fullName})
+                  </label>
+                </div>
+              ))}
+            </div>
+            {selectedArtists.length === 0 && (
+              <p className="text-xs text-muted-foreground mt-1">Select at least one artist</p>
+            )}
           </div>
 
-          {/* Featured Artist */}
+          {/* Featured Artist Selection */}
           <div>
-            <Label htmlFor="featuredArtist">Featured Artist</Label>
-            <Input
-              id="featuredArtist"
-              value={featuredArtist}
-              onChange={(e) => setFeaturedArtist(e.target.value)}
-              placeholder="Featured artist (optional)"
-            />
+            <Label>Featured Artist(s) (Optional)</Label>
+            <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
+              {artistProfiles.map((profile) => (
+                <div key={profile.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`featured-${profile.id}`}
+                    checked={selectedFeaturedArtists.includes(profile.id)}
+                    onChange={() => toggleFeaturedArtistSelection(profile.id)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <label htmlFor={`featured-${profile.id}`} className="text-sm cursor-pointer flex-1">
+                    {profile.stageName} ({profile.fullName})
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Composer */}
@@ -327,14 +490,17 @@ export default function SongSubmissionForm() {
 
           {/* Artwork Upload */}
           <div>
-            <Label htmlFor="artwork">Artwork *</Label>
+            <Label htmlFor="artwork">Artwork * (JPG/PNG, 3000×3000 pixels)</Label>
             <Input
               id="artwork"
               type="file"
-              accept="image/*"
-              onChange={(e) => setArtworkFile(e.target.files?.[0] || null)}
+              accept=".jpg,.jpeg,.png"
+              onChange={handleArtworkChange}
               required
             />
+            {artworkError && (
+              <p className="text-sm text-destructive mt-1">{artworkError}</p>
+            )}
             {artworkProgress > 0 && artworkProgress < 100 && (
               <div className="mt-2 text-sm text-muted-foreground">
                 Uploading artwork: {artworkProgress}%
@@ -369,6 +535,17 @@ export default function SongSubmissionForm() {
             </div>
           )}
 
+          {/* Music Video Link */}
+          <div>
+            <Label htmlFor="musicVideoLink">Music Video Link (Optional)</Label>
+            <Input
+              id="musicVideoLink"
+              value={musicVideoLink}
+              onChange={(e) => setMusicVideoLink(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+
           {/* Additional Details */}
           <div>
             <Label htmlFor="additionalDetails">Additional Details</Label>
@@ -389,26 +566,6 @@ export default function SongSubmissionForm() {
               value={discountCode}
               onChange={(e) => setDiscountCode(e.target.value)}
               placeholder="Discount code"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="liveStreamLink">Live Stream Link (Optional)</Label>
-            <Input
-              id="liveStreamLink"
-              value={liveStreamLink}
-              onChange={(e) => setLiveStreamLink(e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="publicLink">Public Link (Optional)</Label>
-            <Input
-              id="publicLink"
-              value={publicLink}
-              onChange={(e) => setPublicLink(e.target.value)}
-              placeholder="https://..."
             />
           </div>
 

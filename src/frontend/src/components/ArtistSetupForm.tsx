@@ -27,6 +27,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
     facebookLink: initialData?.facebookLink || '',
     spotifyProfile: initialData?.spotifyProfile || '',
     appleProfile: initialData?.appleProfile || '',
+    youtubeChannelLink: initialData?.youtubeChannelLink || '',
   });
 
   const [hasSpotifyProfile, setHasSpotifyProfile] = useState(!!initialData?.spotifyProfile);
@@ -84,19 +85,23 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
 
     try {
       let profilePhotoBlob: any;
+      let profilePhotoFilename = '';
 
       if (profilePhotoFile) {
         const photoBytes = new Uint8Array(await profilePhotoFile.arrayBuffer());
         profilePhotoBlob = ExternalBlob.fromBytes(photoBytes).withUploadProgress((percentage) => {
           setUploadProgress(percentage);
         });
+        profilePhotoFilename = profilePhotoFile.name;
       } else {
         profilePhotoBlob = initialData.profilePhoto;
+        profilePhotoFilename = initialData.profilePhotoFilename || '';
       }
 
       const profileInput = {
         ...formData,
         profilePhoto: profilePhotoBlob,
+        profilePhotoFilename,
         isApproved: initialData?.isApproved || false,
       };
 
@@ -244,7 +249,6 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
             id="instagramLink"
             value={formData.instagramLink}
             onChange={(e) => handleInputChange('instagramLink', e.target.value)}
-            placeholder="https://instagram.com/..."
             required
           />
         </div>
@@ -255,8 +259,17 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
             id="facebookLink"
             value={formData.facebookLink}
             onChange={(e) => handleInputChange('facebookLink', e.target.value)}
-            placeholder="https://facebook.com/..."
             required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="youtubeChannelLink">YouTube Channel Link</Label>
+          <Input
+            id="youtubeChannelLink"
+            value={formData.youtubeChannelLink}
+            onChange={(e) => handleInputChange('youtubeChannelLink', e.target.value)}
+            placeholder="https://youtube.com/..."
           />
         </div>
       </div>
@@ -281,7 +294,6 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
                 id="spotifyProfile"
                 value={formData.spotifyProfile}
                 onChange={(e) => handleInputChange('spotifyProfile', e.target.value)}
-                placeholder="https://open.spotify.com/artist/..."
                 required={hasSpotifyProfile}
               />
             </div>
@@ -307,7 +319,6 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
                 id="appleProfile"
                 value={formData.appleProfile}
                 onChange={(e) => handleInputChange('appleProfile', e.target.value)}
-                placeholder="https://music.apple.com/artist/..."
                 required={hasAppleProfile}
               />
             </div>
@@ -317,8 +328,8 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
 
       <Button
         type="submit"
-        className="w-full"
         disabled={isUploading || createProfile.isPending || updateProfile.isPending}
+        className="w-full"
       >
         {isUploading
           ? `Uploading... ${uploadProgress}%`

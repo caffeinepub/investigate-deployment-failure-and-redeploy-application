@@ -9,6 +9,7 @@ import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ThankYouPage from './pages/ThankYouPage';
 import ProfileSetupModal from './components/ProfileSetupModal';
 import { useActor } from './hooks/useActor';
 
@@ -48,10 +49,17 @@ const adminDashboardRoute = createRoute({
   component: AdminDashboard,
 });
 
+const thankYouRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/thank-you',
+  component: ThankYouPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   userDashboardRoute,
   adminDashboardRoute,
+  thankYouRoute,
 ]);
 
 const router = createRouter({ routeTree });

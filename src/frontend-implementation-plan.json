@@ -1,36 +1,158 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Admin-aware post-login routing and Admin Dashboard route protection",
+  "title": "Verified Artist (Pro) frontend: dashboard promotion/renewal, admin verification list, badge update, and query wiring",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Route authenticated admins to /admin-dashboard instead of always /user-dashboard after login/CTA.",
+      "id": "REQ-4",
+      "summary": "Prioritize Pro (Verified Artist) users' submissions at the top of the Admin song submissions list using backend-derived Pro state while keeping stable ordering within groups.",
       "acceptanceCriteria": [
-        "From the Landing Page, when the authenticated user is an admin, clicking the primary CTA (or any automatic post-login routing implemented) navigates to \"/admin-dashboard\".",
-        "When the authenticated user is not an admin, navigation continues to go to \"/user-dashboard\".",
-        "No changes are made to frontend immutable paths listed in SYSTEM_CONTEXT."
+        "Admin song submissions UI shows submissions from currently Verified Artist users before submissions from non-verified users.",
+        "Within the Pro group and within the non-Pro group, the order remains consistent with the existing behavior (no random reordering).",
+        "This priority is derived from backend Verified Artist state (not a frontend-only toggle)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/LandingPage.tsx",
+          "path": "frontend/src/components/AdminSubmissionsList.tsx",
           "operation": "modify",
-          "description": "Update post-login CTA routing to branch by admin status: use the authorization component’s admin-check capability via the existing `useIsCurrentUserAdmin` hook (calls backend `isCallerAdmin`) to navigate admins to `/admin-dashboard` and non-admins to `/user-dashboard`. Handle the case where the user just logged in (identity becomes available after `login()`): implement a small redirect-intent state/effect so navigation occurs once the admin check query has resolved. Verify the component's usage instructions before implementing."
+          "description": "Update the list rendering to perform a stable two-tier sort (Pro first, then non-Pro) using a backend-derived Pro/Verified indicator associated with each submission (e.g., provided on the submission item or via a derived lookup by submitter principal). If the Pro indicator is fetched separately, ensure sorting waits for that query result and keeps current ordering as the secondary key. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add/extend React Query support used by AdminSubmissionsList for deriving submitter Pro/Verified state (e.g., a query to fetch verified status for a set of principals, or a query that returns a mapping used for sorting). Ensure query keys and invalidations follow existing patterns (e.g., alongside ['allSubmissionsForAdmin']). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Protect /admin-dashboard so non-admin users are redirected to /user-dashboard with a clear English authorization message.",
+      "id": "REQ-5",
+      "summary": "Show a 'Verified Artist benefits' section for non-verified users in the user dashboard with ₹200 informational charge, benefits list, and an Apply button that triggers a verification request and updates UI state.",
       "acceptanceCriteria": [
-        "If a non-admin user manually visits \"/admin-dashboard\", they are redirected to \"/user-dashboard\" and see an authorization error message in English.",
-        "If an admin visits \"/admin-dashboard\", the page renders normally and admin data queries execute without authorization traps."
+        "Non-verified users see a 'Verified Artist benefits' section in the user dashboard with monthly charge shown as '₹200' and the benefits list.",
+        "The section includes an 'Apply for verification' button under the benefits list.",
+        "Clicking 'Apply for verification' calls the backend apply API and updates the UI state (e.g., shows 'Applied / Pending review' and disables the button to prevent rapid re-submission).",
+        "Verified users do not see the benefits section (it disappears once verified is active)."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/components/VerificationBenefitsSection.tsx",
+          "operation": "create",
+          "description": "Create a user-dashboard section component that renders the English benefits copy, shows the informational monthly charge as ₹200, and includes an 'Apply for verification' button under the benefits list. The component should render only when the current user is not verified (based on the verified-status query), and should reflect request state (pending/applied) by disabling the button and showing status text. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/UserDashboard.tsx",
+          "operation": "modify",
+          "description": "Wire the new VerificationBenefitsSection into the existing user dashboard UI (without adding new routes). Place it within an existing tab surface (e.g., above the tab content area or in a specific tab) so it is navigable and visible for non-verified users. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add React Query hooks for the current user's Verified Artist state and for submitting an apply-for-verification request. Ensure mutation success invalidates the verified-status query and any verification-request status query used by the UI, matching existing query-key + invalidation patterns. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "When Verified Artist status is expired, show a renew message and Renew button that refreshes/creates a verification request for admin review (no payment).",
+      "acceptanceCriteria": [
+        "If the backend reports the user's verified status is expired, the user dashboard shows an English message indicating verification has expired and includes a Renew button.",
+        "Clicking Renew triggers the same backend flow as applying (or an explicit renew API if implemented) and results in the admin being able to see the renewed request in the verification list.",
+        "No Stripe/payment checkout flow is added; the monthly charge remains informational only."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VerificationRenewalSection.tsx",
+          "operation": "create",
+          "description": "Create a small dashboard component that renders only when the user's Verified Artist state is expired, showing an English 'Renew Verified Artist' message and a Renew button. The Renew action should trigger the apply/renew mutation and disable while pending; ensure UI communicates that this is review-based (no payment). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/UserDashboard.tsx",
+          "operation": "modify",
+          "description": "Wire VerificationRenewalSection into the user dashboard near the benefits area so expired users see it clearly. Ensure this does not introduce any payment/checkout UI. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add/extend a React Query mutation for renew (either calling the same apply backend capability or a dedicated renew capability if present) and invalidate any queries needed to refresh the expired/pending state immediately after success. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Add an Admin Dashboard 'Verification List' tab/panel showing verification requests with full names and actions, plus an in-dashboard pending-requests notification.",
+      "acceptanceCriteria": [
+        "Admin dashboard includes a dedicated tab/panel labeled 'Verification List'.",
+        "The panel lists verification requests and displays each applicant full name plus request status and timestamp.",
+        "Admins can take relevant actions from the UI to support the backend workflow (at minimum: approve/activate verified benefits; optionally reject).",
+        "Admin dashboard shows an additional in-dashboard notification/alert indicating there are pending verification requests (e.g., badge count on the tab and/or a visible alert at top of panel)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AdminVerificationList.tsx",
+          "operation": "create",
+          "description": "Implement the admin 'Verification List' panel UI: fetch and display verification requests including applicant full name, status, and timestamp; provide admin actions to support workflow (approve/activate, optional reject; include extend-expiry action only if supported by backend hooks). Include a visible alert or summary when pending requests exist. Verify the component's usage instructions before implementing."
+        },
+        {
           "path": "frontend/src/pages/AdminDashboard.tsx",
           "operation": "modify",
-          "description": "Add an admin guard at the Admin Dashboard page level using the authorization component’s admin-check capability via `useIsCurrentUserAdmin`. While the admin check is loading, render a minimal loading state to avoid firing admin-only queries. If the resolved admin flag is false, trigger a Sonner toast with a clear English message (e.g., not authorized) and redirect to `/user-dashboard`. If true, render the existing admin tabs normally. Verify the component's usage instructions before implementing."
+          "description": "Add a new TabsTrigger and TabsContent for 'Verification List' and wire it to render AdminVerificationList. Show an in-dashboard notification/alert for pending requests (e.g., count badge on the 'Verification List' tab) using the admin verification-requests query. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add React Query hooks for admin verification requests list and admin mutations used by the panel (approve/activate verified benefits; optional reject; extend expiry if exposed). Ensure successful admin actions invalidate the admin list and any user-facing verified-status queries that may be impacted. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Replace the green verified badge with a blue verified badge and ensure verified users are visually identified as Pro users wherever the badge is shown.",
+      "acceptanceCriteria": [
+        "Where the app currently renders the green tick badge for artist verification, it renders a blue badge instead for verified users.",
+        "The badge alt text and tooltip text are in English and clearly indicate verified/pro status (e.g., 'Verified Artist' / 'Pro User').",
+        "The new badge asset is loaded from frontend static assets (not via backend)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png",
+          "operation": "create",
+          "description": "Add the generated static asset at the exact required path: frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png."
+        },
+        {
+          "path": "frontend/src/components/GreenBadge.tsx",
+          "operation": "modify",
+          "description": "Update the existing badge component to render the blue verified badge asset and adjust tooltip/alt text to English wording that clearly indicates 'Verified Artist' / 'Pro User'. Keep it compatible with existing call sites so verified users remain visually differentiated. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/VerifiedBadge.tsx",
+          "operation": "modify",
+          "description": "If this placeholder component is used or intended for verified UI, implement it as a wrapper/alias around the updated badge behavior so future call sites can use a semantically named component for 'Verified/Pro' rendering without duplicating logic. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Add React Query hooks and UI wiring for Verified Artist status and verification requests for both user and admin flows, using existing query-key/invalidation patterns.",
+      "acceptanceCriteria": [
+        "Frontend has React Query queries for: current user's verified status; admin list of verification requests.",
+        "Frontend has React Query mutations for: user apply/renew; admin activate verified; admin extend expiry (and any request status updates used by the UI).",
+        "After apply/renew/admin actions, relevant queries are invalidated so user/admin dashboards update without a hard refresh."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Implement the new Verified Artist (Pro) React Query queries/mutations and standardize query keys (e.g., ['verifiedArtistStatus', principal], ['verificationRequestsForAdmin'], etc.). Ensure invalidation occurs after each mutation so both user dashboard and admin dashboard stay in sync without refresh. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/UserDashboard.tsx",
+          "operation": "modify",
+          "description": "Wire the verified-status query state into the dashboard so the benefits section is shown only for non-verified users and the renewal section is shown only for expired users; ensure UI updates immediately via query invalidation after apply/renew. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/AdminDashboard.tsx",
+          "operation": "modify",
+          "description": "Wire the admin verification-requests query into the admin dashboard tab notification (pending count/alert) so it updates automatically as requests are created/processed. Verify the component's usage instructions before implementing."
         }
       ]
     }

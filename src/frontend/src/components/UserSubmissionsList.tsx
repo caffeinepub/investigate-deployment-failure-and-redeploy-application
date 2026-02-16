@@ -1,20 +1,27 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useGetMySubmissions } from '../hooks/useQueries';
-import { Loader2, Music, Calendar } from 'lucide-react';
+import { Loader2, Music, Calendar, ExternalLink, Edit } from 'lucide-react';
 import { SongStatus } from '../backend';
+import UserEditSubmissionDialog from './UserEditSubmissionDialog';
 
 export default function UserSubmissionsList() {
   const { data: submissions, isLoading } = useGetMySubmissions();
+  const [editingSubmission, setEditingSubmission] = useState<string | null>(null);
 
-  const getStatusBadge = (status: SongStatus) => {
+  const getStatusBadge = (status: SongStatus, isManuallyRejected: boolean) => {
+    // Show rejected submissions as Draft
+    if (status === SongStatus.rejected || isManuallyRejected) {
+      return <Badge variant="outline">Draft</Badge>;
+    }
+    
     switch (status) {
       case SongStatus.pending:
         return <Badge variant="secondary">Pending</Badge>;
       case SongStatus.approved:
         return <Badge className="bg-green-600">Approved</Badge>;
-      case SongStatus.rejected:
-        return <Badge variant="destructive">Rejected</Badge>;
       case SongStatus.draft:
         return <Badge variant="outline">Draft</Badge>;
       case SongStatus.live:
@@ -24,11 +31,17 @@ export default function UserSubmissionsList() {
     }
   };
 
+  const canEdit = (status: SongStatus) => {
+    return status === SongStatus.draft || status === SongStatus.pending || status === SongStatus.rejected;
+  };
+
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin" />
+        <CardContent className="py-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
         </CardContent>
       </Card>
     );
@@ -37,64 +50,133 @@ export default function UserSubmissionsList() {
   if (!submissions || submissions.length === 0) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-          <Music className="w-12 h-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">No submissions yet</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Submit your first song to get started
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Music className="w-5 h-5" />
+            My Submissions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground py-8">
+            You haven't submitted any songs yet.
           </p>
         </CardContent>
       </Card>
     );
   }
 
+  const editingSubmissionData = submissions.find((s) => s.id === editingSubmission);
+
   return (
-    <div className="space-y-4">
-      {submissions.map((submission) => (
-        <Card key={submission.id}>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <CardTitle className="text-lg">{submission.title}</CardTitle>
-              {getStatusBadge(submission.status)}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="font-medium">Artist:</span> {submission.artist}
-              </div>
-              <div>
-                <span className="font-medium">Genre:</span> {submission.genre}
-              </div>
-              <div>
-                <span className="font-medium">Language:</span> {submission.language}
-              </div>
-              <div>
-                <span className="font-medium">Release Type:</span> {submission.releaseType}
-              </div>
-            </div>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Music className="w-5 h-5" />
+            My Submissions ({submissions.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {submissions.map((submission) => (
+              <Card key={submission.id}>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <img
+                      src={submission.artwork.getDirectURL()}
+                      alt={submission.title}
+                      className="w-24 h-24 rounded-lg object-cover"
+                    />
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-semibold text-lg">{submission.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {submission.artist}
+                            {submission.featuredArtist && ` ft. ${submission.featuredArtist}`}
+                          </p>
+                        </div>
+                        {getStatusBadge(submission.status, submission.isManuallyRejected)}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Genre:</span> {submission.genre}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Language:</span> {submission.language}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Release Type:</span> {submission.releaseType}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span className="text-muted-foreground">
+                            {new Date(Number(submission.releaseDate / BigInt(1000000))).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      {submission.musicVideoLink && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Music Video:</span>{' '}
+                          <a
+                            href={submission.musicVideoLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            View Video
+                          </a>
+                        </div>
+                      )}
+                      {submission.adminComment && (
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="text-sm font-medium">Admin Comment:</p>
+                          <p className="text-sm text-muted-foreground">{submission.adminComment}</p>
+                        </div>
+                      )}
+                      {submission.adminRemarks && (
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="text-sm font-medium">Admin Remarks:</p>
+                          <p className="text-sm text-muted-foreground">{submission.adminRemarks}</p>
+                        </div>
+                      )}
+                      {submission.status === SongStatus.live && submission.adminLiveLink && (
+                        <Button
+                          size="sm"
+                          onClick={() => window.open(submission.adminLiveLink!, '_blank')}
+                          className="mt-2"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Visit Release
+                        </Button>
+                      )}
+                      {canEdit(submission.status) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingSubmission(submission.id)}
+                          className="mt-2"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Submission
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              Submitted: {new Date(Number(submission.timestamp / BigInt(1000000))).toLocaleDateString()}
-            </div>
-
-            {submission.adminComment && (
-              <div className="mt-4 p-3 bg-muted rounded-md">
-                <p className="text-sm font-medium mb-1">Admin Comment:</p>
-                <p className="text-sm">{submission.adminComment}</p>
-              </div>
-            )}
-
-            {submission.adminRemarks && (
-              <div className="mt-2 p-3 bg-muted rounded-md">
-                <p className="text-sm font-medium mb-1">Admin Remarks:</p>
-                <p className="text-sm">{submission.adminRemarks}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+      {editingSubmissionData && (
+        <UserEditSubmissionDialog
+          submission={editingSubmissionData}
+          open={!!editingSubmission}
+          onOpenChange={(open) => !open && setEditingSubmission(null)}
+        />
+      )}
+    </>
   );
 }

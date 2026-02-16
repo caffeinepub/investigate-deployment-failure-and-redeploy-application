@@ -1,26 +1,63 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
-  "known_issues": [
-    "Admin login redirects to user dashboard for admin account (admin role/permissions not recognized); requires restoring admin privileges for yeetmusictamil@gmail.com and rebuilding/redeploying."
+  "summary": "Implement an Admin-controlled Verified Artist (Pro) benefits system for the website/app: users can apply, admin is notified and manages activation/expiry/extension; verified users get badge/status changes, priority handling, and podcast submission access.",
+  "architectural_notes": [
+    "Verified Artist status auto-expires 30 days after activation date; admin can extend expiry.",
+    "Monthly charge ₹200 is informational only (no payment integration).",
+    "Admin dashboard should include notifications/alerts plus a dedicated Verification List panel showing applicants’ full names.",
+    "Verified Artist benefits UI is shown only to non-verified users; it disappears after activation; on expiry show Renew message and Renew button.",
+    "Verified users are marked as Pro; Pro song submissions are prioritized in the admin submission list; only verified users can submit podcasts."
   ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Blue verified tick badge, transparent background (blue-tick-badge-transparent.dim_24x24.png)",
   "existing_features": [
     {
-      "id": "feature-fix-frontend-post-login-navigation-so-that-admins-are-routed-to-admin-dashboard-instead-of-always-being-routed-to-user-dashboard",
-      "title": "Fix frontend post-login navigation so that admins are routed to \"/admin-dashboard\" instead of always being routed to \"/user-dashboard\".",
+      "id": "feature-prioritize-pro-verified-artist-users-song-submissions-to-appear-first-in-the-admin-song-submission-list-while-keeping-existing-sorting-stable-for-submissions-within-the-same-priority-group",
+      "title": "Prioritize Pro (Verified Artist) users' song submissions to appear first in the Admin song submission list, while keeping existing sorting stable for submissions within the same priority group.",
       "reqIds": [
-        "REQ-2"
+        "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-frontend-route-protection-for-the-admin-dashboard-page-so-that-non-admin-users-who-navigate-to-admin-dashboard-are-redirected-to-user-dashboard-and-are-shown-a-clear-english-error-toast-message-indicating-they-are-not-authorized",
-      "title": "Add frontend route protection for the Admin Dashboard page so that non-admin users who navigate to \"/admin-dashboard\" are redirected to \"/user-dashboard\" (and are shown a clear English error/toast message indicating they are not authorized).",
+      "id": "feature-add-a-user-dashboard-section-that-displays-verified-artist-benefits-only-for-non-verified-users-includes-the-informational-monthly-charge-200-lists-the-benefits-in-english-and-provides-an-apply-for-verification-button-under-the-benefits-section",
+      "title": "Add a user dashboard section that displays 'Verified Artist benefits' only for non-verified users, includes the informational monthly charge (₹200), lists the benefits in English, and provides an 'Apply for verification' button under the benefits section.",
       "reqIds": [
-        "REQ-3"
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-when-a-user-s-verified-artist-status-is-expired-show-a-renew-verified-artist-message-and-a-renew-button-in-the-user-dashboard-the-renew-action-should-create-refresh-a-verification-request-for-admin-review-no-payment-integration",
+      "title": "When a user's Verified Artist status is expired, show a 'Renew Verified Artist' message and a 'Renew' button in the user dashboard; the Renew action should create/refresh a verification request for admin review (no payment integration).",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-admin-dashboard-panel-tab-for-verification-list-that-a-shows-all-users-who-applied-for-verification-with-their-full-name-and-request-details-and-b-provides-an-in-dashboard-notification-alert-when-there-are-pending-requests",
+      "title": "Add an Admin Dashboard panel/tab for 'Verification List' that (a) shows all users who applied for verification with their full name and request details, and (b) provides an in-dashboard notification/alert when there are pending requests.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-verified-badge-ui-so-the-current-green-verified-badge-becomes-a-blue-verified-badge-for-verified-users-and-ensure-verified-users-are-visually-differentiated-as-pro-users-in-user-facing-surfaces-where-the-badge-is-shown",
+      "title": "Update the verified badge UI so the current green verified badge becomes a blue verified badge for verified users, and ensure verified users are visually differentiated as Pro users in user-facing surfaces where the badge is shown.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-frontend-react-query-hooks-and-ui-state-wiring-for-verified-artist-status-verification-requests-user-and-admin-following-the-existing-query-key-invalidation-patterns-used-for-submissions-and-podcast-features",
+      "title": "Add frontend React Query hooks and UI state wiring for Verified Artist status + verification requests (user and admin), following the existing query-key + invalidation patterns used for submissions and podcast features.",
+      "reqIds": [
+        "REQ-9"
       ],
       "version": 1
     }
@@ -28,14 +65,36 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Restore administrator recognition for the account associated with the email address \"yeetmusictamil@gmail.com\" so that this account is treated as an admin by the backend authorization layer (i.e., AccessControl.isAdmin returns true for that user’s Principal after they authenticate).",
+      "summary": "Admin-controlled Verified Artist (Pro) system: user can apply; admin notified + verification list panel; admin activates/extends; auto-expire after 30 days; non-verified see benefits + Apply button; verified hides benefits; expired shows Renew message + Renew button; monthly charge ₹200 informational only; green->blue badge; mark as Pro; Pro song submissions prioritized in admin list; only verified can submit podcasts; priority distribution 24–48h; custom label name option.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Implement backend data model and APIs for Verified Artist (Pro) status that is admin-activated, lasts 30 days from activation, auto-expires after 30 days, and supports admin extension of the expiry date.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Implement backend workflow for user 'Apply for verification' requests and admin visibility, including returning the applicant's full name in the admin list.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Restrict podcast submission to Verified Artist (Pro) users only, enforced on the backend for both podcast show creation and episode creation.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
     }
   ],
-  "projectName": "Fix admin login routing and restore admin privileges for yeetmusictamil@gmail.com",
+  "projectName": "Admin-controlled Verified Artist (Pro) benefits with verification requests, expiry, badge, and podcast gating",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

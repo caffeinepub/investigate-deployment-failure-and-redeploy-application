@@ -1,25 +1,103 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-12T16:28:13.513Z",
-  "summary": "Frontend changes implement admin-aware post-login routing from the Landing Page and add route protection on the Admin Dashboard with an English toast + redirect. Backend changes are present but the provided diff excerpt for backend/main.mo does not contain evidence of restoring admin privileges for the specified account or ensuring persistence across upgrades.",
+  "generatedAt": "2026-02-15T02:30:25.819Z",
+  "summary": "Frontend UI for verification benefits/renewal and an admin verification list panel was added, along with a new reusable blue VerifiedBadge component. However, core backend functionality (verified status model/APIs, verification request workflow, podcast gating, and admin submissions prioritization derived from backend state) is not evidenced in the diff summary, and React Query wiring appears incomplete/placeholder. Some unrelated UI/routing/footer changes were also introduced.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Restore administrator recognition for the account associated with the email address \"yeetmusictamil@gmail.com\" so that this account is treated as an admin by the backend authorization layer (and admin status persists across upgrades, with migration if needed).",
-      "reason": "backend/main.mo is modified but the truncated snippet only shows imports and type definitions; there is no visible change demonstrating that AccessControl.isAdmin (or equivalent) is restored for the target Principal, nor any visible upgrade-persistence or migration logic.",
+      "requirement": "Backend data model + APIs for admin-activated Verified Artist status (30-day duration, auto-expiry, admin extension) and a query API returning active/expired + expiry datetime, enforced by backend logic.",
+      "reason": "The diff summary does not show any new verified-status storage or public actor methods for activate/extend/query, nor expiry enforcement logic. `backend/main.mo` is truncated and the frontend explicitly indicates backend gaps.",
       "evidence": [
-        "backend/main.mo"
+        "frontend/src/components/AdminSubmissionsList.tsx (comment: \"Backend gap: Need a way to check if submitter is verified\")",
+        "frontend/src/hooks/useQueries.ts (frontend-file-summaries.txt notes: \"new Verified Artist (Pro) queries/mutations with placeholder implementations awaiting backend API completion\")",
+        "backend/main.mo (truncated; no evidenced verified-status APIs in shown excerpt)"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Backend workflow for user 'Apply for verification' requests + admin list including applicant full name, idempotent repeat applies, and admin status updates (pending/approved/rejected).",
+      "reason": "Although types appear in `backend/migration.mo`, the diff summary does not evidence corresponding backend actor APIs (submit apply, list for admin with full name, update status) being implemented and exposed.",
+      "evidence": [
+        "backend/migration.mo (defines VerificationRequest/VerificationStatus types only)",
+        "backend/main.mo (truncated; no evidenced verification request APIs in shown excerpt)",
+        "frontend/src/hooks/useQueries.ts (frontend-file-summaries.txt: \"placeholder implementations awaiting backend API completion\")"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Backend-enforced restriction: reject createPodcastShow and createPodcastEpisode for non-active (or expired) Verified Artist users with clear errors.",
+      "reason": "No backend changes are evidenced that add verified checks to podcast creation APIs; `backend/main.mo` excerpt does not show podcast methods or gating logic.",
+      "evidence": [
+        "backend/main.mo (truncated; no evidenced podcast gating logic in shown excerpt)",
+        "frontend/src/hooks/useQueries.ts (no evidenced backend enforcement; summary indicates verified APIs are placeholders)"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Admin song submissions list prioritizes currently Verified Artist users first, stable ordering within verified/non-verified groups, derived from backend verified state.",
+      "reason": "Admin submissions sorting remains timestamp-only; the code explicitly states it cannot determine Pro status from backend and uses a placeholder sort.",
+      "evidence": [
+        "frontend/src/components/AdminSubmissionsList.tsx (sortedSubmissions useMemo: placeholder sort by timestamp; comment \"For now, we cannot determine Pro status from backend\")"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "requirement": "Replace the current green verified badge with the required blue badge across user-facing surfaces where the badge is shown, using the provided static asset and English alt/tooltip indicating verified/pro.",
+      "reason": "A new blue `VerifiedBadge` component is added, but the diff summary indicates the header still displays the green badge and has no verification badge dependency updates.",
+      "evidence": [
+        "frontend/src/components/VerifiedBadge.tsx (new blue badge component)",
+        "frontend-file-summaries.txt (Header.tsx: \"Application header displaying the first artist profile with green badge, ... without verification badge dependencies.\")"
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "requirement": "Add React Query queries/mutations for verified status and verification requests (user/admin) with proper invalidation after apply/renew/admin actions.",
+      "reason": "The diff summary notes that the new Verified Artist queries/mutations are placeholder implementations awaiting backend API completion, so the end-to-end wiring (including correct invalidations and working backend calls) is not evidenced as complete.",
+      "evidence": [
+        "frontend-file-summaries.txt (useQueries.ts: \"new Verified Artist (Pro) queries/mutations with placeholder implementations awaiting backend API completion.\")",
+        "frontend/src/hooks/useQueries.ts (truncated; verified-related hooks not evidenced in the shown excerpt)"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.62,
+  "hallucinated_features": [
+    {
+      "description": "Added a new /thank-you route and related navigation behavior.",
+      "reason": "Not requested by the BuildRequest (verification system scope only).",
+      "evidence": [
+        "frontend-file-summaries.txt (App.tsx: \"routing including new /thank-you route\")",
+        "frontend-file-summaries.txt (SongSubmissionForm.tsx: \"navigation to thank you page on success\")"
+      ]
+    },
+    {
+      "description": "Footer rebranding/content changes (removed attribution/logo; added 'Need Help?' contact section).",
+      "reason": "Not requested as part of the Verified Artist (Pro) system requirements.",
+      "evidence": [
+        "frontend-file-summaries.txt (Footer.tsx summary)"
+      ]
+    },
+    {
+      "description": "Profile setup modal and landing-page post-login routing changes not directly tied to verification features.",
+      "reason": "Not requested by the verification-focused BuildRequest.",
+      "evidence": [
+        "frontend-file-summaries.txt (ProfileSetupModal.tsx summary)",
+        "frontend-file-summaries.txt (LandingPage.tsx summary)"
+      ]
+    }
+  ],
+  "confidence": 0.74,
   "changed_files": [
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
+    "frontend/src/components/AdminSubmissionsList.tsx",
+    "frontend/src/components/AdminVerificationList.tsx",
+    "frontend/src/components/VerificationBenefitsSection.tsx",
+    "frontend/src/components/VerificationRenewalSection.tsx",
+    "frontend/src/components/VerifiedBadge.tsx",
+    "frontend/src/hooks/useQueries.ts",
     "frontend/src/pages/AdminDashboard.tsx",
-    "frontend/src/pages/LandingPage.tsx",
+    "frontend/src/pages/UserDashboard.tsx",
     "project_state.json"
   ]
 }

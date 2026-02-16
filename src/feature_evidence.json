@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-frontend-post-login-navigation-so-that-admins-are-routed-to-admin-dashboard-instead-of-always-being-routed-to-user-dashboard",
-      "featureTitle": "Fix frontend post-login navigation so that admins are routed to \"/admin-dashboard\" instead of always being routed to \"/user-dashboard\".",
+      "featureId": "feature-prioritize-pro-verified-artist-users-song-submissions-to-appear-first-in-the-admin-song-submission-list-while-keeping-existing-sorting-stable-for-submissions-within-the-same-priority-group",
+      "featureTitle": "Prioritize Pro (Verified Artist) users' song submissions to appear first in the Admin song submission list, while keeping existing sorting stable for submissions within the same priority group.",
       "files": [
-        "frontend/src/pages/LandingPage.tsx"
+        "frontend/src/components/AdminSubmissionsList.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -21,14 +22,68 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
+        "REQ-4"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-frontend-route-protection-for-the-admin-dashboard-page-so-that-non-admin-users-who-navigate-to-admin-dashboard-are-redirected-to-user-dashboard-and-are-shown-a-clear-english-error-toast-message-indicating-they-are-not-authorized",
-      "featureTitle": "Add frontend route protection for the Admin Dashboard page so that non-admin users who navigate to \"/admin-dashboard\" are redirected to \"/user-dashboard\" (and are shown a clear English error/toast message indicating they are not authorized).",
+      "featureId": "feature-add-a-user-dashboard-section-that-displays-verified-artist-benefits-only-for-non-verified-users-includes-the-informational-monthly-charge-200-lists-the-benefits-in-english-and-provides-an-apply-for-verification-button-under-the-benefits-section",
+      "featureTitle": "Add a user dashboard section that displays 'Verified Artist benefits' only for non-verified users, includes the informational monthly charge (₹200), lists the benefits in English, and provides an 'Apply for verification' button under the benefits section.",
       "files": [
+        "frontend/src/components/VerificationBenefitsSection.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/UserDashboard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-when-a-user-s-verified-artist-status-is-expired-show-a-renew-verified-artist-message-and-a-renew-button-in-the-user-dashboard-the-renew-action-should-create-refresh-a-verification-request-for-admin-review-no-payment-integration",
+      "featureTitle": "When a user's Verified Artist status is expired, show a 'Renew Verified Artist' message and a 'Renew' button in the user dashboard; the Renew action should create/refresh a verification request for admin review (no payment integration).",
+      "files": [
+        "frontend/src/components/VerificationRenewalSection.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/UserDashboard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-an-admin-dashboard-panel-tab-for-verification-list-that-a-shows-all-users-who-applied-for-verification-with-their-full-name-and-request-details-and-b-provides-an-in-dashboard-notification-alert-when-there-are-pending-requests",
+      "featureTitle": "Add an Admin Dashboard panel/tab for 'Verification List' that (a) shows all users who applied for verification with their full name and request details, and (b) provides an in-dashboard notification/alert when there are pending requests.",
+      "files": [
+        "frontend/src/components/AdminVerificationList.tsx",
+        "frontend/src/hooks/useQueries.ts",
         "frontend/src/pages/AdminDashboard.tsx"
       ],
       "components": [
@@ -45,7 +100,57 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-verified-badge-ui-so-the-current-green-verified-badge-becomes-a-blue-verified-badge-for-verified-users-and-ensure-verified-users-are-visually-differentiated-as-pro-users-in-user-facing-surfaces-where-the-badge-is-shown",
+      "featureTitle": "Update the verified badge UI so the current green verified badge becomes a blue verified badge for verified users, and ensure verified users are visually differentiated as Pro users in user-facing surfaces where the badge is shown.",
+      "files": [
+        "frontend/src/components/VerifiedBadge.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-frontend-react-query-hooks-and-ui-state-wiring-for-verified-artist-status-verification-requests-user-and-admin-following-the-existing-query-key-invalidation-patterns-used-for-submissions-and-podcast-features",
+      "featureTitle": "Add frontend React Query hooks and UI state wiring for Verified Artist status + verification requests (user and admin), following the existing query-key + invalidation patterns used for submissions and podcast features.",
+      "files": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/AdminDashboard.tsx",
+        "frontend/src/pages/UserDashboard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
       ],
       "confidence": "high"
     }

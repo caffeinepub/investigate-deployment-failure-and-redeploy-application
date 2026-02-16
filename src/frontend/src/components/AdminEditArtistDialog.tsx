@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useAdminEditArtistProfileById } from '../hooks/useQueries';
+import { useAdminEditArtistProfile } from '../hooks/useQueries';
 import { ArtistProfile, ExternalBlob } from '../backend';
 import { Upload, User } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -25,6 +25,7 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
     facebookLink: artistProfile.facebookLink,
     spotifyProfile: artistProfile.spotifyProfile,
     appleProfile: artistProfile.appleProfile,
+    youtubeChannelLink: artistProfile.youtubeChannelLink,
   });
 
   const [hasSpotifyProfile, setHasSpotifyProfile] = useState(!!artistProfile.spotifyProfile);
@@ -34,7 +35,7 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
   const [photoPreview, setPhotoPreview] = useState<string>(artistProfile.profilePhoto.getDirectURL());
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  const editArtistProfile = useAdminEditArtistProfileById();
+  const editArtistProfile = useAdminEditArtistProfile();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -71,17 +72,20 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
 
     try {
       let profilePhotoBlob = artistProfile.profilePhoto;
+      let profilePhotoFilename = artistProfile.profilePhotoFilename;
 
       if (profilePhotoFile) {
         const photoBytes = new Uint8Array(await profilePhotoFile.arrayBuffer());
         profilePhotoBlob = ExternalBlob.fromBytes(photoBytes).withUploadProgress((percentage) => {
           setUploadProgress(percentage);
         });
+        profilePhotoFilename = profilePhotoFile.name;
       }
 
       const profileInput = {
         ...formData,
         profilePhoto: profilePhotoBlob,
+        profilePhotoFilename,
         isApproved: artistProfile.isApproved,
       };
 
@@ -215,6 +219,16 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
                 id="facebookLink"
                 value={formData.facebookLink}
                 onChange={(e) => handleInputChange('facebookLink', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="youtubeChannelLink">YouTube Channel Link</Label>
+              <Input
+                id="youtubeChannelLink"
+                value={formData.youtubeChannelLink}
+                onChange={(e) => handleInputChange('youtubeChannelLink', e.target.value)}
+                placeholder="https://youtube.com/..."
               />
             </div>
           </div>

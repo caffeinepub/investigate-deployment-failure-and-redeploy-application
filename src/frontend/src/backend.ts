@@ -99,9 +99,24 @@ export interface ArtistProfile {
     mobileNumber: string;
     email: string;
     spotifyProfile: string;
+    youtubeChannelLink: string;
     facebookLink: string;
     appleProfile: string;
+    profilePhotoFilename: string;
     stageName: string;
+}
+export interface PodcastShow {
+    id: string;
+    podcastType: PodcastType;
+    title: string;
+    createdBy: Principal;
+    description: string;
+    artwork: ExternalBlob;
+    language: Language;
+    moderationStatus: PodcastModerationStatus;
+    timestamp: Time;
+    category: PodcastCategory;
+    liveLink?: string;
 }
 export interface TransformationOutput {
     status: bigint;
@@ -109,26 +124,19 @@ export interface TransformationOutput {
     headers: Array<http_header>;
 }
 export type Time = bigint;
-export interface SubmitSongInput {
-    artworkBlob: ExternalBlob;
-    albumTracks?: Array<TrackMetadata>;
+export interface PodcastEpisodeInput {
+    isPromotional: boolean;
     title: string;
-    additionalDetails: string;
-    lyricist: string;
-    publicLink?: string;
-    discountCode?: string;
-    artworkFilename: string;
-    audioBlob: ExternalBlob;
-    liveStreamLink?: string;
-    audioFilename: string;
-    language: string;
-    composer: string;
-    genre: string;
-    artist: string;
-    producer: string;
-    releaseDate: Time;
-    releaseType: string;
-    featuredArtist: string;
+    isEighteenPlus: boolean;
+    thumbnail: ExternalBlob;
+    showId: string;
+    description: string;
+    artwork: ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: EpisodeType;
+    mediaFile: ExternalBlob;
+    isExplicit: boolean;
 }
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
@@ -137,14 +145,26 @@ export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
 }
-export interface http_header {
-    value: string;
-    name: string;
-}
-export interface http_request_result {
-    status: bigint;
-    body: Uint8Array;
-    headers: Array<http_header>;
+export interface SongSubmissionEditInput {
+    artworkBlob: ExternalBlob;
+    albumTracks?: Array<TrackMetadata>;
+    title: string;
+    additionalDetails: string;
+    lyricist: string;
+    discountCode?: string;
+    songSubmissionId: string;
+    artworkFilename: string;
+    audioFile: ExternalBlob;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    genre: string;
+    musicVideoLink?: string;
+    artist: string;
+    producer: string;
+    releaseDate: Time;
+    releaseType: string;
+    featuredArtist: string;
 }
 export interface SaveArtistProfileInput {
     isApproved: boolean;
@@ -154,26 +174,11 @@ export interface SaveArtistProfileInput {
     mobileNumber: string;
     email: string;
     spotifyProfile: string;
+    youtubeChannelLink: string;
     facebookLink: string;
     appleProfile: string;
+    profilePhotoFilename: string;
     stageName: string;
-}
-export interface UserApprovalInfo {
-    status: ApprovalStatus;
-    principal: Principal;
-}
-export interface RSVP {
-    name: string;
-    inviteCode: string;
-    timestamp: Time;
-    attending: boolean;
-}
-export interface ShoppingItem {
-    productName: string;
-    currency: string;
-    quantity: bigint;
-    priceInCents: bigint;
-    productDescription: string;
 }
 export interface InviteCode {
     created: Time;
@@ -183,10 +188,6 @@ export interface InviteCode {
 export interface TransformationInput {
     context: Uint8Array;
     response: http_request_result;
-}
-export interface ACRResult {
-    music: string;
-    statusCode: string;
 }
 export interface TrackMetadata {
     title: string;
@@ -214,10 +215,87 @@ export interface StripeConfiguration {
     allowedCountries: Array<string>;
     secretKey: string;
 }
+export interface PodcastShowInput {
+    podcastType: PodcastType;
+    title: string;
+    description: string;
+    artwork: ExternalBlob;
+    language: Language;
+    category: PodcastCategory;
+}
+export interface http_header {
+    value: string;
+    name: string;
+}
+export interface http_request_result {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
+export interface RSVP {
+    name: string;
+    inviteCode: string;
+    timestamp: Time;
+    attending: boolean;
+}
+export interface UserApprovalInfo {
+    status: ApprovalStatus;
+    principal: Principal;
+}
+export interface PodcastEpisode {
+    id: string;
+    isPromotional: boolean;
+    title: string;
+    isEighteenPlus: boolean;
+    thumbnail: ExternalBlob;
+    showId: string;
+    createdBy: Principal;
+    description: string;
+    artwork: ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: EpisodeType;
+    moderationStatus: PodcastModerationStatus;
+    mediaFile: ExternalBlob;
+    timestamp: Time;
+    isExplicit: boolean;
+}
+export interface ShoppingItem {
+    productName: string;
+    currency: string;
+    quantity: bigint;
+    priceInCents: bigint;
+    productDescription: string;
+}
+export interface SongSubmissionInput {
+    artworkBlob: ExternalBlob;
+    albumTracks?: Array<TrackMetadata>;
+    title: string;
+    additionalDetails: string;
+    lyricist: string;
+    discountCode?: string;
+    artworkFilename: string;
+    audioBlob: ExternalBlob;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    genre: string;
+    musicVideoLink?: string;
+    artist: string;
+    producer: string;
+    releaseDate: Time;
+    releaseType: string;
+    featuredArtist: string;
+}
+export interface ACRResult {
+    music: string;
+    statusCode: string;
+}
 export interface SongSubmission {
     id: string;
     status: SongStatus;
     albumTracks?: Array<TrackMetadata>;
+    adminLiveLink?: string;
     title: string;
     preSaveLink?: string;
     additionalDetails: string;
@@ -234,11 +312,13 @@ export interface SongSubmission {
     composer: string;
     adminComment: string;
     genre: string;
+    musicVideoLink?: string;
     timestamp: Time;
     artist: string;
     acrResult?: ACRResult;
     producer: string;
     releaseDate: Time;
+    isManuallyRejected: boolean;
     releaseType: string;
     adminRemarks: string;
     featuredArtist: string;
@@ -255,6 +335,50 @@ export enum ApprovalStatus {
     pending = "pending",
     approved = "approved",
     rejected = "rejected"
+}
+export enum EpisodeType {
+    full = "full",
+    trailer = "trailer",
+    bonus = "bonus"
+}
+export enum Language {
+    tamil = "tamil",
+    hindi = "hindi",
+    other = "other",
+    marathi = "marathi",
+    gujarati = "gujarati",
+    punjabi = "punjabi",
+    malayalam = "malayalam",
+    kannada = "kannada",
+    telugu = "telugu",
+    bengali = "bengali",
+    english = "english"
+}
+export enum PodcastCategory {
+    kidsFamily = "kidsFamily",
+    music = "music",
+    newsPolitics = "newsPolitics",
+    other = "other",
+    arts = "arts",
+    education = "education",
+    religionSpirituality = "religionSpirituality",
+    healthFitness = "healthFitness",
+    tvFilm = "tvFilm",
+    technology = "technology",
+    business = "business",
+    sports = "sports",
+    comedy = "comedy",
+    science = "science"
+}
+export enum PodcastModerationStatus {
+    pending = "pending",
+    live = "live",
+    approved = "approved",
+    rejected = "rejected"
+}
+export enum PodcastType {
+    audio = "audio",
+    video = "video"
 }
 export enum SongStatus {
     pending = "pending",
@@ -279,41 +403,71 @@ export interface backendInterface {
     adminDeleteArtistProfile(id: string): Promise<void>;
     adminDeleteSubmission(id: string): Promise<void>;
     adminEditArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
+    adminEditSubmission(input: SongSubmissionEditInput): Promise<void>;
+    adminSetSubmissionLive(id: string, liveUrl: string, adminRemarks: string, adminComment: string): Promise<void>;
     adminUpdateSubmission(id: string, status: SongStatus, adminRemarks: string, adminComment: string): Promise<void>;
+    approveEpisode(id: string): Promise<void>;
+    approvePodcast(id: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    blockUser(user: Principal): Promise<void>;
     createArtistProfile(input: SaveArtistProfileInput): Promise<string>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
+    createPodcastEpisode(input: PodcastEpisodeInput): Promise<string>;
+    createPodcastShow(input: PodcastShowInput): Promise<string>;
     deleteArtistProfile(id: string): Promise<void>;
+    downgradeTeamMember(user: Principal): Promise<void>;
+    editSongSubmission(input: SongSubmissionEditInput): Promise<void>;
     generateInviteCode(): Promise<string>;
     getAllArtistProfileOwnersForAdmin(): Promise<Array<Principal>>;
     getAllArtistProfilesForAdmin(): Promise<Array<ArtistProfile>>;
+    getAllBlockedUsers(): Promise<Array<Principal>>;
+    getAllEpisodes(): Promise<Array<PodcastEpisode>>;
+    getAllPendingEpisodes(): Promise<Array<PodcastEpisode>>;
+    getAllPendingPodcasts(): Promise<Array<PodcastShow>>;
+    getAllPodcasts(): Promise<Array<PodcastShow>>;
     getAllRSVPs(): Promise<Array<RSVP>>;
     getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
+    getAllTeamMembers(): Promise<Array<Principal>>;
     getArtistProfileEditingAccessStatus(): Promise<boolean>;
     getArtistProfilesByUserForAdmin(user: Principal): Promise<Array<ArtistProfile>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getEpisodesByShowId(showId: string): Promise<Array<PodcastEpisode>>;
     getInviteCodes(): Promise<Array<InviteCode>>;
     getMyArtistProfiles(): Promise<Array<ArtistProfile>>;
+    getMyEpisodes(showId: string): Promise<Array<PodcastEpisode>>;
+    getMyPodcastShows(): Promise<Array<PodcastShow>>;
     getMySubmissions(): Promise<Array<SongSubmission>>;
+    getPodcastsByCategory(category: PodcastCategory): Promise<Array<PodcastShow>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getWebsiteLogo(): Promise<ExternalBlob | null>;
     isArtistProfileEditingEnabled(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     isCallerApproved(): Promise<boolean>;
     isStripeConfigured(): Promise<boolean>;
+    isUserBlocked(user: Principal): Promise<boolean>;
+    isUserTeamMember(user: Principal): Promise<boolean>;
     listApprovals(): Promise<Array<UserApprovalInfo>>;
+    markEpisodeLive(id: string): Promise<void>;
+    markPodcastLive(id: string, liveLink: string): Promise<void>;
+    rejectEpisode(id: string): Promise<void>;
+    rejectPodcast(id: string): Promise<void>;
+    removeWebsiteLogo(): Promise<void>;
     requestApproval(): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setApproval(user: Principal, status: ApprovalStatus): Promise<void>;
     setArtistProfileEditingAccess(enabled: boolean): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
+    setWebsiteLogo(logo: ExternalBlob): Promise<void>;
     submitRSVP(name: string, attending: boolean, inviteCode: string): Promise<void>;
-    submitSong(input: SubmitSongInput): Promise<string>;
+    submitSong(input: SongSubmissionInput): Promise<string>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
+    unblockUser(user: Principal): Promise<void>;
     updateArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
+    upgradeUserToTeamMember(user: Principal): Promise<void>;
 }
-import type { ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, ExternalBlob as _ExternalBlob, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, StripeSessionStatus as _StripeSessionStatus, SubmitSongInput as _SubmitSongInput, Time as _Time, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, EpisodeType as _EpisodeType, ExternalBlob as _ExternalBlob, Language as _Language, PodcastCategory as _PodcastCategory, PodcastEpisode as _PodcastEpisode, PodcastEpisodeInput as _PodcastEpisodeInput, PodcastModerationStatus as _PodcastModerationStatus, PodcastShow as _PodcastShow, PodcastShowInput as _PodcastShowInput, PodcastType as _PodcastType, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, SongSubmissionEditInput as _SongSubmissionEditInput, SongSubmissionInput as _SongSubmissionInput, StripeSessionStatus as _StripeSessionStatus, Time as _Time, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -456,31 +610,101 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async adminUpdateSubmission(arg0: string, arg1: SongStatus, arg2: string, arg3: string): Promise<void> {
+    async adminEditSubmission(arg0: SongSubmissionEditInput): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.adminUpdateSubmission(arg0, to_candid_SongStatus_n11(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+                const result = await this.actor.adminEditSubmission(await to_candid_SongSubmissionEditInput_n11(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.adminUpdateSubmission(arg0, to_candid_SongStatus_n11(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+            const result = await this.actor.adminEditSubmission(await to_candid_SongSubmissionEditInput_n11(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async adminSetSubmissionLive(arg0: string, arg1: string, arg2: string, arg3: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminSetSubmissionLive(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminSetSubmissionLive(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async adminUpdateSubmission(arg0: string, arg1: SongStatus, arg2: string, arg3: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminUpdateSubmission(arg0, to_candid_SongStatus_n16(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminUpdateSubmission(arg0, to_candid_SongStatus_n16(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+            return result;
+        }
+    }
+    async approveEpisode(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.approveEpisode(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.approveEpisode(arg0);
+            return result;
+        }
+    }
+    async approvePodcast(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.approvePodcast(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.approvePodcast(arg0);
             return result;
         }
     }
     async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n13(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n18(this._uploadFile, this._downloadFile, arg1));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n13(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n18(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async blockUser(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.blockUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.blockUser(arg0);
             return result;
         }
     }
@@ -512,6 +736,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async createPodcastEpisode(arg0: PodcastEpisodeInput): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createPodcastEpisode(await to_candid_PodcastEpisodeInput_n20(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createPodcastEpisode(await to_candid_PodcastEpisodeInput_n20(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async createPodcastShow(arg0: PodcastShowInput): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createPodcastShow(await to_candid_PodcastShowInput_n24(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createPodcastShow(await to_candid_PodcastShowInput_n24(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
     async deleteArtistProfile(arg0: string): Promise<void> {
         if (this.processError) {
             try {
@@ -523,6 +775,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.deleteArtistProfile(arg0);
+            return result;
+        }
+    }
+    async downgradeTeamMember(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.downgradeTeamMember(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.downgradeTeamMember(arg0);
+            return result;
+        }
+    }
+    async editSongSubmission(arg0: SongSubmissionEditInput): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.editSongSubmission(await to_candid_SongSubmissionEditInput_n11(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.editSongSubmission(await to_candid_SongSubmissionEditInput_n11(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -558,14 +838,84 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getAllArtistProfilesForAdmin();
-                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n32(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getAllArtistProfilesForAdmin();
-            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n32(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllBlockedUsers(): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllBlockedUsers();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllBlockedUsers();
+            return result;
+        }
+    }
+    async getAllEpisodes(): Promise<Array<PodcastEpisode>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllEpisodes();
+                return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllEpisodes();
+            return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllPendingEpisodes(): Promise<Array<PodcastEpisode>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPendingEpisodes();
+                return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPendingEpisodes();
+            return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllPendingPodcasts(): Promise<Array<PodcastShow>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPendingPodcasts();
+                return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPendingPodcasts();
+            return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllPodcasts(): Promise<Array<PodcastShow>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPodcasts();
+                return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPodcasts();
+            return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
         }
     }
     async getAllRSVPs(): Promise<Array<RSVP>> {
@@ -586,14 +936,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getAllSubmissionsForAdmin();
-                return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n53(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getAllSubmissionsForAdmin();
-            return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n53(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllTeamMembers(): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllTeamMembers();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllTeamMembers();
+            return result;
         }
     }
     async getArtistProfileEditingAccessStatus(): Promise<boolean> {
@@ -614,42 +978,56 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getArtistProfilesByUserForAdmin(arg0);
-                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n32(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getArtistProfilesByUserForAdmin(arg0);
-            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n32(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserProfile(): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n63(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n63(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n31(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n64(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n31(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n64(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getEpisodesByShowId(arg0: string): Promise<Array<PodcastEpisode>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getEpisodesByShowId(arg0);
+                return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getEpisodesByShowId(arg0);
+            return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
         }
     }
     async getInviteCodes(): Promise<Array<InviteCode>> {
@@ -670,56 +1048,112 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getMyArtistProfiles();
-                return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n32(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getMyArtistProfiles();
-            return from_candid_vec_n15(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n32(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMyEpisodes(arg0: string): Promise<Array<PodcastEpisode>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMyEpisodes(arg0);
+                return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMyEpisodes(arg0);
+            return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMyPodcastShows(): Promise<Array<PodcastShow>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMyPodcastShows();
+                return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMyPodcastShows();
+            return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
         }
     }
     async getMySubmissions(): Promise<Array<SongSubmission>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getMySubmissions();
-                return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n53(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getMySubmissions();
-            return from_candid_vec_n19(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n53(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getPodcastsByCategory(arg0: PodcastCategory): Promise<Array<PodcastShow>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPodcastsByCategory(to_candid_PodcastCategory_n30(this._uploadFile, this._downloadFile, arg0));
+                return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPodcastsByCategory(to_candid_PodcastCategory_n30(this._uploadFile, this._downloadFile, arg0));
+            return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
         }
     }
     async getStripeSessionStatus(arg0: string): Promise<StripeSessionStatus> {
         if (this.processError) {
             try {
                 const result = await this.actor.getStripeSessionStatus(arg0);
-                return from_candid_StripeSessionStatus_n33(this._uploadFile, this._downloadFile, result);
+                return from_candid_StripeSessionStatus_n66(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getStripeSessionStatus(arg0);
-            return from_candid_StripeSessionStatus_n33(this._uploadFile, this._downloadFile, result);
+            return from_candid_StripeSessionStatus_n66(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n63(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n30(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n63(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getWebsiteLogo(): Promise<ExternalBlob | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getWebsiteLogo();
+                return from_candid_opt_n69(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getWebsiteLogo();
+            return from_candid_opt_n69(this._uploadFile, this._downloadFile, result);
         }
     }
     async isArtistProfileEditingEnabled(): Promise<boolean> {
@@ -778,18 +1212,116 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async isUserBlocked(arg0: Principal): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isUserBlocked(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isUserBlocked(arg0);
+            return result;
+        }
+    }
+    async isUserTeamMember(arg0: Principal): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isUserTeamMember(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isUserTeamMember(arg0);
+            return result;
+        }
+    }
     async listApprovals(): Promise<Array<UserApprovalInfo>> {
         if (this.processError) {
             try {
                 const result = await this.actor.listApprovals();
-                return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n70(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.listApprovals();
-            return from_candid_vec_n36(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n70(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async markEpisodeLive(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markEpisodeLive(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markEpisodeLive(arg0);
+            return result;
+        }
+    }
+    async markPodcastLive(arg0: string, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.markPodcastLive(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.markPodcastLive(arg0, arg1);
+            return result;
+        }
+    }
+    async rejectEpisode(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.rejectEpisode(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.rejectEpisode(arg0);
+            return result;
+        }
+    }
+    async rejectPodcast(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.rejectPodcast(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.rejectPodcast(arg0);
+            return result;
+        }
+    }
+    async removeWebsiteLogo(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.removeWebsiteLogo();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.removeWebsiteLogo();
+            return result;
         }
     }
     async requestApproval(): Promise<void> {
@@ -823,14 +1355,14 @@ export class Backend implements backendInterface {
     async setApproval(arg0: Principal, arg1: ApprovalStatus): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n41(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n75(this._uploadFile, this._downloadFile, arg1));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n41(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n75(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
@@ -862,6 +1394,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async setWebsiteLogo(arg0: ExternalBlob): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setWebsiteLogo(await to_candid_ExternalBlob_n10(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setWebsiteLogo(await to_candid_ExternalBlob_n10(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
     async submitRSVP(arg0: string, arg1: boolean, arg2: string): Promise<void> {
         if (this.processError) {
             try {
@@ -876,17 +1422,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async submitSong(arg0: SubmitSongInput): Promise<string> {
+    async submitSong(arg0: SongSubmissionInput): Promise<string> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitSong(await to_candid_SubmitSongInput_n43(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.submitSong(await to_candid_SongSubmissionInput_n77(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitSong(await to_candid_SubmitSongInput_n43(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.submitSong(await to_candid_SongSubmissionInput_n77(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -904,6 +1450,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async unblockUser(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.unblockUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.unblockUser(arg0);
+            return result;
+        }
+    }
     async updateArtistProfile(arg0: string, arg1: SaveArtistProfileInput): Promise<void> {
         if (this.processError) {
             try {
@@ -918,56 +1478,94 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async upgradeUserToTeamMember(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.upgradeUserToTeamMember(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.upgradeUserToTeamMember(arg0);
+            return result;
+        }
+    }
 }
-function from_candid_ApprovalStatus_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ApprovalStatus): ApprovalStatus {
+function from_candid_ApprovalStatus_n73(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ApprovalStatus): ApprovalStatus {
+    return from_candid_variant_n74(_uploadFile, _downloadFile, value);
+}
+async function from_candid_ArtistProfile_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ArtistProfile): Promise<ArtistProfile> {
+    return await from_candid_record_n34(_uploadFile, _downloadFile, value);
+}
+function from_candid_EpisodeType_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _EpisodeType): EpisodeType {
     return from_candid_variant_n40(_uploadFile, _downloadFile, value);
 }
-async function from_candid_ArtistProfile_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ArtistProfile): Promise<ArtistProfile> {
-    return await from_candid_record_n17(_uploadFile, _downloadFile, value);
-}
-async function from_candid_ExternalBlob_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
+async function from_candid_ExternalBlob_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
     return await _downloadFile(value);
 }
-function from_candid_SongStatus_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SongStatus): SongStatus {
-    return from_candid_variant_n23(_uploadFile, _downloadFile, value);
+function from_candid_Language_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Language): Language {
+    return from_candid_variant_n49(_uploadFile, _downloadFile, value);
 }
-async function from_candid_SongSubmission_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SongSubmission): Promise<SongSubmission> {
-    return await from_candid_record_n21(_uploadFile, _downloadFile, value);
+function from_candid_PodcastCategory_n50(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _PodcastCategory): PodcastCategory {
+    return from_candid_variant_n51(_uploadFile, _downloadFile, value);
 }
-function from_candid_StripeSessionStatus_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StripeSessionStatus): StripeSessionStatus {
-    return from_candid_variant_n34(_uploadFile, _downloadFile, value);
+async function from_candid_PodcastEpisode_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _PodcastEpisode): Promise<PodcastEpisode> {
+    return await from_candid_record_n38(_uploadFile, _downloadFile, value);
 }
-async function from_candid_TrackMetadata_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _TrackMetadata): Promise<TrackMetadata> {
-    return await from_candid_record_n27(_uploadFile, _downloadFile, value);
+function from_candid_PodcastModerationStatus_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _PodcastModerationStatus): PodcastModerationStatus {
+    return from_candid_variant_n42(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserApprovalInfo_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserApprovalInfo): UserApprovalInfo {
-    return from_candid_record_n38(_uploadFile, _downloadFile, value);
+async function from_candid_PodcastShow_n44(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _PodcastShow): Promise<PodcastShow> {
+    return await from_candid_record_n45(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n32(_uploadFile, _downloadFile, value);
+function from_candid_PodcastType_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _PodcastType): PodcastType {
+    return from_candid_variant_n47(_uploadFile, _downloadFile, value);
+}
+function from_candid_SongStatus_n56(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SongStatus): SongStatus {
+    return from_candid_variant_n57(_uploadFile, _downloadFile, value);
+}
+async function from_candid_SongSubmission_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SongSubmission): Promise<SongSubmission> {
+    return await from_candid_record_n55(_uploadFile, _downloadFile, value);
+}
+function from_candid_StripeSessionStatus_n66(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StripeSessionStatus): StripeSessionStatus {
+    return from_candid_variant_n67(_uploadFile, _downloadFile, value);
+}
+async function from_candid_TrackMetadata_n60(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _TrackMetadata): Promise<TrackMetadata> {
+    return await from_candid_record_n61(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserApprovalInfo_n71(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserApprovalInfo): UserApprovalInfo {
+    return from_candid_record_n72(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserRole_n64(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n65(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
-async function from_candid_opt_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [Array<_TrackMetadata>]): Promise<Array<TrackMetadata> | null> {
-    return value.length === 0 ? null : await from_candid_vec_n25(_uploadFile, _downloadFile, value[0]);
-}
-function from_candid_opt_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+function from_candid_opt_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ACRResult]): ACRResult | null {
-    return value.length === 0 ? null : value[0];
-}
-function from_candid_opt_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
-    return value.length === 0 ? null : value[0];
+async function from_candid_opt_n58(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [Array<_TrackMetadata>]): Promise<Array<TrackMetadata> | null> {
+    return value.length === 0 ? null : await from_candid_vec_n59(_uploadFile, _downloadFile, value[0]);
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
     return value.length === 0 ? null : value[0];
 }
+function from_candid_opt_n62(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ACRResult]): ACRResult | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n63(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : value[0];
+}
+async function from_candid_opt_n69(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExternalBlob]): Promise<ExternalBlob | null> {
+    return value.length === 0 ? null : await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value[0]);
+}
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
 }
-async function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: string;
     isApproved: boolean;
     instagramLink: string;
@@ -977,8 +1575,10 @@ async function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promi
     mobileNumber: string;
     email: string;
     spotifyProfile: string;
+    youtubeChannelLink: string;
     facebookLink: string;
     appleProfile: string;
+    profilePhotoFilename: string;
     stageName: string;
 }): Promise<{
     id: string;
@@ -990,8 +1590,10 @@ async function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promi
     mobileNumber: string;
     email: string;
     spotifyProfile: string;
+    youtubeChannelLink: string;
     facebookLink: string;
     appleProfile: string;
+    profilePhotoFilename: string;
     stageName: string;
 }> {
     return {
@@ -999,20 +1601,128 @@ async function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promi
         isApproved: value.isApproved,
         instagramLink: value.instagramLink,
         owner: value.owner,
-        profilePhoto: await from_candid_ExternalBlob_n18(_uploadFile, _downloadFile, value.profilePhoto),
+        profilePhoto: await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value.profilePhoto),
         fullName: value.fullName,
         mobileNumber: value.mobileNumber,
         email: value.email,
         spotifyProfile: value.spotifyProfile,
+        youtubeChannelLink: value.youtubeChannelLink,
         facebookLink: value.facebookLink,
         appleProfile: value.appleProfile,
+        profilePhotoFilename: value.profilePhotoFilename,
         stageName: value.stageName
     };
 }
-async function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: string;
+    isPromotional: boolean;
+    title: string;
+    isEighteenPlus: boolean;
+    thumbnail: _ExternalBlob;
+    showId: string;
+    createdBy: Principal;
+    description: string;
+    artwork: _ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: _EpisodeType;
+    moderationStatus: _PodcastModerationStatus;
+    mediaFile: _ExternalBlob;
+    timestamp: _Time;
+    isExplicit: boolean;
+}): Promise<{
+    id: string;
+    isPromotional: boolean;
+    title: string;
+    isEighteenPlus: boolean;
+    thumbnail: ExternalBlob;
+    showId: string;
+    createdBy: Principal;
+    description: string;
+    artwork: ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: EpisodeType;
+    moderationStatus: PodcastModerationStatus;
+    mediaFile: ExternalBlob;
+    timestamp: Time;
+    isExplicit: boolean;
+}> {
+    return {
+        id: value.id,
+        isPromotional: value.isPromotional,
+        title: value.title,
+        isEighteenPlus: value.isEighteenPlus,
+        thumbnail: await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value.thumbnail),
+        showId: value.showId,
+        createdBy: value.createdBy,
+        description: value.description,
+        artwork: await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value.artwork),
+        seasonNumber: value.seasonNumber,
+        episodeNumber: value.episodeNumber,
+        episodeType: from_candid_EpisodeType_n39(_uploadFile, _downloadFile, value.episodeType),
+        moderationStatus: from_candid_PodcastModerationStatus_n41(_uploadFile, _downloadFile, value.moderationStatus),
+        mediaFile: await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value.mediaFile),
+        timestamp: value.timestamp,
+        isExplicit: value.isExplicit
+    };
+}
+async function from_candid_record_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: string;
+    podcastType: _PodcastType;
+    title: string;
+    createdBy: Principal;
+    description: string;
+    artwork: _ExternalBlob;
+    language: _Language;
+    moderationStatus: _PodcastModerationStatus;
+    timestamp: _Time;
+    category: _PodcastCategory;
+    liveLink: [] | [string];
+}): Promise<{
+    id: string;
+    podcastType: PodcastType;
+    title: string;
+    createdBy: Principal;
+    description: string;
+    artwork: ExternalBlob;
+    language: Language;
+    moderationStatus: PodcastModerationStatus;
+    timestamp: Time;
+    category: PodcastCategory;
+    liveLink?: string;
+}> {
+    return {
+        id: value.id,
+        podcastType: from_candid_PodcastType_n46(_uploadFile, _downloadFile, value.podcastType),
+        title: value.title,
+        createdBy: value.createdBy,
+        description: value.description,
+        artwork: await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value.artwork),
+        language: from_candid_Language_n48(_uploadFile, _downloadFile, value.language),
+        moderationStatus: from_candid_PodcastModerationStatus_n41(_uploadFile, _downloadFile, value.moderationStatus),
+        timestamp: value.timestamp,
+        category: from_candid_PodcastCategory_n50(_uploadFile, _downloadFile, value.category),
+        liveLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.liveLink))
+    };
+}
+function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    success: [] | [boolean];
+    topped_up_amount: [] | [bigint];
+}): {
+    success?: boolean;
+    topped_up_amount?: bigint;
+} {
+    return {
+        success: record_opt_to_undefined(from_candid_opt_n6(_uploadFile, _downloadFile, value.success)),
+        topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
+    };
+}
+async function from_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: string;
     status: _SongStatus;
     albumTracks: [] | [Array<_TrackMetadata>];
+    adminLiveLink: [] | [string];
     title: string;
     preSaveLink: [] | [string];
     additionalDetails: string;
@@ -1029,11 +1739,13 @@ async function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promi
     composer: string;
     adminComment: string;
     genre: string;
+    musicVideoLink: [] | [string];
     timestamp: _Time;
     artist: string;
     acrResult: [] | [_ACRResult];
     producer: string;
     releaseDate: _Time;
+    isManuallyRejected: boolean;
     releaseType: string;
     adminRemarks: string;
     featuredArtist: string;
@@ -1041,6 +1753,7 @@ async function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promi
     id: string;
     status: SongStatus;
     albumTracks?: Array<TrackMetadata>;
+    adminLiveLink?: string;
     title: string;
     preSaveLink?: string;
     additionalDetails: string;
@@ -1057,46 +1770,51 @@ async function from_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promi
     composer: string;
     adminComment: string;
     genre: string;
+    musicVideoLink?: string;
     timestamp: Time;
     artist: string;
     acrResult?: ACRResult;
     producer: string;
     releaseDate: Time;
+    isManuallyRejected: boolean;
     releaseType: string;
     adminRemarks: string;
     featuredArtist: string;
 }> {
     return {
         id: value.id,
-        status: from_candid_SongStatus_n22(_uploadFile, _downloadFile, value.status),
-        albumTracks: record_opt_to_undefined(await from_candid_opt_n24(_uploadFile, _downloadFile, value.albumTracks)),
+        status: from_candid_SongStatus_n56(_uploadFile, _downloadFile, value.status),
+        albumTracks: record_opt_to_undefined(await from_candid_opt_n58(_uploadFile, _downloadFile, value.albumTracks)),
+        adminLiveLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.adminLiveLink)),
         title: value.title,
-        preSaveLink: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.preSaveLink)),
+        preSaveLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.preSaveLink)),
         additionalDetails: value.additionalDetails,
         lyricist: value.lyricist,
-        publicLink: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.publicLink)),
+        publicLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.publicLink)),
         submitter: value.submitter,
-        discountCode: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.discountCode)),
+        discountCode: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.discountCode)),
         artworkFilename: value.artworkFilename,
-        audioFile: await from_candid_ExternalBlob_n18(_uploadFile, _downloadFile, value.audioFile),
-        liveStreamLink: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.liveStreamLink)),
-        artwork: await from_candid_ExternalBlob_n18(_uploadFile, _downloadFile, value.artwork),
+        audioFile: await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value.audioFile),
+        liveStreamLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.liveStreamLink)),
+        artwork: await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value.artwork),
         audioFilename: value.audioFilename,
         language: value.language,
         composer: value.composer,
         adminComment: value.adminComment,
         genre: value.genre,
+        musicVideoLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.musicVideoLink)),
         timestamp: value.timestamp,
         artist: value.artist,
-        acrResult: record_opt_to_undefined(from_candid_opt_n29(_uploadFile, _downloadFile, value.acrResult)),
+        acrResult: record_opt_to_undefined(from_candid_opt_n62(_uploadFile, _downloadFile, value.acrResult)),
         producer: value.producer,
         releaseDate: value.releaseDate,
+        isManuallyRejected: value.isManuallyRejected,
         releaseType: value.releaseType,
         adminRemarks: value.adminRemarks,
         featuredArtist: value.featuredArtist
     };
 }
-async function from_candid_record_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n61(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     title: string;
     lyricist: string;
     audioFile: _ExternalBlob;
@@ -1118,7 +1836,7 @@ async function from_candid_record_n27(_uploadFile: (file: ExternalBlob) => Promi
     return {
         title: value.title,
         lyricist: value.lyricist,
-        audioFile: await from_candid_ExternalBlob_n18(_uploadFile, _downloadFile, value.audioFile),
+        audioFile: await from_candid_ExternalBlob_n35(_uploadFile, _downloadFile, value.audioFile),
         audioFilename: value.audioFilename,
         composer: value.composer,
         artist: value.artist,
@@ -1126,7 +1844,7 @@ async function from_candid_record_n27(_uploadFile: (file: ExternalBlob) => Promi
         featuredArtist: value.featuredArtist
     };
 }
-function from_candid_record_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n68(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     userPrincipal: [] | [string];
     response: string;
 }): {
@@ -1134,11 +1852,11 @@ function from_candid_record_n35(_uploadFile: (file: ExternalBlob) => Promise<Uin
     response: string;
 } {
     return {
-        userPrincipal: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.userPrincipal)),
+        userPrincipal: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.userPrincipal)),
         response: value.response
     };
 }
-function from_candid_record_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n72(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     status: _ApprovalStatus;
     principal: Principal;
 }): {
@@ -1146,23 +1864,94 @@ function from_candid_record_n38(_uploadFile: (file: ExternalBlob) => Promise<Uin
     principal: Principal;
 } {
     return {
-        status: from_candid_ApprovalStatus_n39(_uploadFile, _downloadFile, value.status),
+        status: from_candid_ApprovalStatus_n73(_uploadFile, _downloadFile, value.status),
         principal: value.principal
     };
 }
-function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    success: [] | [boolean];
-    topped_up_amount: [] | [bigint];
-}): {
-    success?: boolean;
-    topped_up_amount?: bigint;
-} {
-    return {
-        success: record_opt_to_undefined(from_candid_opt_n6(_uploadFile, _downloadFile, value.success)),
-        topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
-    };
+function from_candid_variant_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    full: null;
+} | {
+    trailer: null;
+} | {
+    bonus: null;
+}): EpisodeType {
+    return "full" in value ? EpisodeType.full : "trailer" in value ? EpisodeType.trailer : "bonus" in value ? EpisodeType.bonus : value;
 }
-function from_candid_variant_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n42(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    pending: null;
+} | {
+    live: null;
+} | {
+    approved: null;
+} | {
+    rejected: null;
+}): PodcastModerationStatus {
+    return "pending" in value ? PodcastModerationStatus.pending : "live" in value ? PodcastModerationStatus.live : "approved" in value ? PodcastModerationStatus.approved : "rejected" in value ? PodcastModerationStatus.rejected : value;
+}
+function from_candid_variant_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    audio: null;
+} | {
+    video: null;
+}): PodcastType {
+    return "audio" in value ? PodcastType.audio : "video" in value ? PodcastType.video : value;
+}
+function from_candid_variant_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    tamil: null;
+} | {
+    hindi: null;
+} | {
+    other: null;
+} | {
+    marathi: null;
+} | {
+    gujarati: null;
+} | {
+    punjabi: null;
+} | {
+    malayalam: null;
+} | {
+    kannada: null;
+} | {
+    telugu: null;
+} | {
+    bengali: null;
+} | {
+    english: null;
+}): Language {
+    return "tamil" in value ? Language.tamil : "hindi" in value ? Language.hindi : "other" in value ? Language.other : "marathi" in value ? Language.marathi : "gujarati" in value ? Language.gujarati : "punjabi" in value ? Language.punjabi : "malayalam" in value ? Language.malayalam : "kannada" in value ? Language.kannada : "telugu" in value ? Language.telugu : "bengali" in value ? Language.bengali : "english" in value ? Language.english : value;
+}
+function from_candid_variant_n51(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    kidsFamily: null;
+} | {
+    music: null;
+} | {
+    newsPolitics: null;
+} | {
+    other: null;
+} | {
+    arts: null;
+} | {
+    education: null;
+} | {
+    religionSpirituality: null;
+} | {
+    healthFitness: null;
+} | {
+    tvFilm: null;
+} | {
+    technology: null;
+} | {
+    business: null;
+} | {
+    sports: null;
+} | {
+    comedy: null;
+} | {
+    science: null;
+}): PodcastCategory {
+    return "kidsFamily" in value ? PodcastCategory.kidsFamily : "music" in value ? PodcastCategory.music : "newsPolitics" in value ? PodcastCategory.newsPolitics : "other" in value ? PodcastCategory.other : "arts" in value ? PodcastCategory.arts : "education" in value ? PodcastCategory.education : "religionSpirituality" in value ? PodcastCategory.religionSpirituality : "healthFitness" in value ? PodcastCategory.healthFitness : "tvFilm" in value ? PodcastCategory.tvFilm : "technology" in value ? PodcastCategory.technology : "business" in value ? PodcastCategory.business : "sports" in value ? PodcastCategory.sports : "comedy" in value ? PodcastCategory.comedy : "science" in value ? PodcastCategory.science : value;
+}
+function from_candid_variant_n57(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     pending: null;
 } | {
     live: null;
@@ -1175,7 +1964,7 @@ function from_candid_variant_n23(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): SongStatus {
     return "pending" in value ? SongStatus.pending : "live" in value ? SongStatus.live : "approved" in value ? SongStatus.approved : "rejected" in value ? SongStatus.rejected : "draft" in value ? SongStatus.draft : value;
 }
-function from_candid_variant_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n65(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -1184,7 +1973,7 @@ function from_candid_variant_n32(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function from_candid_variant_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n67(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     completed: {
         userPrincipal: [] | [string];
         response: string;
@@ -1207,13 +1996,13 @@ function from_candid_variant_n34(_uploadFile: (file: ExternalBlob) => Promise<Ui
 } {
     return "completed" in value ? {
         __kind__: "completed",
-        completed: from_candid_record_n35(_uploadFile, _downloadFile, value.completed)
+        completed: from_candid_record_n68(_uploadFile, _downloadFile, value.completed)
     } : "failed" in value ? {
         __kind__: "failed",
         failed: value.failed
     } : value;
 }
-function from_candid_variant_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n74(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     pending: null;
 } | {
     approved: null;
@@ -1222,38 +2011,65 @@ function from_candid_variant_n40(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): ApprovalStatus {
     return "pending" in value ? ApprovalStatus.pending : "approved" in value ? ApprovalStatus.approved : "rejected" in value ? ApprovalStatus.rejected : value;
 }
-async function from_candid_vec_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ArtistProfile>): Promise<Array<ArtistProfile>> {
-    return await Promise.all(value.map(async (x)=>await from_candid_ArtistProfile_n16(_uploadFile, _downloadFile, x)));
+async function from_candid_vec_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ArtistProfile>): Promise<Array<ArtistProfile>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_ArtistProfile_n33(_uploadFile, _downloadFile, x)));
 }
-async function from_candid_vec_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_SongSubmission>): Promise<Array<SongSubmission>> {
-    return await Promise.all(value.map(async (x)=>await from_candid_SongSubmission_n20(_uploadFile, _downloadFile, x)));
+async function from_candid_vec_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_PodcastEpisode>): Promise<Array<PodcastEpisode>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_PodcastEpisode_n37(_uploadFile, _downloadFile, x)));
 }
-async function from_candid_vec_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_TrackMetadata>): Promise<Array<TrackMetadata>> {
-    return await Promise.all(value.map(async (x)=>await from_candid_TrackMetadata_n26(_uploadFile, _downloadFile, x)));
+async function from_candid_vec_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_PodcastShow>): Promise<Array<PodcastShow>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_PodcastShow_n44(_uploadFile, _downloadFile, x)));
 }
-function from_candid_vec_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserApprovalInfo>): Array<UserApprovalInfo> {
-    return value.map((x)=>from_candid_UserApprovalInfo_n37(_uploadFile, _downloadFile, x));
+async function from_candid_vec_n53(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_SongSubmission>): Promise<Array<SongSubmission>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_SongSubmission_n54(_uploadFile, _downloadFile, x)));
 }
-function to_candid_ApprovalStatus_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): _ApprovalStatus {
-    return to_candid_variant_n42(_uploadFile, _downloadFile, value);
+async function from_candid_vec_n59(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_TrackMetadata>): Promise<Array<TrackMetadata>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_TrackMetadata_n60(_uploadFile, _downloadFile, x)));
+}
+function from_candid_vec_n70(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserApprovalInfo>): Array<UserApprovalInfo> {
+    return value.map((x)=>from_candid_UserApprovalInfo_n71(_uploadFile, _downloadFile, x));
+}
+function to_candid_ApprovalStatus_n75(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): _ApprovalStatus {
+    return to_candid_variant_n76(_uploadFile, _downloadFile, value);
+}
+function to_candid_EpisodeType_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: EpisodeType): _EpisodeType {
+    return to_candid_variant_n23(_uploadFile, _downloadFile, value);
 }
 async function to_candid_ExternalBlob_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await _uploadFile(value);
 }
+function to_candid_Language_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Language): _Language {
+    return to_candid_variant_n29(_uploadFile, _downloadFile, value);
+}
+function to_candid_PodcastCategory_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PodcastCategory): _PodcastCategory {
+    return to_candid_variant_n31(_uploadFile, _downloadFile, value);
+}
+async function to_candid_PodcastEpisodeInput_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PodcastEpisodeInput): Promise<_PodcastEpisodeInput> {
+    return await to_candid_record_n21(_uploadFile, _downloadFile, value);
+}
+async function to_candid_PodcastShowInput_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PodcastShowInput): Promise<_PodcastShowInput> {
+    return await to_candid_record_n25(_uploadFile, _downloadFile, value);
+}
+function to_candid_PodcastType_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PodcastType): _PodcastType {
+    return to_candid_variant_n27(_uploadFile, _downloadFile, value);
+}
 async function to_candid_SaveArtistProfileInput_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SaveArtistProfileInput): Promise<_SaveArtistProfileInput> {
     return await to_candid_record_n9(_uploadFile, _downloadFile, value);
 }
-function to_candid_SongStatus_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongStatus): _SongStatus {
-    return to_candid_variant_n12(_uploadFile, _downloadFile, value);
+function to_candid_SongStatus_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongStatus): _SongStatus {
+    return to_candid_variant_n17(_uploadFile, _downloadFile, value);
 }
-async function to_candid_SubmitSongInput_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubmitSongInput): Promise<_SubmitSongInput> {
-    return await to_candid_record_n44(_uploadFile, _downloadFile, value);
+async function to_candid_SongSubmissionEditInput_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongSubmissionEditInput): Promise<_SongSubmissionEditInput> {
+    return await to_candid_record_n12(_uploadFile, _downloadFile, value);
 }
-async function to_candid_TrackMetadata_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TrackMetadata): Promise<_TrackMetadata> {
-    return await to_candid_record_n47(_uploadFile, _downloadFile, value);
+async function to_candid_SongSubmissionInput_n77(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongSubmissionInput): Promise<_SongSubmissionInput> {
+    return await to_candid_record_n78(_uploadFile, _downloadFile, value);
 }
-function to_candid_UserRole_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
-    return to_candid_variant_n14(_uploadFile, _downloadFile, value);
+async function to_candid_TrackMetadata_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TrackMetadata): Promise<_TrackMetadata> {
+    return await to_candid_record_n15(_uploadFile, _downloadFile, value);
+}
+function to_candid_UserRole_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
+    return to_candid_variant_n19(_uploadFile, _downloadFile, value);
 }
 function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation): __CaffeineStorageRefillInformation {
     return to_candid_record_n3(_uploadFile, _downloadFile, value);
@@ -1261,30 +2077,21 @@ function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: Exte
 function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
     return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
 }
-function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    proposed_top_up_amount?: bigint;
-}): {
-    proposed_top_up_amount: [] | [bigint];
-} {
-    return {
-        proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
-    };
-}
-async function to_candid_record_n44(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function to_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     artworkBlob: ExternalBlob;
     albumTracks?: Array<TrackMetadata>;
     title: string;
     additionalDetails: string;
     lyricist: string;
-    publicLink?: string;
     discountCode?: string;
+    songSubmissionId: string;
     artworkFilename: string;
-    audioBlob: ExternalBlob;
-    liveStreamLink?: string;
+    audioFile: ExternalBlob;
     audioFilename: string;
     language: string;
     composer: string;
     genre: string;
+    musicVideoLink?: string;
     artist: string;
     producer: string;
     releaseDate: Time;
@@ -1296,15 +2103,15 @@ async function to_candid_record_n44(_uploadFile: (file: ExternalBlob) => Promise
     title: string;
     additionalDetails: string;
     lyricist: string;
-    publicLink: [] | [string];
     discountCode: [] | [string];
+    songSubmissionId: string;
     artworkFilename: string;
-    audioBlob: _ExternalBlob;
-    liveStreamLink: [] | [string];
+    audioFile: _ExternalBlob;
     audioFilename: string;
     language: string;
     composer: string;
     genre: string;
+    musicVideoLink: [] | [string];
     artist: string;
     producer: string;
     releaseDate: _Time;
@@ -1313,19 +2120,19 @@ async function to_candid_record_n44(_uploadFile: (file: ExternalBlob) => Promise
 }> {
     return {
         artworkBlob: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.artworkBlob),
-        albumTracks: value.albumTracks ? candid_some(await to_candid_vec_n45(_uploadFile, _downloadFile, value.albumTracks)) : candid_none(),
+        albumTracks: value.albumTracks ? candid_some(await to_candid_vec_n13(_uploadFile, _downloadFile, value.albumTracks)) : candid_none(),
         title: value.title,
         additionalDetails: value.additionalDetails,
         lyricist: value.lyricist,
-        publicLink: value.publicLink ? candid_some(value.publicLink) : candid_none(),
         discountCode: value.discountCode ? candid_some(value.discountCode) : candid_none(),
+        songSubmissionId: value.songSubmissionId,
         artworkFilename: value.artworkFilename,
-        audioBlob: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.audioBlob),
-        liveStreamLink: value.liveStreamLink ? candid_some(value.liveStreamLink) : candid_none(),
+        audioFile: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.audioFile),
         audioFilename: value.audioFilename,
         language: value.language,
         composer: value.composer,
         genre: value.genre,
+        musicVideoLink: value.musicVideoLink ? candid_some(value.musicVideoLink) : candid_none(),
         artist: value.artist,
         producer: value.producer,
         releaseDate: value.releaseDate,
@@ -1333,7 +2140,7 @@ async function to_candid_record_n44(_uploadFile: (file: ExternalBlob) => Promise
         featuredArtist: value.featuredArtist
     };
 }
-async function to_candid_record_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function to_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     title: string;
     lyricist: string;
     audioFile: ExternalBlob;
@@ -1363,6 +2170,141 @@ async function to_candid_record_n47(_uploadFile: (file: ExternalBlob) => Promise
         featuredArtist: value.featuredArtist
     };
 }
+async function to_candid_record_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    isPromotional: boolean;
+    title: string;
+    isEighteenPlus: boolean;
+    thumbnail: ExternalBlob;
+    showId: string;
+    description: string;
+    artwork: ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: EpisodeType;
+    mediaFile: ExternalBlob;
+    isExplicit: boolean;
+}): Promise<{
+    isPromotional: boolean;
+    title: string;
+    isEighteenPlus: boolean;
+    thumbnail: _ExternalBlob;
+    showId: string;
+    description: string;
+    artwork: _ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: _EpisodeType;
+    mediaFile: _ExternalBlob;
+    isExplicit: boolean;
+}> {
+    return {
+        isPromotional: value.isPromotional,
+        title: value.title,
+        isEighteenPlus: value.isEighteenPlus,
+        thumbnail: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.thumbnail),
+        showId: value.showId,
+        description: value.description,
+        artwork: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.artwork),
+        seasonNumber: value.seasonNumber,
+        episodeNumber: value.episodeNumber,
+        episodeType: to_candid_EpisodeType_n22(_uploadFile, _downloadFile, value.episodeType),
+        mediaFile: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.mediaFile),
+        isExplicit: value.isExplicit
+    };
+}
+async function to_candid_record_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    podcastType: PodcastType;
+    title: string;
+    description: string;
+    artwork: ExternalBlob;
+    language: Language;
+    category: PodcastCategory;
+}): Promise<{
+    podcastType: _PodcastType;
+    title: string;
+    description: string;
+    artwork: _ExternalBlob;
+    language: _Language;
+    category: _PodcastCategory;
+}> {
+    return {
+        podcastType: to_candid_PodcastType_n26(_uploadFile, _downloadFile, value.podcastType),
+        title: value.title,
+        description: value.description,
+        artwork: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.artwork),
+        language: to_candid_Language_n28(_uploadFile, _downloadFile, value.language),
+        category: to_candid_PodcastCategory_n30(_uploadFile, _downloadFile, value.category)
+    };
+}
+function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    proposed_top_up_amount?: bigint;
+}): {
+    proposed_top_up_amount: [] | [bigint];
+} {
+    return {
+        proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
+    };
+}
+async function to_candid_record_n78(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    artworkBlob: ExternalBlob;
+    albumTracks?: Array<TrackMetadata>;
+    title: string;
+    additionalDetails: string;
+    lyricist: string;
+    discountCode?: string;
+    artworkFilename: string;
+    audioBlob: ExternalBlob;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    genre: string;
+    musicVideoLink?: string;
+    artist: string;
+    producer: string;
+    releaseDate: Time;
+    releaseType: string;
+    featuredArtist: string;
+}): Promise<{
+    artworkBlob: _ExternalBlob;
+    albumTracks: [] | [Array<_TrackMetadata>];
+    title: string;
+    additionalDetails: string;
+    lyricist: string;
+    discountCode: [] | [string];
+    artworkFilename: string;
+    audioBlob: _ExternalBlob;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    genre: string;
+    musicVideoLink: [] | [string];
+    artist: string;
+    producer: string;
+    releaseDate: _Time;
+    releaseType: string;
+    featuredArtist: string;
+}> {
+    return {
+        artworkBlob: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.artworkBlob),
+        albumTracks: value.albumTracks ? candid_some(await to_candid_vec_n13(_uploadFile, _downloadFile, value.albumTracks)) : candid_none(),
+        title: value.title,
+        additionalDetails: value.additionalDetails,
+        lyricist: value.lyricist,
+        discountCode: value.discountCode ? candid_some(value.discountCode) : candid_none(),
+        artworkFilename: value.artworkFilename,
+        audioBlob: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.audioBlob),
+        audioFilename: value.audioFilename,
+        language: value.language,
+        composer: value.composer,
+        genre: value.genre,
+        musicVideoLink: value.musicVideoLink ? candid_some(value.musicVideoLink) : candid_none(),
+        artist: value.artist,
+        producer: value.producer,
+        releaseDate: value.releaseDate,
+        releaseType: value.releaseType,
+        featuredArtist: value.featuredArtist
+    };
+}
 async function to_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     isApproved: boolean;
     instagramLink: string;
@@ -1371,8 +2313,10 @@ async function to_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<
     mobileNumber: string;
     email: string;
     spotifyProfile: string;
+    youtubeChannelLink: string;
     facebookLink: string;
     appleProfile: string;
+    profilePhotoFilename: string;
     stageName: string;
 }): Promise<{
     isApproved: boolean;
@@ -1382,8 +2326,10 @@ async function to_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<
     mobileNumber: string;
     email: string;
     spotifyProfile: string;
+    youtubeChannelLink: string;
     facebookLink: string;
     appleProfile: string;
+    profilePhotoFilename: string;
     stageName: string;
 }> {
     return {
@@ -1394,12 +2340,14 @@ async function to_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<
         mobileNumber: value.mobileNumber,
         email: value.email,
         spotifyProfile: value.spotifyProfile,
+        youtubeChannelLink: value.youtubeChannelLink,
         facebookLink: value.facebookLink,
         appleProfile: value.appleProfile,
+        profilePhotoFilename: value.profilePhotoFilename,
         stageName: value.stageName
     };
 }
-function to_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongStatus): {
+function to_candid_variant_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongStatus): {
     pending: null;
 } | {
     live: null;
@@ -1422,7 +2370,7 @@ function to_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint
         draft: null
     } : value;
 }
-function to_candid_variant_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
+function to_candid_variant_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
     admin: null;
 } | {
     user: null;
@@ -1437,7 +2385,139 @@ function to_candid_variant_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint
         guest: null
     } : value;
 }
-function to_candid_variant_n42(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): {
+function to_candid_variant_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: EpisodeType): {
+    full: null;
+} | {
+    trailer: null;
+} | {
+    bonus: null;
+} {
+    return value == EpisodeType.full ? {
+        full: null
+    } : value == EpisodeType.trailer ? {
+        trailer: null
+    } : value == EpisodeType.bonus ? {
+        bonus: null
+    } : value;
+}
+function to_candid_variant_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PodcastType): {
+    audio: null;
+} | {
+    video: null;
+} {
+    return value == PodcastType.audio ? {
+        audio: null
+    } : value == PodcastType.video ? {
+        video: null
+    } : value;
+}
+function to_candid_variant_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Language): {
+    tamil: null;
+} | {
+    hindi: null;
+} | {
+    other: null;
+} | {
+    marathi: null;
+} | {
+    gujarati: null;
+} | {
+    punjabi: null;
+} | {
+    malayalam: null;
+} | {
+    kannada: null;
+} | {
+    telugu: null;
+} | {
+    bengali: null;
+} | {
+    english: null;
+} {
+    return value == Language.tamil ? {
+        tamil: null
+    } : value == Language.hindi ? {
+        hindi: null
+    } : value == Language.other ? {
+        other: null
+    } : value == Language.marathi ? {
+        marathi: null
+    } : value == Language.gujarati ? {
+        gujarati: null
+    } : value == Language.punjabi ? {
+        punjabi: null
+    } : value == Language.malayalam ? {
+        malayalam: null
+    } : value == Language.kannada ? {
+        kannada: null
+    } : value == Language.telugu ? {
+        telugu: null
+    } : value == Language.bengali ? {
+        bengali: null
+    } : value == Language.english ? {
+        english: null
+    } : value;
+}
+function to_candid_variant_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PodcastCategory): {
+    kidsFamily: null;
+} | {
+    music: null;
+} | {
+    newsPolitics: null;
+} | {
+    other: null;
+} | {
+    arts: null;
+} | {
+    education: null;
+} | {
+    religionSpirituality: null;
+} | {
+    healthFitness: null;
+} | {
+    tvFilm: null;
+} | {
+    technology: null;
+} | {
+    business: null;
+} | {
+    sports: null;
+} | {
+    comedy: null;
+} | {
+    science: null;
+} {
+    return value == PodcastCategory.kidsFamily ? {
+        kidsFamily: null
+    } : value == PodcastCategory.music ? {
+        music: null
+    } : value == PodcastCategory.newsPolitics ? {
+        newsPolitics: null
+    } : value == PodcastCategory.other ? {
+        other: null
+    } : value == PodcastCategory.arts ? {
+        arts: null
+    } : value == PodcastCategory.education ? {
+        education: null
+    } : value == PodcastCategory.religionSpirituality ? {
+        religionSpirituality: null
+    } : value == PodcastCategory.healthFitness ? {
+        healthFitness: null
+    } : value == PodcastCategory.tvFilm ? {
+        tvFilm: null
+    } : value == PodcastCategory.technology ? {
+        technology: null
+    } : value == PodcastCategory.business ? {
+        business: null
+    } : value == PodcastCategory.sports ? {
+        sports: null
+    } : value == PodcastCategory.comedy ? {
+        comedy: null
+    } : value == PodcastCategory.science ? {
+        science: null
+    } : value;
+}
+function to_candid_variant_n76(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): {
     pending: null;
 } | {
     approved: null;
@@ -1452,8 +2532,8 @@ function to_candid_variant_n42(_uploadFile: (file: ExternalBlob) => Promise<Uint
         rejected: null
     } : value;
 }
-async function to_candid_vec_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TrackMetadata>): Promise<Array<_TrackMetadata>> {
-    return await Promise.all(value.map(async (x)=>await to_candid_TrackMetadata_n46(_uploadFile, _downloadFile, x)));
+async function to_candid_vec_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TrackMetadata>): Promise<Array<_TrackMetadata>> {
+    return await Promise.all(value.map(async (x)=>await to_candid_TrackMetadata_n14(_uploadFile, _downloadFile, x)));
 }
 export interface CreateActorOptions {
     agent?: Agent;
