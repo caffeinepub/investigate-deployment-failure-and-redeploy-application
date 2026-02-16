@@ -14,21 +14,9 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
-export interface ArtistProfile {
-    id: string;
-    isApproved: boolean;
-    instagramLink: string;
-    owner: Principal;
-    profilePhoto: ExternalBlob;
-    fullName: string;
-    mobileNumber: string;
-    email: string;
-    spotifyProfile: string;
-    youtubeChannelLink: string;
-    facebookLink: string;
-    appleProfile: string;
-    profilePhotoFilename: string;
-    stageName: string;
+export interface UserProfile {
+    name: string;
+    artistId: string;
 }
 export interface PodcastShow {
     id: string;
@@ -42,6 +30,11 @@ export interface PodcastShow {
     timestamp: Time;
     category: PodcastCategory;
     liveLink?: string;
+}
+export interface MonthlyListenerStats {
+    month: bigint;
+    value: bigint;
+    year: bigint;
 }
 export interface TransformationOutput {
     status: bigint;
@@ -62,6 +55,23 @@ export interface PodcastEpisodeInput {
     episodeType: EpisodeType;
     mediaFile: ExternalBlob;
     isExplicit: boolean;
+}
+export interface ArtistProfile {
+    id: string;
+    isApproved: boolean;
+    instagramLink: string;
+    owner: Principal;
+    profilePhoto: ExternalBlob;
+    fullName: string;
+    mobileNumber: string;
+    email: string;
+    isVerified: boolean;
+    spotifyProfile: string;
+    youtubeChannelLink: string;
+    facebookLink: string;
+    appleProfile: string;
+    profilePhotoFilename: string;
+    stageName: string;
 }
 export interface SongSubmissionEditInput {
     artworkBlob: ExternalBlob;
@@ -133,6 +143,11 @@ export interface StripeConfiguration {
     allowedCountries: Array<string>;
     secretKey: string;
 }
+export interface ListenerStatsUpdate {
+    month: bigint;
+    value: bigint;
+    year: bigint;
+}
 export interface PodcastShowInput {
     podcastType: PodcastType;
     title: string;
@@ -160,24 +175,6 @@ export interface UserApprovalInfo {
     status: ApprovalStatus;
     principal: Principal;
 }
-export interface PodcastEpisode {
-    id: string;
-    isPromotional: boolean;
-    title: string;
-    isEighteenPlus: boolean;
-    thumbnail: ExternalBlob;
-    showId: string;
-    createdBy: Principal;
-    description: string;
-    artwork: ExternalBlob;
-    seasonNumber: bigint;
-    episodeNumber: bigint;
-    episodeType: EpisodeType;
-    moderationStatus: PodcastModerationStatus;
-    mediaFile: ExternalBlob;
-    timestamp: Time;
-    isExplicit: boolean;
-}
 export interface ShoppingItem {
     productName: string;
     currency: string;
@@ -204,6 +201,24 @@ export interface SongSubmissionInput {
     releaseDate: Time;
     releaseType: string;
     featuredArtist: string;
+}
+export interface PodcastEpisode {
+    id: string;
+    isPromotional: boolean;
+    title: string;
+    isEighteenPlus: boolean;
+    thumbnail: ExternalBlob;
+    showId: string;
+    createdBy: Principal;
+    description: string;
+    artwork: ExternalBlob;
+    seasonNumber: bigint;
+    episodeNumber: bigint;
+    episodeType: EpisodeType;
+    moderationStatus: PodcastModerationStatus;
+    mediaFile: ExternalBlob;
+    timestamp: Time;
+    isExplicit: boolean;
 }
 export interface ACRResult {
     music: string;
@@ -241,9 +256,13 @@ export interface SongSubmission {
     adminRemarks: string;
     featuredArtist: string;
 }
-export interface UserProfile {
-    name: string;
-    artistId: string;
+export interface VerificationRequest {
+    id: string;
+    status: VerificationStatus;
+    expiryExtensionDays: bigint;
+    user: Principal;
+    verificationApprovedTimestamp?: Time;
+    timestamp: Time;
 }
 export enum ApprovalStatus {
     pending = "pending",
@@ -306,6 +325,12 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
+export enum VerificationStatus {
+    pending = "pending",
+    approved = "approved",
+    rejected = "rejected",
+    waiting = "waiting"
+}
 export interface backendInterface {
     adminDeleteArtistProfile(id: string): Promise<void>;
     adminDeleteSubmission(id: string): Promise<void>;
@@ -313,6 +338,7 @@ export interface backendInterface {
     adminEditSubmission(input: SongSubmissionEditInput): Promise<void>;
     adminSetSubmissionLive(id: string, liveUrl: string, adminRemarks: string, adminComment: string): Promise<void>;
     adminUpdateSubmission(id: string, status: SongStatus, adminRemarks: string, adminComment: string): Promise<void>;
+    applyForVerification(): Promise<string>;
     approveEpisode(id: string): Promise<void>;
     approvePodcast(id: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
@@ -322,6 +348,7 @@ export interface backendInterface {
     createPodcastEpisode(input: PodcastEpisodeInput): Promise<string>;
     createPodcastShow(input: PodcastShowInput): Promise<string>;
     deleteArtistProfile(id: string): Promise<void>;
+    doesUserHaveArtistProfile(owner: Principal): Promise<boolean>;
     downgradeTeamMember(user: Principal): Promise<void>;
     editSongSubmission(input: SongSubmissionEditInput): Promise<void>;
     generateInviteCode(): Promise<string>;
@@ -335,21 +362,29 @@ export interface backendInterface {
     getAllRSVPs(): Promise<Array<RSVP>>;
     getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
     getAllTeamMembers(): Promise<Array<Principal>>;
+    getArtistProfileByOwner(owner: Principal): Promise<ArtistProfile | null>;
     getArtistProfileEditingAccessStatus(): Promise<boolean>;
+    getArtistProfileIdByOwnerId(owner: Principal): Promise<string | null>;
     getArtistProfilesByUserForAdmin(user: Principal): Promise<Array<ArtistProfile>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getEpisodesByShowId(showId: string): Promise<Array<PodcastEpisode>>;
     getInviteCodes(): Promise<Array<InviteCode>>;
+    getLiveSongsForAnalysis(): Promise<Array<SongSubmission>>;
     getMyArtistProfiles(): Promise<Array<ArtistProfile>>;
     getMyEpisodes(showId: string): Promise<Array<PodcastEpisode>>;
     getMyPodcastShows(): Promise<Array<PodcastShow>>;
     getMySubmissions(): Promise<Array<SongSubmission>>;
     getPodcastsByCategory(category: PodcastCategory): Promise<Array<PodcastShow>>;
+    getSongMonthlyListenerStats(songId: string): Promise<Array<MonthlyListenerStats>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getVerificationRequests(): Promise<Array<VerificationRequest>>;
+    getVerificationRequestsByUser(user: Principal): Promise<Array<VerificationRequest>>;
     getWebsiteLogo(): Promise<ExternalBlob | null>;
+    handleVerificationRequest(artistProfileId: string, isVerified: boolean, verificationRequestId: string, newStatus: VerificationStatus): Promise<void>;
     isArtistProfileEditingEnabled(): Promise<boolean>;
+    isArtistVerified(owner: Principal): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     isCallerApproved(): Promise<boolean>;
     isStripeConfigured(): Promise<boolean>;
@@ -372,5 +407,7 @@ export interface backendInterface {
     transform(input: TransformationInput): Promise<TransformationOutput>;
     unblockUser(user: Principal): Promise<void>;
     updateArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
+    updateMonthlyListenerStats(songId: string, updates: Array<ListenerStatsUpdate>): Promise<void>;
+    updateVerificationStatus(verificationId: string, status: VerificationStatus, expiryExtensionDays: bigint): Promise<void>;
     upgradeUserToTeamMember(user: Principal): Promise<void>;
 }

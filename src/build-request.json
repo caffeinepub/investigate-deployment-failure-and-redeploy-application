@@ -1,199 +1,128 @@
 {
   "kind": "build_request",
-  "title": "Admin-controlled Verified Artist (Pro) benefits with verification requests, expiry, badge, and podcast gating",
+  "title": "Verified artist blue tick across UI + admin verify/unverify + admin delete artist profile only",
+  "projectName": "Tamil Indie Dashboard",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement backend data model and APIs for Verified Artist (Pro) status that is admin-activated, lasts 30 days from activation, auto-expires after 30 days, and supports admin extension of the expiry date.",
-      "target": "backend",
+      "text": "Add a verified/blue-tick indicator next to the artist’s name across the UI, using the user-uploaded blue tick image as the source asset and rendering it via the existing VerifiedBadge component (or an equivalent shared UI element).",
+      "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Verified status lasts 30 days from activation date.\n\nAdmin can manually extend expiry date.\n\nVerified status automatically expire after 30 days"
+          "the verifyed artist should have blue tick so, use the attached file as blue tick",
+          "1. yes next to the artist's name"
         ]
       },
       "acceptanceCriteria": [
-        "Backend stores Verified Artist activation timestamp and expiry calculation (30 days + admin extension days) per user.",
-        "There is a backend API for admin to activate Verified Artist for a given user and set the activation time to 'now'.",
-        "There is a backend API for admin to extend a user's expiry by a specified number of days.",
-        "There is a backend API for a user (and/or frontend) to query current Verified Artist state, including whether it is active, expired, and the expiry date/time.",
-        "Expired status is enforced by backend logic (i.e., status becomes inactive after the computed expiry, without requiring manual admin action)."
+        "A blue tick icon is shown next to an artist’s displayed name wherever an artist name is rendered in artist profile cards/lists and header/primary artist display.",
+        "The tick uses a static asset served from the frontend (not fetched via backend).",
+        "The existing tooltip behavior for the verified icon remains (or is replaced with an equivalent tooltip)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement backend workflow for user 'Apply for verification' requests and admin visibility, including returning the applicant's full name in the admin list.",
+      "text": "Implement backend support to determine whether a given artist (by owner Principal) is currently verified based on the verification workflow state, and expose a query API the frontend can use to render the blue tick correctly.",
       "target": "backend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "When user click apply for verification button. In admin dashboard admin should get notified and the applyed users full name should display in admin dashboard as seperate panel named as verification list"
+          "the verifyed artist should have blue tick",
+          "yes, and at the same time admin can reject the verification at any time."
         ]
       },
       "acceptanceCriteria": [
-        "There is a backend API for an authenticated user to submit an 'apply for verification' request.",
-        "Repeated applies are handled safely (either prevented when already pending/active, or idempotent), without creating duplicate active requests for the same user.",
-        "There is a backend API for admin/team to list verification requests including: request id, user principal, status, timestamp, and the applicant full name (derived from existing artist profile data, matching the current `getUserFullName` behavior).",
-        "There is a backend API for admin/team to update a request status as needed for admin workflow (at minimum: pending/approved/rejected, consistent with existing `VerificationStatus` types)."
+        "Backend exposes a query method that returns whether a provided Principal is verified (e.g., approved and not expired).",
+        "Frontend can call this query and map verification status to artist profiles by profile.owner Principal.",
+        "Verification status changes (approve/reject) are reflected after React Query invalidation without requiring a hard refresh."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Restrict podcast submission to Verified Artist (Pro) users only, enforced on the backend for both podcast show creation and episode creation.",
-      "target": "backend",
+      "text": "Ensure the admin dashboard supports toggling verification status for artists: admins can approve verification (activate) and can also reject/unverify at any time after approval.",
+      "target": "both",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Only verified users can submit podcasts",
-          "It means the podcast is added in latest update of the website."
+          "yes, and at the same time admin can reject the verification at any time."
         ]
       },
       "acceptanceCriteria": [
-        "Backend rejects `createPodcastShow` if caller is not currently Verified Artist (active and not expired), with a clear error message.",
-        "Backend rejects `createPodcastEpisode` if caller is not currently Verified Artist (active and not expired), with a clear error message.",
-        "If a user's verified status expires, subsequent podcast submissions are rejected until re-activated by admin."
+        "Admin can approve a verification request for a user.",
+        "Admin can reject/unverify an already-approved user (not limited to only pending requests).",
+        "After admin changes status, the artist’s blue tick disappears/appears across the UI accordingly."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Prioritize Pro (Verified Artist) users' song submissions to appear first in the Admin song submission list, while keeping existing sorting stable for submissions within the same priority group.",
+      "text": "Add admin-only ability to delete/remove an artist profile from the Admin Dashboard (Artist Management) without deleting the artist’s songs/submissions (songs must remain visible/unchanged).",
       "target": "both",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Pro users’ song submissions must appear first in Admin submission list"
+          "give the access that admin can delete the artist profile from admin dashboard.",
+          "only the profile be removed while their songs remain visible"
         ]
       },
       "acceptanceCriteria": [
-        "Admin song submissions UI shows submissions from currently Verified Artist users before submissions from non-verified users.",
-        "Within the Pro group and within the non-Pro group, the order remains consistent with the existing behavior (no random reordering).",
-        "This priority is derived from backend Verified Artist state (not a frontend-only toggle)."
+        "Admin Artist Management UI shows a delete action per artist profile with a confirmation step.",
+        "Calling admin delete removes only the artist profile record; existing song submissions remain intact and still appear in user/admin submissions lists.",
+        "After deletion, the profile no longer appears in admin artist profile listings and cannot be fetched via getMyArtistProfiles for that owner."
       ]
     },
     {
       "id": "REQ-5",
-      "text": "Add a user dashboard section that displays 'Verified Artist benefits' only for non-verified users, includes the informational monthly charge (₹200), lists the benefits in English, and provides an 'Apply for verification' button under the benefits section.",
+      "text": "Add the provided blue tick image to the frontend as an optimized transparent PNG asset and update the app to reference that asset consistently (including updating the existing VerifiedBadge image path).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "In user dashboard for non verified users show button apply for verification this should appear below the verification benefit.",
-          "2.yes under verified artist benefits section"
+          "use the attached file as blue tick"
         ]
       },
       "acceptanceCriteria": [
-        "Non-verified users see a 'Verified Artist benefits' section in the user dashboard with monthly charge shown as '₹200' and the benefits list.",
-        "The section includes an 'Apply for verification' button under the benefits list.",
-        "Clicking 'Apply for verification' calls the backend apply API and updates the UI state (e.g., shows 'Applied / Pending review' and disables the button to prevent rapid re-submission).",
-        "Verified users do not see the benefits section (it disappears once verified is active)."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "When a user's Verified Artist status is expired, show a 'Renew Verified Artist' message and a 'Renew' button in the user dashboard; the Renew action should create/refresh a verification request for admin review (no payment integration).",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "When expired, user must see Renew Verified Artist message.",
-          "3.both",
-          "1.it just informational with no real payment integration"
-        ]
-      },
-      "acceptanceCriteria": [
-        "If the backend reports the user's verified status is expired, the user dashboard shows an English message indicating verification has expired and includes a Renew button.",
-        "Clicking Renew triggers the same backend flow as applying (or an explicit renew API if implemented) and results in the admin being able to see the renewed request in the verification list.",
-        "No Stripe/payment checkout flow is added; the monthly charge remains informational only."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Add an Admin Dashboard panel/tab for 'Verification List' that (a) shows all users who applied for verification with their full name and request details, and (b) provides an in-dashboard notification/alert when there are pending requests.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "In admin dashboard admin should get notified and the applyed users full name should display in admin dashboard as seperate panel named as verification list",
-          "2.both"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin dashboard includes a dedicated tab/panel labeled 'Verification List'.",
-        "The panel lists verification requests and displays each applicant full name plus request status and timestamp.",
-        "Admins can take relevant actions from the UI to support the backend workflow (at minimum: approve/activate verified benefits; optionally reject).",
-        "Admin dashboard shows an additional in-dashboard notification/alert indicating there are pending verification requests (e.g., badge count on the tab and/or a visible alert at top of panel)."
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "text": "Update the verified badge UI so the current green verified badge becomes a blue verified badge for verified users, and ensure verified users are visually differentiated as Pro users in user-facing surfaces where the badge is shown.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Green Verified badge must change to Blue Verified badge",
-          "Mark verified users as Pro Users"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Where the app currently renders the green tick badge for artist verification, it renders a blue badge instead for verified users.",
-        "The badge alt text and tooltip text are in English and clearly indicate verified/pro status (e.g., 'Verified Artist' / 'Pro User').",
-        "The new badge asset is loaded from frontend static assets (not via backend)."
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "text": "Add frontend React Query hooks and UI state wiring for Verified Artist status + verification requests (user and admin), following the existing query-key + invalidation patterns used for submissions and podcast features.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "This features should be add in the website.",
-          "admin should get notified",
-          "apply for verification"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Frontend has React Query queries for: current user's verified status; admin list of verification requests.",
-        "Frontend has React Query mutations for: user apply/renew; admin activate verified; admin extend expiry (and any request status updates used by the UI).",
-        "After apply/renew/admin actions, relevant queries are invalidated so user/admin dashboards update without a hard refresh."
+        "A transparent, appropriately-sized blue tick icon exists in frontend/public/assets/generated and is used by VerifiedBadge.",
+        "No broken image links appear for the verified badge in any theme mode.",
+        "Asset filename/path used in code matches the generated/static asset path."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
-    "Only Internet Identity authentication is allowed; no third-party auth providers.",
-    "Do not edit files under frontend/src/components/ui or any path listed in frontend.immutablePaths (compose existing components instead).",
-    "Monthly charge ₹200 is informational only; do not add Stripe checkout/payment flow for verification/renewal."
+    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
+    "Do not edit files under frontend/src/components/ui or the immutable hook entrypoints listed in SYSTEM_CONTEXT.",
+    "Serve the blue tick icon as a frontend static asset (do not proxy through the backend)."
   ],
   "nonGoals": [
-    "Implementing actual payment collection or subscription billing for Verified Artist.",
-    "Email/SMS/push notifications; admin 'notification' must be in-dashboard UI only.",
-    "Adding new podcast features beyond restricting access to existing podcast submission workflows."
+    "Do not delete or modify song submissions when an artist profile is deleted; only remove the profile record.",
+    "Do not add third-party authentication providers (Internet Identity only).",
+    "Do not add real-time/WebSocket features."
   ],
   "imageRequirements": {
-    "required": [
-      "Blue verified tick badge, transparent background (blue-tick-badge-transparent.dim_24x24.png)"
-    ],
-    "edits": []
+    "required": [],
+    "edits": [
+      "Convert uploaded blue tick image to an optimized transparent PNG at small icon size (—Pngtree—instagram bule tick insta blue_9074860-1.png > blue-tick-badge-transparent.dim_24x24.png)",
+      "Convert uploaded blue tick image to an optimized transparent PNG at medium icon size (—Pngtree—instagram bule tick insta blue_9074860-1.png > blue-tick-badge-transparent.dim_20x20.png)"
+    ]
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

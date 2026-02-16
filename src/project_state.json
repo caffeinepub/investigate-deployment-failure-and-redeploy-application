@@ -1,63 +1,44 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Implement an Admin-controlled Verified Artist (Pro) benefits system for the website/app: users can apply, admin is notified and manages activation/expiry/extension; verified users get badge/status changes, priority handling, and podcast submission access.",
+  "summary": "Music-industry dashboard web app for indie Tamil artists with artist profiles, submissions, podcasts, analytics, and admin management.",
   "architectural_notes": [
-    "Verified Artist status auto-expires 30 days after activation date; admin can extend expiry.",
-    "Monthly charge ₹200 is informational only (no payment integration).",
-    "Admin dashboard should include notifications/alerts plus a dedicated Verification List panel showing applicants’ full names.",
-    "Verified Artist benefits UI is shown only to non-verified users; it disappears after activation; on expiry show Renew message and Renew button.",
-    "Verified users are marked as Pro; Pro song submissions are prioritized in the admin submission list; only verified users can submit podcasts."
+    "Verified status is admin-managed (toggle on/off) and should reflect immediately in UI (blue tick next to artist name).",
+    "Deleting an artist removes only the profile; songs remain visible and must remain associated/accessible without the profile."
   ],
   "known_issues": [],
   "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- Blue verified tick badge, transparent background (blue-tick-badge-transparent.dim_24x24.png)",
+  "imageRequirements": "## Edit Images\n- Convert uploaded blue tick image to an optimized transparent PNG at small icon size (—Pngtree—instagram bule tick insta blue_9074860-1.png > blue-tick-badge-transparent.dim_24x24.png)\n- Convert uploaded blue tick image to an optimized transparent PNG at medium icon size (—Pngtree—instagram bule tick insta blue_9074860-1.png > blue-tick-badge-transparent.dim_20x20.png)",
   "existing_features": [
     {
-      "id": "feature-prioritize-pro-verified-artist-users-song-submissions-to-appear-first-in-the-admin-song-submission-list-while-keeping-existing-sorting-stable-for-submissions-within-the-same-priority-group",
-      "title": "Prioritize Pro (Verified Artist) users' song submissions to appear first in the Admin song submission list, while keeping existing sorting stable for submissions within the same priority group.",
+      "id": "feature-add-a-verified-blue-tick-indicator-next-to-the-artist-s-name-across-the-ui-using-the-user-uploaded-blue-tick-image-as-the-source-asset-and-rendering-it-via-the-existing-verifiedbadge-component-or-an-equivalent-shared-ui-element",
+      "title": "Add a verified/blue-tick indicator next to the artist’s name across the UI, using the user-uploaded blue tick image as the source asset and rendering it via the existing VerifiedBadge component (or an equivalent shared UI element).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-admin-dashboard-supports-toggling-verification-status-for-artists-admins-can-approve-verification-activate-and-can-also-reject-unverify-at-any-time-after-approval",
+      "title": "Ensure the admin dashboard supports toggling verification status for artists: admins can approve verification (activate) and can also reject/unverify at any time after approval.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-admin-only-ability-to-delete-remove-an-artist-profile-from-the-admin-dashboard-artist-management-without-deleting-the-artist-s-songs-submissions-songs-must-remain-visible-unchanged",
+      "title": "Add admin-only ability to delete/remove an artist profile from the Admin Dashboard (Artist Management) without deleting the artist’s songs/submissions (songs must remain visible/unchanged).",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-user-dashboard-section-that-displays-verified-artist-benefits-only-for-non-verified-users-includes-the-informational-monthly-charge-200-lists-the-benefits-in-english-and-provides-an-apply-for-verification-button-under-the-benefits-section",
-      "title": "Add a user dashboard section that displays 'Verified Artist benefits' only for non-verified users, includes the informational monthly charge (₹200), lists the benefits in English, and provides an 'Apply for verification' button under the benefits section.",
+      "id": "feature-add-the-provided-blue-tick-image-to-the-frontend-as-an-optimized-transparent-png-asset-and-update-the-app-to-reference-that-asset-consistently-including-updating-the-existing-verifiedbadge-image-path",
+      "title": "Add the provided blue tick image to the frontend as an optimized transparent PNG asset and update the app to reference that asset consistently (including updating the existing VerifiedBadge image path).",
       "reqIds": [
         "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-when-a-user-s-verified-artist-status-is-expired-show-a-renew-verified-artist-message-and-a-renew-button-in-the-user-dashboard-the-renew-action-should-create-refresh-a-verification-request-for-admin-review-no-payment-integration",
-      "title": "When a user's Verified Artist status is expired, show a 'Renew Verified Artist' message and a 'Renew' button in the user dashboard; the Renew action should create/refresh a verification request for admin review (no payment integration).",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-an-admin-dashboard-panel-tab-for-verification-list-that-a-shows-all-users-who-applied-for-verification-with-their-full-name-and-request-details-and-b-provides-an-in-dashboard-notification-alert-when-there-are-pending-requests",
-      "title": "Add an Admin Dashboard panel/tab for 'Verification List' that (a) shows all users who applied for verification with their full name and request details, and (b) provides an in-dashboard notification/alert when there are pending requests.",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-verified-badge-ui-so-the-current-green-verified-badge-becomes-a-blue-verified-badge-for-verified-users-and-ensure-verified-users-are-visually-differentiated-as-pro-users-in-user-facing-surfaces-where-the-badge-is-shown",
-      "title": "Update the verified badge UI so the current green verified badge becomes a blue verified badge for verified users, and ensure verified users are visually differentiated as Pro users in user-facing surfaces where the badge is shown.",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-frontend-react-query-hooks-and-ui-state-wiring-for-verified-artist-status-verification-requests-user-and-admin-following-the-existing-query-key-invalidation-patterns-used-for-submissions-and-podcast-features",
-      "title": "Add frontend React Query hooks and UI state wiring for Verified Artist status + verification requests (user and admin), following the existing query-key + invalidation patterns used for submissions and podcast features.",
-      "reqIds": [
-        "REQ-9"
       ],
       "version": 1
     }
@@ -65,36 +46,33 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Admin-controlled Verified Artist (Pro) system: user can apply; admin notified + verification list panel; admin activates/extends; auto-expire after 30 days; non-verified see benefits + Apply button; verified hides benefits; expired shows Renew message + Renew button; monthly charge ₹200 informational only; green->blue badge; mark as Pro; Pro song submissions prioritized in admin list; only verified can submit podcasts; priority distribution 24–48h; custom label name option.",
+      "summary": "Show a blue tick icon next to verified artist names across the UI (using the provided blue-tick asset).",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Implement backend data model and APIs for Verified Artist (Pro) status that is admin-activated, lasts 30 days from activation, auto-expires after 30 days, and supports admin extension of the expiry date.",
-      "reqIds": [
-        "REQ-1"
-      ],
+      "summary": "Admin dashboard control to verify/unverify (reject verification) for artists; verification state updates the UI blue tick.",
+      "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Implement backend workflow for user 'Apply for verification' requests and admin visibility, including returning the applicant's full name in the admin list.",
+      "summary": "Admin can delete/remove an artist profile while keeping the artist’s songs visible.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Implement backend support to determine whether a given artist (by owner Principal) is currently verified based on the verification workflow state, and expose a query API the frontend can use to render the blue tick correctly.",
       "reqIds": [
         "REQ-2"
       ],
       "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Restrict podcast submission to Verified Artist (Pro) users only, enforced on the backend for both podcast show creation and episode creation.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "status": "pending"
     }
   ],
-  "projectName": "Admin-controlled Verified Artist (Pro) benefits with verification requests, expiry, badge, and podcast gating",
+  "gameProjectType": "none",
+  "projectName": "Tamil Indie Dashboard",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -5,7 +5,7 @@ import { Moon, Sun, LogOut, LogIn } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import GreenBadge from './GreenBadge';
+import ArtistNameWithVerified from './ArtistNameWithVerified';
 
 export default function Header() {
   const { login, clear, loginStatus, identity } = useInternetIdentity();
@@ -57,8 +57,12 @@ export default function Header() {
                 alt={firstProfile.stageName}
                 className="w-6 h-6 rounded-full object-cover"
               />
-              <span className="text-sm font-medium">{firstProfile.stageName}</span>
-              <GreenBadge size="small" />
+              <ArtistNameWithVerified
+                artistName={firstProfile.stageName}
+                ownerPrincipal={firstProfile.owner}
+                badgeSize="small"
+                className="text-sm font-medium"
+              />
             </div>
           )}
 

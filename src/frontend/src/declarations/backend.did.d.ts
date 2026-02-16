@@ -23,6 +23,7 @@ export interface ArtistProfile {
   'fullName' : string,
   'mobileNumber' : string,
   'email' : string,
+  'isVerified' : boolean,
   'spotifyProfile' : string,
   'youtubeChannelLink' : string,
   'facebookLink' : string,
@@ -50,6 +51,16 @@ export type Language = { 'tamil' : null } |
   { 'telugu' : null } |
   { 'bengali' : null } |
   { 'english' : null };
+export interface ListenerStatsUpdate {
+  'month' : bigint,
+  'value' : bigint,
+  'year' : bigint,
+}
+export interface MonthlyListenerStats {
+  'month' : bigint,
+  'value' : bigint,
+  'year' : bigint,
+}
 export type PodcastCategory = { 'kidsFamily' : null } |
   { 'music' : null } |
   { 'newsPolitics' : null } |
@@ -264,6 +275,18 @@ export interface UserProfile { 'name' : string, 'artistId' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface VerificationRequest {
+  'id' : string,
+  'status' : VerificationStatus,
+  'expiryExtensionDays' : bigint,
+  'user' : Principal,
+  'verificationApprovedTimestamp' : [] | [Time],
+  'timestamp' : Time,
+}
+export type VerificationStatus = { 'pending' : null } |
+  { 'approved' : null } |
+  { 'rejected' : null } |
+  { 'waiting' : null };
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -313,6 +336,7 @@ export interface _SERVICE {
     [string, SongStatus, string, string],
     undefined
   >,
+  'applyForVerification' : ActorMethod<[], string>,
   'approveEpisode' : ActorMethod<[string], undefined>,
   'approvePodcast' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
@@ -325,6 +349,7 @@ export interface _SERVICE {
   'createPodcastEpisode' : ActorMethod<[PodcastEpisodeInput], string>,
   'createPodcastShow' : ActorMethod<[PodcastShowInput], string>,
   'deleteArtistProfile' : ActorMethod<[string], undefined>,
+  'doesUserHaveArtistProfile' : ActorMethod<[Principal], boolean>,
   'downgradeTeamMember' : ActorMethod<[Principal], undefined>,
   'editSongSubmission' : ActorMethod<[SongSubmissionEditInput], undefined>,
   'generateInviteCode' : ActorMethod<[], string>,
@@ -338,7 +363,9 @@ export interface _SERVICE {
   'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
   'getAllSubmissionsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
   'getAllTeamMembers' : ActorMethod<[], Array<Principal>>,
+  'getArtistProfileByOwner' : ActorMethod<[Principal], [] | [ArtistProfile]>,
   'getArtistProfileEditingAccessStatus' : ActorMethod<[], boolean>,
+  'getArtistProfileIdByOwnerId' : ActorMethod<[Principal], [] | [string]>,
   'getArtistProfilesByUserForAdmin' : ActorMethod<
     [Principal],
     Array<ArtistProfile>
@@ -347,15 +374,30 @@ export interface _SERVICE {
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getEpisodesByShowId' : ActorMethod<[string], Array<PodcastEpisode>>,
   'getInviteCodes' : ActorMethod<[], Array<InviteCode>>,
+  'getLiveSongsForAnalysis' : ActorMethod<[], Array<SongSubmission>>,
   'getMyArtistProfiles' : ActorMethod<[], Array<ArtistProfile>>,
   'getMyEpisodes' : ActorMethod<[string], Array<PodcastEpisode>>,
   'getMyPodcastShows' : ActorMethod<[], Array<PodcastShow>>,
   'getMySubmissions' : ActorMethod<[], Array<SongSubmission>>,
   'getPodcastsByCategory' : ActorMethod<[PodcastCategory], Array<PodcastShow>>,
+  'getSongMonthlyListenerStats' : ActorMethod<
+    [string],
+    Array<MonthlyListenerStats>
+  >,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getVerificationRequests' : ActorMethod<[], Array<VerificationRequest>>,
+  'getVerificationRequestsByUser' : ActorMethod<
+    [Principal],
+    Array<VerificationRequest>
+  >,
   'getWebsiteLogo' : ActorMethod<[], [] | [ExternalBlob]>,
+  'handleVerificationRequest' : ActorMethod<
+    [string, boolean, string, VerificationStatus],
+    undefined
+  >,
   'isArtistProfileEditingEnabled' : ActorMethod<[], boolean>,
+  'isArtistVerified' : ActorMethod<[Principal], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCallerApproved' : ActorMethod<[], boolean>,
   'isStripeConfigured' : ActorMethod<[], boolean>,
@@ -379,6 +421,14 @@ export interface _SERVICE {
   'unblockUser' : ActorMethod<[Principal], undefined>,
   'updateArtistProfile' : ActorMethod<
     [string, SaveArtistProfileInput],
+    undefined
+  >,
+  'updateMonthlyListenerStats' : ActorMethod<
+    [string, Array<ListenerStatsUpdate>],
+    undefined
+  >,
+  'updateVerificationStatus' : ActorMethod<
+    [string, VerificationStatus, bigint],
     undefined
   >,
   'upgradeUserToTeamMember' : ActorMethod<[Principal], undefined>,

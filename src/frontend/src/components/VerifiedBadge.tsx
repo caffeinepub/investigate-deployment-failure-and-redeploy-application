@@ -12,12 +12,16 @@ export default function VerifiedBadge({ size = 'medium', className = '' }: Verif
     large: 'w-6 h-6',
   };
 
+  const imageSrc = size === 'small' 
+    ? '/assets/generated/blue-tick-badge-transparent.dim_20x20.png'
+    : '/assets/generated/blue-tick-badge-transparent.dim_24x24.png';
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <img
-            src="/assets/generated/blue-tick-badge-transparent.dim_24x24.png"
+            src={imageSrc}
             alt="Verified Artist"
             className={`inline-block ${sizeClasses[size]} ${className}`}
           />

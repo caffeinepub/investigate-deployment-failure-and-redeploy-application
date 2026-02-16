@@ -201,6 +201,26 @@ export default function AdminVerificationList() {
 
                       {isApproved && (
                         <div className="space-y-2 pt-2 border-t">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleReject(request.id)}
+                              disabled={updateStatus.isPending}
+                            >
+                              {updateStatus.isPending ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Unverifying...
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="w-4 h-4 mr-2" />
+                                  Unverify / Reject
+                                </>
+                              )}
+                            </Button>
+                          </div>
                           <Label className="text-sm">Extend Expiry (days)</Label>
                           <div className="flex gap-2">
                             <Input

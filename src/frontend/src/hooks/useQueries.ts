@@ -14,6 +14,9 @@ import {
   PodcastEpisode,
   PodcastEpisodeInput,
   PodcastCategory,
+  MonthlyListenerStats,
+  ListenerStatsUpdate,
+  VerificationStatus,
 } from '../backend';
 import { toast } from 'sonner';
 import { useInternetIdentity } from './useInternetIdentity';
@@ -138,6 +141,8 @@ export function useAdminSetSubmissionLive() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allSubmissionsForAdmin'] });
       queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['liveSongsForAnalysis'] });
+      queryClient.invalidateQueries({ queryKey: ['myLiveSongsWithStats'] });
       toast.success('Submission set to live successfully');
     },
     onError: (error: any) => {
@@ -398,252 +403,7 @@ export function useMarkEpisodeLive() {
   });
 }
 
-// Invite Links Management
-export function useGenerateInviteCode() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.generateInviteCode();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inviteCodes'] });
-      toast.success('Invite code generated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to generate invite code');
-    },
-  });
-}
-
-export function useGetInviteCodes() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<InviteCode[]>({
-    queryKey: ['inviteCodes'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getInviteCodes();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-// User blocking
-export function useIsUserBlocked() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['isUserBlocked', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) return false;
-      return actor.isUserBlocked(identity.getPrincipal());
-    },
-    enabled: !!actor && !!identity && !isFetching,
-  });
-}
-
-export function useBlockUser() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userPrincipal: string) => {
-      if (!actor) throw new Error('Actor not available');
-      const { Principal } = await import('@dfinity/principal');
-      return actor.blockUser(Principal.fromText(userPrincipal));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allBlockedUsers'] });
-      toast.success('User blocked successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to block user');
-    },
-  });
-}
-
-export function useUnblockUser() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userPrincipal: string) => {
-      if (!actor) throw new Error('Actor not available');
-      const { Principal } = await import('@dfinity/principal');
-      return actor.unblockUser(Principal.fromText(userPrincipal));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allBlockedUsers'] });
-      toast.success('User unblocked successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to unblock user');
-    },
-  });
-}
-
-export function useGetAllBlockedUsers() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['allBlockedUsers'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllBlockedUsers();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-// Team member management
-export function useUpgradeUserToTeamMember() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userPrincipal: string) => {
-      if (!actor) throw new Error('Actor not available');
-      const { Principal } = await import('@dfinity/principal');
-      return actor.upgradeUserToTeamMember(Principal.fromText(userPrincipal));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allTeamMembers'] });
-      toast.success('User upgraded to team member');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to upgrade user');
-    },
-  });
-}
-
-export function useDowngradeTeamMember() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userPrincipal: string) => {
-      if (!actor) throw new Error('Actor not available');
-      const { Principal } = await import('@dfinity/principal');
-      return actor.downgradeTeamMember(Principal.fromText(userPrincipal));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allTeamMembers'] });
-      toast.success('Team member downgraded');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to downgrade team member');
-    },
-  });
-}
-
-export function useGetAllTeamMembers() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['allTeamMembers'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllTeamMembers();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-// Website logo management
-export function useGetWebsiteLogo() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['websiteLogo'],
-    queryFn: async () => {
-      if (!actor) return null;
-      return actor.getWebsiteLogo();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useSetWebsiteLogo() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (logo: any) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.setWebsiteLogo(logo);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['websiteLogo'] });
-      toast.success('Logo updated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to update logo');
-    },
-  });
-}
-
-export function useRemoveWebsiteLogo() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.removeWebsiteLogo();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['websiteLogo'] });
-      toast.success('Logo removed successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to remove logo');
-    },
-  });
-}
-
-// Check if current user is admin
-export function useIsCurrentUserAdmin() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-  
-  // Include principal in query key to avoid stale cached data across identity changes
-  const principal = identity?.getPrincipal().toString() || 'anonymous';
-
-  const query = useQuery<boolean>({
-    queryKey: ['isCurrentUserAdmin', principal],
-    queryFn: async () => {
-      if (!actor) return false;
-      return actor.isCallerAdmin();
-    },
-    enabled: !!actor && !actorFetching,
-    staleTime: 0, // Always refetch to ensure fresh admin status
-  });
-
-  return {
-    ...query,
-    isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && query.isFetched,
-  };
-}
-
-// Multi-Artist Profile Management
-export function useGetMyArtistProfiles() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<ArtistProfile[]>({
-    queryKey: ['myArtistProfiles'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getMyArtistProfiles();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
+// Artist Profile Management
 export function useCreateArtistProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -655,12 +415,25 @@ export function useCreateArtistProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfilesForAdmin'] });
+      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
       toast.success('Artist profile created successfully!');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create artist profile');
     },
+  });
+}
+
+export function useGetMyArtistProfiles() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ArtistProfile[]>({
+    queryKey: ['myArtistProfiles'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMyArtistProfiles();
+    },
+    enabled: !!actor && !isFetching,
   });
 }
 
@@ -675,7 +448,7 @@ export function useUpdateArtistProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfilesForAdmin'] });
+      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
       toast.success('Artist profile updated successfully!');
     },
     onError: (error: any) => {
@@ -695,7 +468,7 @@ export function useDeleteArtistProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfilesForAdmin'] });
+      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
       toast.success('Artist profile deleted successfully!');
     },
     onError: (error: any) => {
@@ -705,11 +478,11 @@ export function useDeleteArtistProfile() {
 }
 
 // Admin Artist Profile Management
-export function useGetAllArtistProfilesForAdmin() {
+export function useGetAllArtistProfiles() {
   const { actor, isFetching } = useActor();
 
   return useQuery<ArtistProfile[]>({
-    queryKey: ['allArtistProfilesForAdmin'],
+    queryKey: ['allArtistProfiles'],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllArtistProfilesForAdmin();
@@ -728,7 +501,7 @@ export function useAdminEditArtistProfile() {
       return actor.adminEditArtistProfile(id, input);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfilesForAdmin'] });
+      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
       queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
       toast.success('Artist profile updated successfully');
     },
@@ -748,8 +521,9 @@ export function useAdminDeleteArtistProfile() {
       return actor.adminDeleteArtistProfile(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfilesForAdmin'] });
+      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
       queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
+      queryClient.invalidateQueries({ queryKey: ['artistVerified'] });
       toast.success('Artist profile deleted successfully');
     },
     onError: (error: any) => {
@@ -761,18 +535,11 @@ export function useAdminDeleteArtistProfile() {
 export function useGetAllArtistsWithUserIds() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<{ principal: Principal; profiles: ArtistProfile[] }[]>({
+  return useQuery<ArtistProfile[]>({
     queryKey: ['allArtistsWithUserIds'],
     queryFn: async () => {
       if (!actor) return [];
-      const owners = await actor.getAllArtistProfileOwnersForAdmin();
-      const results = await Promise.all(
-        owners.map(async (owner) => {
-          const profiles = await actor.getArtistProfilesByUserForAdmin(owner);
-          return { principal: owner, profiles };
-        })
-      );
-      return results;
+      return actor.getAllArtistProfilesForAdmin();
     },
     enabled: !!actor && !isFetching,
   });
@@ -818,7 +585,348 @@ export function useSaveCallerUserProfile() {
   });
 }
 
-// Artist Profile Editing Access Control
+// Invite Links Management
+export function useGenerateInviteCode() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.generateInviteCode();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inviteCodes'] });
+      toast.success('Invite code generated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to generate invite code');
+    },
+  });
+}
+
+export function useGetInviteCodes() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<InviteCode[]>({
+    queryKey: ['inviteCodes'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getInviteCodes();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// Admin Management
+export function useIsCurrentUserAdmin() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  const query = useQuery<boolean>({
+    queryKey: ['isAdmin'],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerAdmin();
+    },
+    enabled: !!actor && !actorFetching,
+    retry: false,
+  });
+
+  return {
+    ...query,
+    isLoading: actorFetching || query.isLoading,
+    isFetched: !!actor && query.isFetched,
+  };
+}
+
+// Verification Management
+export function useApplyForVerification() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.applyForVerification();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
+      toast.success('Verification request submitted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to submit verification request');
+    },
+  });
+}
+
+export function useGetVerificationRequestsForAdmin() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery({
+    queryKey: ['verificationRequests'],
+    queryFn: async () => {
+      if (!actor) return [];
+      const requests = await actor.getVerificationRequests();
+      const allProfiles = await actor.getAllArtistProfilesForAdmin();
+      
+      return requests.map((request) => {
+        const profile = allProfiles.find((p) => p.owner.toString() === request.user.toString());
+        return {
+          ...request,
+          fullName: profile?.fullName || 'Unknown User',
+        };
+      });
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateVerificationStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      verificationId,
+      status,
+      expiryExtensionDays,
+    }: {
+      verificationId: string;
+      status: VerificationStatus;
+      expiryExtensionDays: number;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.updateVerificationStatus(verificationId, status, BigInt(expiryExtensionDays));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['artistVerified'] });
+      toast.success('Verification status updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update verification status');
+    },
+  });
+}
+
+export function useGetVerifiedArtistStatus() {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery({
+    queryKey: ['verifiedArtistStatus'],
+    queryFn: async () => {
+      if (!actor || !identity) return { isExpired: false, hasPendingRequest: false };
+      
+      const requests = await actor.getVerificationRequestsByUser(identity.getPrincipal());
+      const hasPendingRequest = requests.some((r) => r.status === VerificationStatus.pending);
+      
+      const approvedRequest = requests.find((r) => r.status === VerificationStatus.approved);
+      if (!approvedRequest || !approvedRequest.verificationApprovedTimestamp) {
+        return { isExpired: false, hasPendingRequest };
+      }
+
+      const approvalTime = Number(approvedRequest.verificationApprovedTimestamp / BigInt(1000000));
+      const expiryTime = approvalTime + (30 + Number(approvedRequest.expiryExtensionDays)) * 24 * 60 * 60 * 1000;
+      const isExpired = Date.now() > expiryTime;
+
+      return { isExpired, hasPendingRequest };
+    },
+    enabled: !!actor && !isFetching && !!identity,
+  });
+}
+
+// New hook: Check if an artist (by owner Principal) is verified
+export function useIsArtistVerified(ownerPrincipal: Principal | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ['artistVerified', ownerPrincipal?.toString()],
+    queryFn: async () => {
+      if (!actor || !ownerPrincipal) return false;
+      return actor.isArtistVerified(ownerPrincipal);
+    },
+    enabled: !!actor && !isFetching && !!ownerPrincipal,
+  });
+}
+
+export function useAdminActivateVerifiedArtist() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userPrincipal: string) => {
+      if (!actor) throw new Error('Actor not available');
+      const principal = Principal.fromText(userPrincipal);
+      const requests = await actor.getVerificationRequestsByUser(principal);
+      const pendingRequest = requests.find((r) => r.status === VerificationStatus.pending);
+      
+      if (!pendingRequest) {
+        throw new Error('No pending verification request found');
+      }
+
+      await actor.updateVerificationStatus(pendingRequest.id, VerificationStatus.approved, BigInt(0));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['artistVerified'] });
+      toast.success('Artist verified and activated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to activate verified artist');
+    },
+  });
+}
+
+export function useAdminExtendVerifiedExpiry() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userPrincipal, extensionDays }: { userPrincipal: string; extensionDays: number }) => {
+      if (!actor) throw new Error('Actor not available');
+      const principal = Principal.fromText(userPrincipal);
+      const requests = await actor.getVerificationRequestsByUser(principal);
+      const approvedRequest = requests.find((r) => r.status === VerificationStatus.approved);
+      
+      if (!approvedRequest) {
+        throw new Error('No approved verification request found');
+      }
+
+      const currentExtension = Number(approvedRequest.expiryExtensionDays);
+      const newExtension = currentExtension + extensionDays;
+
+      await actor.updateVerificationStatus(approvedRequest.id, VerificationStatus.approved, BigInt(newExtension));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['artistVerified'] });
+      toast.success('Verification expiry extended successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to extend verification expiry');
+    },
+  });
+}
+
+export function useAdminUpdateVerificationRequestStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      
+      let verificationStatus: VerificationStatus;
+      if (status === 'approved') {
+        verificationStatus = VerificationStatus.approved;
+      } else if (status === 'rejected') {
+        verificationStatus = VerificationStatus.rejected;
+      } else if (status === 'waiting') {
+        verificationStatus = VerificationStatus.waiting;
+      } else {
+        verificationStatus = VerificationStatus.pending;
+      }
+
+      await actor.updateVerificationStatus(requestId, verificationStatus, BigInt(0));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['artistVerified'] });
+      toast.success('Verification status updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update verification status');
+    },
+  });
+}
+
+// Monthly Listener Stats
+export function useGetLiveSongsForAnalysis() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<SongSubmission[]>({
+    queryKey: ['liveSongsForAnalysis'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getLiveSongsForAnalysis();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetSongMonthlyListenerStats() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (songId: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getSongMonthlyListenerStats(songId);
+    },
+  });
+}
+
+export function useUpdateMonthlyListenerStats() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ songId, updates }: { songId: string; updates: ListenerStatsUpdate[] }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.updateMonthlyListenerStats(songId, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['liveSongsForAnalysis'] });
+      queryClient.invalidateQueries({ queryKey: ['myLiveSongsWithStats'] });
+      toast.success('Monthly listener stats updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update monthly listener stats');
+    },
+  });
+}
+
+export function useGetMyLiveSongsWithStats() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery({
+    queryKey: ['myLiveSongsWithStats'],
+    queryFn: async () => {
+      if (!actor) return [];
+      
+      const mySubmissions = await actor.getMySubmissions();
+      const liveSongs = mySubmissions.filter((s) => s.status === SongStatus.live);
+      
+      const songsWithStats = await Promise.all(
+        liveSongs.map(async (song) => {
+          const stats = await actor.getSongMonthlyListenerStats(song.id);
+          return { song, stats };
+        })
+      );
+      
+      return songsWithStats;
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// User Blocking
+export function useIsUserBlocked() {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<boolean>({
+    queryKey: ['isUserBlocked'],
+    queryFn: async () => {
+      if (!actor || !identity) return false;
+      return actor.isUserBlocked(identity.getPrincipal());
+    },
+    enabled: !!actor && !isFetching && !!identity,
+  });
+}
+
+// Artist Profile Editing Access
 export function useGetArtistProfileEditingAccessStatus() {
   const { actor, isFetching } = useActor();
 
@@ -829,178 +937,5 @@ export function useGetArtistProfileEditingAccessStatus() {
       return actor.getArtistProfileEditingAccessStatus();
     },
     enabled: !!actor && !isFetching,
-  });
-}
-
-export function useSetArtistProfileEditingAccess() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (enabled: boolean) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.setArtistProfileEditingAccess(enabled);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['artistProfileEditingAccessStatus'] });
-      toast.success('Access control updated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to update access control');
-    },
-  });
-}
-
-// Verified Artist (Pro) Management - Backend missing APIs
-// These hooks are placeholders until backend implements the verification request system
-
-export interface VerifiedArtistStatus {
-  isVerified: boolean;
-  isExpired: boolean;
-  expiryDate: bigint | null;
-  hasPendingRequest: boolean;
-}
-
-export interface VerificationRequest {
-  id: string;
-  user: Principal;
-  status: 'pending' | 'approved' | 'rejected' | 'waiting';
-  timestamp: bigint;
-  fullName: string;
-  verificationApprovedTimestamp: bigint | null;
-  expiryExtensionDays: number;
-}
-
-// User-facing verified artist status query
-export function useGetVerifiedArtistStatus() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<VerifiedArtistStatus>({
-    queryKey: ['verifiedArtistStatus', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) {
-        return {
-          isVerified: false,
-          isExpired: false,
-          expiryDate: null,
-          hasPendingRequest: false,
-        };
-      }
-      
-      // Backend gap: Need getVerifiedArtistStatus() API
-      // For now, return default non-verified state
-      return {
-        isVerified: false,
-        isExpired: false,
-        expiryDate: null,
-        hasPendingRequest: false,
-      };
-    },
-    enabled: !!actor && !!identity && !isFetching,
-  });
-}
-
-// User applies for verification
-export function useApplyForVerification() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      // Backend gap: Need applyForVerification() API
-      throw new Error('Verification application API not yet implemented');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
-      queryClient.invalidateQueries({ queryKey: ['verificationRequestsForAdmin'] });
-      toast.success('Verification application submitted successfully!');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to submit verification application');
-    },
-  });
-}
-
-// Admin queries all verification requests
-export function useGetVerificationRequestsForAdmin() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<VerificationRequest[]>({
-    queryKey: ['verificationRequestsForAdmin'],
-    queryFn: async () => {
-      if (!actor) return [];
-      // Backend gap: Need getVerificationRequests() API
-      return [];
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-// Admin activates verified artist status
-export function useAdminActivateVerifiedArtist() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userPrincipal: string) => {
-      if (!actor) throw new Error('Actor not available');
-      // Backend gap: Need activateVerifiedArtist(principal) API
-      throw new Error('Activate verified artist API not yet implemented');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['verificationRequestsForAdmin'] });
-      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
-      queryClient.invalidateQueries({ queryKey: ['allSubmissionsForAdmin'] });
-      toast.success('Verified artist status activated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to activate verified artist status');
-    },
-  });
-}
-
-// Admin extends expiry
-export function useAdminExtendVerifiedExpiry() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ userPrincipal, extensionDays }: { userPrincipal: string; extensionDays: number }) => {
-      if (!actor) throw new Error('Actor not available');
-      // Backend gap: Need extendVerifiedExpiry(principal, days) API
-      throw new Error('Extend verified expiry API not yet implemented');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['verificationRequestsForAdmin'] });
-      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
-      toast.success('Verified artist expiry extended successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to extend verified artist expiry');
-    },
-  });
-}
-
-// Admin updates verification request status
-export function useAdminUpdateVerificationRequestStatus() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ requestId, status }: { requestId: string; status: 'pending' | 'approved' | 'rejected' }) => {
-      if (!actor) throw new Error('Actor not available');
-      // Backend gap: Need updateVerificationRequestStatus(requestId, status) API
-      throw new Error('Update verification request status API not yet implemented');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['verificationRequestsForAdmin'] });
-      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
-      toast.success('Verification request status updated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to update verification request status');
-    },
   });
 }

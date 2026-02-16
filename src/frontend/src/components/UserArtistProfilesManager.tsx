@@ -7,7 +7,7 @@ import { UserPlus, Edit2, Trash2, Mail, Phone, Instagram, Facebook } from 'lucid
 import { SiSpotify, SiApplemusic } from 'react-icons/si';
 import { useGetMyArtistProfiles, useDeleteArtistProfile } from '../hooks/useQueries';
 import ArtistSetupForm from './ArtistSetupForm';
-import GreenBadge from './GreenBadge';
+import ArtistNameWithVerified from './ArtistNameWithVerified';
 import type { ArtistProfile } from '../backend';
 
 export default function UserArtistProfilesManager() {
@@ -82,8 +82,13 @@ export default function UserArtistProfilesManager() {
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-xl font-bold">{profile.stageName}</h3>
-                          <GreenBadge size="medium" />
+                          <h3 className="text-xl font-bold">
+                            <ArtistNameWithVerified
+                              artistName={profile.stageName}
+                              ownerPrincipal={profile.owner}
+                              badgeSize="medium"
+                            />
+                          </h3>
                         </div>
                         <p className="text-muted-foreground">{profile.fullName}</p>
                       </div>

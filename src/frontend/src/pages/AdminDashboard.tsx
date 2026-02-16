@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, Music, Radio, BadgeCheck } from 'lucide-react';
+import { Users, Music, Radio, BadgeCheck, BarChart3 } from 'lucide-react';
 import AdminArtistManagement from '../components/AdminArtistManagement';
 import AdminSubmissionsList from '../components/AdminSubmissionsList';
 import AdminPodcastSubmissions from '../components/AdminPodcastSubmissions';
 import AdminVerificationList from '../components/AdminVerificationList';
+import AdminMonthlyListenersManagement from '../components/AdminMonthlyListenersManagement';
 import { useIsCurrentUserAdmin, useGetVerificationRequestsForAdmin } from '../hooks/useQueries';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
@@ -48,7 +49,7 @@ export default function AdminDashboard() {
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
+        <TabsList className="grid w-full grid-cols-5 mb-8">
           <TabsTrigger value="artists" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Artist Profiles
@@ -70,6 +71,10 @@ export default function AdminDashboard() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="listeners" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Monthly Listeners
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="artists">
@@ -86,6 +91,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="verification">
           <AdminVerificationList />
+        </TabsContent>
+
+        <TabsContent value="listeners">
+          <AdminMonthlyListenersManagement />
         </TabsContent>
       </Tabs>
     </div>

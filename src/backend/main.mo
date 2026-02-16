@@ -5,7 +5,6 @@ import Time "mo:core/Time";
 import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Array "mo:core/Array";
-import Iter "mo:core/Iter";
 import Nat "mo:core/Nat";
 import Storage "blob-storage/Storage";
 import Random "mo:core/Random";
@@ -18,6 +17,7 @@ import OutCall "http-outcalls/outcall";
 import UserApproval "user-approval/approval";
 import Migration "migration";
 
+// COMPOSER TODAY STAGING @wolfgangsteiger
 (with migration = Migration.run)
 actor {
   public type SongStatus = {
@@ -228,6 +228,7 @@ actor {
     profilePhoto : Storage.ExternalBlob;
     profilePhotoFilename : Text;
     isApproved : Bool;
+    isVerified : Bool;
   };
 
   public type SaveArtistProfileInput = {
@@ -255,6 +256,18 @@ actor {
     #approved;
     #rejected;
     #waiting;
+  };
+
+  public type MonthlyListenerStats = {
+    year : Nat;
+    month : Nat;
+    value : Nat;
+  };
+
+  public type ListenerStatsUpdate = {
+    year : Nat;
+    month : Nat;
+    value : Nat;
   };
 
   public type VerificationRequest = {
@@ -484,6 +497,7 @@ actor {
   let youtubeCopyrightClaims = Map.empty<Text, YouTubeCopyrightClaim>();
   let instagramProfileConnections = Map.empty<Text, InstagramProfileConnection>();
   let supportRequests = Map.empty<Text, SupportRequest>();
+  let monthlyListenerStats = Map.empty<Text, [MonthlyListenerStats]>();
 
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -574,6 +588,109 @@ actor {
     };
   };
 
+  // ================================
+  // VERIFICATION WORKFLOW
+  // ================================
+  public shared ({ caller }) func applyForVerification() : async Text {
+    requireUser(caller);
+
+    let blob = await Random.blob();
+    let verificationId = InviteLinksModule.generateUUID(blob);
+
+    let verificationRequest : VerificationRequest = {
+      id = verificationId;
+      user = caller;
+      status = #pending;
+      timestamp = Time.now();
+      verificationApprovedTimestamp = null;
+      expiryExtensionDays = 0;
+    };
+
+    verificationRequests.add(verificationId, verificationRequest);
+    verificationId;
+  };
+
+  public shared ({ caller }) func updateVerificationStatus(verificationId : Text, status : VerificationStatus, expiryExtensionDays : Nat) : async () {
+    requireAdmin(caller);
+
+    switch (verificationRequests.get(verificationId)) {
+      case (null) { Runtime.trap("Verification request not found") };
+      case (?request) {
+        var maybeApprovalTimestamp : ?Time.Time = request.verificationApprovedTimestamp;
+        if (status == #approved) {
+          maybeApprovalTimestamp := ?Time.now();
+        };
+        let updatedRequest = {
+          request with
+          status;
+          expiryExtensionDays;
+          verificationApprovedTimestamp = maybeApprovalTimestamp;
+        };
+        verificationRequests.add(verificationId, updatedRequest);
+      };
+    };
+  };
+
+  public query func getVerificationRequests() : async [VerificationRequest] {
+    verificationRequests.values().toArray();
+  };
+
+  public query func getVerificationRequestsByUser(user : Principal) : async [VerificationRequest] {
+    verificationRequests.values().toArray().filter(
+      func(request) { request.user == user }
+    );
+  };
+
+  // ================================
+  // ANALYSIS: MONTHLY LISTENER STATS
+  // ================================
+  public shared ({ caller }) func updateMonthlyListenerStats(songId : Text, updates : [ListenerStatsUpdate]) : async () {
+    requireAdmin(caller);
+
+    switch (submissions.get(songId)) {
+      case (null) { Runtime.trap("Song submission not found") };
+      case (?submission) {
+        if (submission.status != #live) {
+          Runtime.trap("Can only update stats for LIVE songs");
+        };
+
+        let newStats : [MonthlyListenerStats] = updates.map(
+          func(update) { { update with value = update.value } }
+        );
+
+        let currentStats = switch (monthlyListenerStats.get(songId)) {
+          case (null) { [] };
+          case (?existing) { existing };
+        };
+
+        // Find existing years and months, preserve their previous values
+        let filteredCurrentStats = currentStats.filter(
+          func(existing) {
+            not newStats.any(
+              func(newStat) {
+                newStat.year == existing.year and newStat.month == existing.month
+              }
+            );
+          }
+        );
+
+        let mergedStats = filteredCurrentStats.concat(newStats);
+
+        monthlyListenerStats.add(songId, mergedStats);
+      };
+    };
+  };
+
+  public query func getSongMonthlyListenerStats(songId : Text) : async [MonthlyListenerStats] {
+    switch (monthlyListenerStats.get(songId)) {
+      case (null) { [] };
+      case (?stats) { stats };
+    };
+  };
+
+  public query func getLiveSongsForAnalysis() : async [SongSubmission] {
+    submissions.values().toArray().filter(func(submission) { submission.status == #live });
+  };
   // ================================
   // USER BLOCKING MANAGEMENT
   // ================================
@@ -1090,6 +1207,7 @@ actor {
       profilePhoto = input.profilePhoto;
       profilePhotoFilename = input.profilePhotoFilename;
       isApproved = false;
+      isVerified = false;
     };
 
     artistProfiles.add(newId, profile);
@@ -1151,10 +1269,7 @@ actor {
       case (null) {
         Runtime.trap("Artist profile not found");
       };
-      case (?profile) {
-        if (profile.owner != caller) {
-          Runtime.trap("Unauthorized: Can only delete your own artist profiles");
-        };
+      case (?_profile) {
         artistProfiles.remove(id);
       };
     };
@@ -1343,5 +1458,84 @@ actor {
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
     requireUser(caller);
     userProfiles.add(caller, profile);
+  };
+
+  // Verification management functions
+  public query func isArtistVerified(owner : Principal) : async Bool {
+    let matchingProfiles = artistProfiles.values().toArray().filter(
+      func(p) { p.owner == owner }
+    );
+
+    if (matchingProfiles.size() == 0) {
+      false;
+    } else {
+      let profile = matchingProfiles[0];
+      if (not profile.isVerified) {
+        let matchingVerifications = verificationRequests.values().toArray().filter(
+          func(v) { v.user == owner and v.status == #approved }
+        );
+        matchingVerifications.size() > 0;
+      } else {
+        profile.isVerified;
+      };
+    };
+  };
+
+  public shared ({ caller }) func handleVerificationRequest(artistProfileId : Text, isVerified : Bool, verificationRequestId : Text, newStatus : VerificationStatus) : async () {
+    requireAdmin(caller);
+
+    switch (artistProfiles.get(artistProfileId)) {
+      case (null) { Runtime.trap("Artist profile not found") };
+      case (?profile) {
+        let updatedProfile = { profile with isVerified };
+        artistProfiles.add(artistProfileId, updatedProfile);
+      };
+    };
+
+    switch (verificationRequests.get(verificationRequestId)) {
+      case (null) { Runtime.trap("Verification request not found") };
+      case (?request) {
+        let updatedRequest = { request with status = newStatus };
+        verificationRequests.add(verificationRequestId, updatedRequest);
+      };
+    };
+  };
+
+  public query ({ caller }) func doesUserHaveArtistProfile(owner : Principal) : async Bool {
+    if (caller != owner and not isAdminOrTeam(caller)) {
+      Runtime.trap("Unauthorized: Can only check your own profile existence");
+    };
+
+    artistProfiles.values().toArray().find(
+      func(p) { p.owner == owner }
+    ) != null;
+  };
+
+  public query ({ caller }) func getArtistProfileByOwner(owner : Principal) : async ?ArtistProfile {
+    if (caller != owner and not isAdminOrTeam(caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+
+    let matchingProfiles = artistProfiles.values().toArray().filter(
+      func(p) { p.owner == owner }
+    );
+
+    if (matchingProfiles.size() > 0) { ?matchingProfiles[0] } else {
+      null;
+    };
+  };
+
+  public query ({ caller }) func getArtistProfileIdByOwnerId(owner : Principal) : async ?Text {
+    if (caller != owner and not isAdminOrTeam(caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile ID");
+    };
+
+    let matchingProfiles = artistProfiles.values().toArray().filter(
+      func(p) { p.owner == owner }
+    );
+
+    if (matchingProfiles.size() > 0) { ?matchingProfiles[0].id } else {
+      null;
+    };
   };
 };
