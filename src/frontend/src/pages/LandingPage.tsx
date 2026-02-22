@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Music, Users, Headphones, LogIn } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useIsCurrentUserAdmin } from '../hooks/useQueries';
+import PricingSection from '../components/PricingSection';
 
 export default function LandingPage() {
   const { login, loginStatus, identity } = useInternetIdentity();
@@ -139,6 +140,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Pricing Section */}
+      <PricingSection />
 
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-blue-500/10">

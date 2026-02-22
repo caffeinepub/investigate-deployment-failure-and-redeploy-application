@@ -1,15 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { useGetVerifiedArtistStatus, useApplyForVerification } from '../hooks/useQueries';
 
 export default function VerificationRenewalSection() {
-  const { data: verifiedStatus, isLoading: statusLoading } = useGetVerifiedArtistStatus();
+  const { data: isVerified, isLoading: statusLoading } = useGetVerifiedArtistStatus();
   const renewVerification = useApplyForVerification();
 
-  // Only show if user's verification is expired
-  if (!verifiedStatus?.isExpired) {
+  // Only show if user is not verified (could be expired)
+  // Note: The backend doesn't track expiry separately, so we show this for non-verified users
+  if (isVerified || statusLoading) {
     return null;
   }
 
@@ -20,10 +20,6 @@ export default function VerificationRenewalSection() {
       // Error already handled by mutation
     }
   };
-
-  if (statusLoading) {
-    return null;
-  }
 
   return (
     <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-red-50">
@@ -50,35 +46,24 @@ export default function VerificationRenewalSection() {
           </ul>
         </div>
 
-        {verifiedStatus?.hasPendingRequest ? (
-          <div className="text-center space-y-2">
-            <Badge variant="secondary" className="text-sm">
-              Renewal Request Pending
-            </Badge>
-            <p className="text-xs text-muted-foreground">
-              Your renewal request is under review by our admin team
-            </p>
-          </div>
-        ) : (
-          <Button
-            onClick={handleRenew}
-            disabled={renewVerification.isPending}
-            className="w-full bg-orange-600 hover:bg-orange-700"
-            size="lg"
-          >
-            {renewVerification.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              'Renew Verified Artist'
-            )}
-          </Button>
-        )}
+        <Button
+          onClick={handleRenew}
+          disabled={renewVerification.isPending}
+          className="w-full bg-orange-600 hover:bg-orange-700"
+          size="lg"
+        >
+          {renewVerification.isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Submitting...
+            </>
+          ) : (
+            'Renew Verified Artist'
+          )}
+        </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          Monthly charge: ₹200 (informational only, no payment required)
+          Monthly charge: ₹200 (informational only, no payment required at this time)
         </p>
       </CardContent>
     </Card>

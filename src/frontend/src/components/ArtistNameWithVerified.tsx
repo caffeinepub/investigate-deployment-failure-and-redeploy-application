@@ -16,7 +16,7 @@ export default function ArtistNameWithVerified({
   className = '',
   badgeSize = 'medium',
 }: ArtistNameWithVerifiedProps) {
-  const { data: isVerified, isLoading } = useIsArtistVerified(ownerPrincipal);
+  const { data: isVerified, isLoading } = useIsArtistVerified();
 
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>

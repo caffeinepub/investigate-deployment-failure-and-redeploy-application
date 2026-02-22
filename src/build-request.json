@@ -1,128 +1,63 @@
 {
   "kind": "build_request",
-  "title": "Verified artist blue tick across UI + admin verify/unverify + admin delete artist profile only",
-  "projectName": "Tamil Indie Dashboard",
+  "title": "Retry subscription plans feature implementation",
+  "projectName": "Indie Tamil Music Production",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a verified/blue-tick indicator next to the artist’s name across the UI, using the user-uploaded blue tick image as the source asset and rendering it via the existing VerifiedBadge component (or an equivalent shared UI element).",
-      "target": "frontend",
+      "text": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-recent"
         ],
         "quotes": [
-          "the verifyed artist should have blue tick so, use the attached file as blue tick",
-          "1. yes next to the artist's name"
+          "Admin will manually add it via the dedicated plans panel in the admin dashboard"
         ]
       },
       "acceptanceCriteria": [
-        "A blue tick icon is shown next to an artist’s displayed name wherever an artist name is rendered in artist profile cards/lists and header/primary artist display.",
-        "The tick uses a static asset served from the frontend (not fetched via backend).",
-        "The existing tooltip behavior for the verified icon remains (or is replaced with an equivalent tooltip)."
+        "Admin dashboard has a dedicated subscription plans management panel",
+        "Admins can create new subscription plans with name, price, benefits, and redirect URL",
+        "Admins can edit existing subscription plans",
+        "Admins can delete subscription plans",
+        "Changes persist in backend storage"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement backend support to determine whether a given artist (by owner Principal) is currently verified based on the verification workflow state, and expose a query API the frontend can use to render the blue tick correctly.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "the verifyed artist should have blue tick",
-          "yes, and at the same time admin can reject the verification at any time."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes a query method that returns whether a provided Principal is verified (e.g., approved and not expired).",
-        "Frontend can call this query and map verification status to artist profiles by profile.owner Principal.",
-        "Verification status changes (approve/reject) are reflected after React Query invalidation without requiring a hard refresh."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Ensure the admin dashboard supports toggling verification status for artists: admins can approve verification (activate) and can also reject/unverify at any time after approval.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "yes, and at the same time admin can reject the verification at any time."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin can approve a verification request for a user.",
-        "Admin can reject/unverify an already-approved user (not limited to only pending requests).",
-        "After admin changes status, the artist’s blue tick disappears/appears across the UI accordingly."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Add admin-only ability to delete/remove an artist profile from the Admin Dashboard (Artist Management) without deleting the artist’s songs/submissions (songs must remain visible/unchanged).",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "give the access that admin can delete the artist profile from admin dashboard.",
-          "only the profile be removed while their songs remain visible"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin Artist Management UI shows a delete action per artist profile with a confirmation step.",
-        "Calling admin delete removes only the artist profile record; existing song submissions remain intact and still appear in user/admin submissions lists.",
-        "After deletion, the profile no longer appears in admin artist profile listings and cannot be fetched via getMyArtistProfiles for that owner."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Add the provided blue tick image to the frontend as an optimized transparent PNG asset and update the app to reference that asset consistently (including updating the existing VerifiedBadge image path).",
+      "text": "Display all active subscription plans publicly on the landing page in the existing PricingSection component location",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-recent"
         ],
         "quotes": [
-          "use the attached file as blue tick"
+          "Already existing location",
+          "Make subscription plans visible for everyone publicly. Which is displayed in landing page of this website"
         ]
       },
       "acceptanceCriteria": [
-        "A transparent, appropriately-sized blue tick icon exists in frontend/public/assets/generated and is used by VerifiedBadge.",
-        "No broken image links appear for the verified badge in any theme mode.",
-        "Asset filename/path used in code matches the generated/static asset path."
+        "Subscription plans are fetched from backend and displayed in PricingSection component",
+        "Plans show name, pricing, benefits list, and call-to-action buttons",
+        "Plans are visible to all visitors without authentication",
+        "Display uses existing pricing section styling and layout"
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
-    "Do not edit files under frontend/src/components/ui or the immutable hook entrypoints listed in SYSTEM_CONTEXT.",
-    "Serve the blue tick icon as a frontend static asset (do not proxy through the backend)."
+    "Use existing AdminSubscriptionPlansManagement.tsx and PricingSection.tsx components",
+    "Backend must use single-actor architecture in main.mo",
+    "Frontend must use React Query for data fetching"
   ],
   "nonGoals": [
-    "Do not delete or modify song submissions when an artist profile is deleted; only remove the profile record.",
-    "Do not add third-party authentication providers (Internet Identity only).",
-    "Do not add real-time/WebSocket features."
+    "Payment processing integration beyond redirect URLs",
+    "User subscription status tracking or management",
+    "Automatic subscription renewal or billing",
+    "Email notifications for subscription changes"
   ],
   "imageRequirements": {
     "required": [],
-    "edits": [
-      "Convert uploaded blue tick image to an optimized transparent PNG at small icon size (—Pngtree—instagram bule tick insta blue_9074860-1.png > blue-tick-badge-transparent.dim_24x24.png)",
-      "Convert uploaded blue tick image to an optimized transparent PNG at medium icon size (—Pngtree—instagram bule tick insta blue_9074860-1.png > blue-tick-badge-transparent.dim_20x20.png)"
-    ]
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
+    "edits": []
   }
 }

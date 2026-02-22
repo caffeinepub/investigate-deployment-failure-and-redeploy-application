@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useCreatePodcastEpisode, useGetMyPodcastShows } from '../hooks/useQueries';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCreatePodcastEpisode, useGetMyPodcastShows, useIsCurrentUserBlockedPodcastSubmission } from '../hooks/useQueries';
 import { EpisodeType } from '../backend';
 import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PodcastEpisodeFormProps {
   showId?: string;
@@ -33,9 +35,15 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
 
   const { data: shows = [] } = useGetMyPodcastShows();
   const createEpisode = useCreatePodcastEpisode();
+  const { data: isBlocked, isLoading: blockCheckLoading } = useIsCurrentUserBlockedPodcastSubmission();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isBlocked) {
+      toast.error('Your access blocked due to submission limit is full');
+      return;
+    }
 
     if (!selectedShowId || !title || !description || !thumbnailFile || !artworkFile || !mediaFile) {
       return;
@@ -83,12 +91,47 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
       setMediaFile(null);
       setAdditionalDetails('');
       setUploadProgress({ thumbnail: 0, artwork: 0, media: 0 });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create episode:', error);
+      if (error.message?.includes('blocked') || error.message?.includes('submission limit')) {
+        toast.error('Your access blocked due to submission limit is full');
+      }
     }
   };
 
   const isSubmitting = createEpisode.isPending;
+
+  if (blockCheckLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="w-5 h-5" />
+            Submission Access Blocked
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>
+              Your access blocked due to submission limit is full
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

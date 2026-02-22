@@ -8,20 +8,24 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import {
   useGetVerificationRequestsForAdmin,
-  useAdminActivateVerifiedArtist,
-  useAdminExtendVerifiedExpiry,
-  useAdminUpdateVerificationRequestStatus,
+  useUpdateVerificationStatus,
+  useGetAllArtistsWithUserIds,
 } from '../hooks/useQueries';
+import { VerificationStatus } from '../backend';
 
 export default function AdminVerificationList() {
   const { data: requests, isLoading } = useGetVerificationRequestsForAdmin();
-  const activateVerified = useAdminActivateVerifiedArtist();
-  const extendExpiry = useAdminExtendVerifiedExpiry();
-  const updateStatus = useAdminUpdateVerificationRequestStatus();
+  const { data: artistProfiles } = useGetAllArtistsWithUserIds();
+  const updateStatus = useUpdateVerificationStatus();
 
   const [extensionDays, setExtensionDays] = useState<{ [key: string]: number }>({});
 
   const pendingCount = requests?.filter((r) => r.status === 'pending').length || 0;
+
+  const getUserFullName = (userPrincipal: string): string => {
+    const profile = artistProfiles?.find((p) => p.owner.toString() === userPrincipal);
+    return profile?.fullName || 'Unknown User';
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -58,21 +62,29 @@ export default function AdminVerificationList() {
     }
   };
 
-  const handleActivate = async (userPrincipal: string) => {
+  const handleApprove = async (verificationId: string) => {
     try {
-      await activateVerified.mutateAsync(userPrincipal);
+      await updateStatus.mutateAsync({
+        verificationId,
+        status: VerificationStatus.approved,
+        expiryExtensionDays: BigInt(0),
+      });
     } catch (error) {
       // Error handled by mutation
     }
   };
 
-  const handleExtend = async (userPrincipal: string) => {
-    const days = extensionDays[userPrincipal] || 30;
+  const handleExtend = async (verificationId: string, userPrincipalStr: string) => {
+    const days = extensionDays[userPrincipalStr] || 30;
     try {
-      await extendExpiry.mutateAsync({ userPrincipal, extensionDays: days });
+      await updateStatus.mutateAsync({
+        verificationId,
+        status: VerificationStatus.approved,
+        expiryExtensionDays: BigInt(days),
+      });
       setExtensionDays((prev) => {
         const updated = { ...prev };
-        delete updated[userPrincipal];
+        delete updated[userPrincipalStr];
         return updated;
       });
     } catch (error) {
@@ -80,9 +92,13 @@ export default function AdminVerificationList() {
     }
   };
 
-  const handleReject = async (requestId: string) => {
+  const handleReject = async (verificationId: string) => {
     try {
-      await updateStatus.mutateAsync({ requestId, status: 'rejected' });
+      await updateStatus.mutateAsync({
+        verificationId,
+        status: VerificationStatus.rejected,
+        expiryExtensionDays: BigInt(0),
+      });
     } catch (error) {
       // Error handled by mutation
     }
@@ -128,6 +144,7 @@ export default function AdminVerificationList() {
           <div className="space-y-4">
             {requests.map((request) => {
               const userPrincipalStr = request.user.toString();
+              const fullName = getUserFullName(userPrincipalStr);
               const isApproved = request.status === 'approved';
               const expiryDate = request.verificationApprovedTimestamp
                 ? new Date(Number(request.verificationApprovedTimestamp / BigInt(1000000)) + 30 * 24 * 60 * 60 * 1000)
@@ -139,7 +156,7 @@ export default function AdminVerificationList() {
                     <div className="space-y-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-lg">{request.fullName}</h3>
+                          <h3 className="font-semibold text-lg">{fullName}</h3>
                           <p className="text-xs text-muted-foreground font-mono mt-1">{userPrincipalStr}</p>
                           <p className="text-sm text-muted-foreground mt-2">
                             Requested: {new Date(Number(request.timestamp / BigInt(1000000))).toLocaleDateString()}
@@ -149,7 +166,7 @@ export default function AdminVerificationList() {
                               Expires: {expiryDate.toLocaleDateString()}
                               {request.expiryExtensionDays > 0 && (
                                 <span className="text-green-600 ml-2">
-                                  (+{request.expiryExtensionDays} days extended)
+                                  (+{request.expiryExtensionDays.toString()} days extended)
                                 </span>
                               )}
                             </p>
@@ -162,11 +179,11 @@ export default function AdminVerificationList() {
                         <div className="flex flex-wrap gap-2 pt-2 border-t">
                           <Button
                             size="sm"
-                            onClick={() => handleActivate(userPrincipalStr)}
-                            disabled={activateVerified.isPending}
+                            onClick={() => handleApprove(request.id)}
+                            disabled={updateStatus.isPending}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            {activateVerified.isPending ? (
+                            {updateStatus.isPending ? (
                               <>
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                 Activating...
@@ -237,10 +254,10 @@ export default function AdminVerificationList() {
                             />
                             <Button
                               size="sm"
-                              onClick={() => handleExtend(userPrincipalStr)}
-                              disabled={extendExpiry.isPending}
+                              onClick={() => handleExtend(request.id, userPrincipalStr)}
+                              disabled={updateStatus.isPending}
                             >
-                              {extendExpiry.isPending ? (
+                              {updateStatus.isPending ? (
                                 <>
                                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                   Extending...

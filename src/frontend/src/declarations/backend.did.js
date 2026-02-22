@@ -145,6 +145,12 @@ export const PodcastShowInput = IDL.Record({
   'language' : Language,
   'category' : PodcastCategory,
 });
+export const SubscriptionPlan = IDL.Record({
+  'redirectUrl' : IDL.Text,
+  'pricePerYear' : IDL.Nat,
+  'benefits' : IDL.Vec(IDL.Text),
+  'planName' : IDL.Text,
+});
 export const ArtistProfile = IDL.Record({
   'id' : IDL.Text,
   'isApproved' : IDL.Bool,
@@ -241,9 +247,39 @@ export const SongSubmission = IDL.Record({
   'adminRemarks' : IDL.Text,
   'featuredArtist' : IDL.Text,
 });
+export const VideoSubmissionStatus = IDL.Variant({
+  'pending' : IDL.Null,
+  'live' : IDL.Null,
+  'approved' : IDL.Null,
+  'rejected' : IDL.Null,
+  'waiting' : IDL.Null,
+});
+export const VideoSubmission = IDL.Record({
+  'id' : IDL.Text,
+  'status' : VideoSubmissionStatus,
+  'title' : IDL.Text,
+  'thumbnail' : ExternalBlob,
+  'userId' : IDL.Principal,
+  'tags' : IDL.Vec(IDL.Text),
+  'submittedAt' : Time,
+  'description' : IDL.Text,
+  'videoFile' : ExternalBlob,
+  'artwork' : ExternalBlob,
+  'updatedAt' : Time,
+  'category' : IDL.Text,
+  'liveUrl' : IDL.Opt(IDL.Text),
+});
+export const UserCategory = IDL.Variant({
+  'generalArtist' : IDL.Null,
+  'generalLabel' : IDL.Null,
+  'proArtist' : IDL.Null,
+  'ultraArtist' : IDL.Null,
+  'proLabel' : IDL.Null,
+});
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'artistId' : IDL.Text,
+  'category' : UserCategory,
 });
 export const InviteCode = IDL.Record({
   'created' : Time,
@@ -308,6 +344,15 @@ export const SongSubmissionInput = IDL.Record({
   'releaseDate' : Time,
   'releaseType' : IDL.Text,
   'featuredArtist' : IDL.Text,
+});
+export const VideoSubmissionInput = IDL.Record({
+  'title' : IDL.Text,
+  'thumbnail' : ExternalBlob,
+  'tags' : IDL.Vec(IDL.Text),
+  'description' : IDL.Text,
+  'videoFile' : ExternalBlob,
+  'artwork' : ExternalBlob,
+  'category' : IDL.Text,
 });
 export const http_header = IDL.Record({
   'value' : IDL.Text,
@@ -383,7 +428,8 @@ export const idlService = IDL.Service({
   'approveEpisode' : IDL.Func([IDL.Text], [], []),
   'approvePodcast' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'blockUser' : IDL.Func([IDL.Principal], [], []),
+  'blockUserPodcastSubmission' : IDL.Func([IDL.Principal], [], []),
+  'blockUserSongSubmission' : IDL.Func([IDL.Principal], [], []),
   'createArtistProfile' : IDL.Func([SaveArtistProfileInput], [IDL.Text], []),
   'createCheckoutSession' : IDL.Func(
       [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
@@ -392,13 +438,17 @@ export const idlService = IDL.Service({
     ),
   'createPodcastEpisode' : IDL.Func([PodcastEpisodeInput], [IDL.Text], []),
   'createPodcastShow' : IDL.Func([PodcastShowInput], [IDL.Text], []),
+  'createSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
   'deleteArtistProfile' : IDL.Func([IDL.Text], [], []),
+  'deleteSubscriptionPlan' : IDL.Func([IDL.Text], [], []),
+  'deleteVideoSubmission' : IDL.Func([IDL.Text], [], []),
   'doesUserHaveArtistProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Bool],
       ['query'],
     ),
   'downgradeTeamMember' : IDL.Func([IDL.Principal], [], []),
+  'downloadVideoFile' : IDL.Func([IDL.Text], [ExternalBlob], []),
   'editSongSubmission' : IDL.Func([SongSubmissionEditInput], [], []),
   'generateInviteCode' : IDL.Func([], [IDL.Text], []),
   'getAllArtistProfileOwnersForAdmin' : IDL.Func(
@@ -411,7 +461,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(ArtistProfile)],
       ['query'],
     ),
-  'getAllBlockedUsers' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+  'getAllBlockedUsersAdmin' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
   'getAllEpisodes' : IDL.Func([], [IDL.Vec(PodcastEpisode)], ['query']),
   'getAllPendingEpisodes' : IDL.Func([], [IDL.Vec(PodcastEpisode)], ['query']),
   'getAllPendingPodcasts' : IDL.Func([], [IDL.Vec(PodcastShow)], ['query']),
@@ -422,7 +472,17 @@ export const idlService = IDL.Service({
       [IDL.Vec(SongSubmission)],
       ['query'],
     ),
+  'getAllSubscriptionPlans' : IDL.Func(
+      [],
+      [IDL.Vec(SubscriptionPlan)],
+      ['query'],
+    ),
   'getAllTeamMembers' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+  'getAllVideoSubmissions' : IDL.Func(
+      [],
+      [IDL.Vec(VideoSubmission)],
+      ['query'],
+    ),
   'getArtistProfileByOwner' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(ArtistProfile)],
@@ -472,6 +532,16 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'getUserVideoSubmissions' : IDL.Func(
+      [],
+      [IDL.Vec(VideoSubmission)],
+      ['query'],
+    ),
+  'getUsersByCategory' : IDL.Func(
+      [UserCategory],
+      [IDL.Vec(UserProfile)],
+      ['query'],
+    ),
   'getVerificationRequests' : IDL.Func(
       [],
       [IDL.Vec(VerificationRequest)],
@@ -493,7 +563,16 @@ export const idlService = IDL.Service({
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerApproved' : IDL.Func([], [IDL.Bool], ['query']),
   'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
-  'isUserBlocked' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
+  'isUserBlockedPodcastSubmission' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Bool],
+      ['query'],
+    ),
+  'isUserBlockedSongSubmission' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Bool],
+      ['query'],
+    ),
   'isUserTeamMember' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
   'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
   'markEpisodeLive' : IDL.Func([IDL.Text], [], []),
@@ -509,23 +588,33 @@ export const idlService = IDL.Service({
   'setWebsiteLogo' : IDL.Func([ExternalBlob], [], []),
   'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
   'submitSong' : IDL.Func([SongSubmissionInput], [IDL.Text], []),
+  'submitVideo' : IDL.Func([VideoSubmissionInput], [IDL.Text], []),
   'transform' : IDL.Func(
       [TransformationInput],
       [TransformationOutput],
       ['query'],
     ),
-  'unblockUser' : IDL.Func([IDL.Principal], [], []),
+  'unblockUserPodcastSubmission' : IDL.Func([IDL.Principal], [], []),
+  'unblockUserSongSubmission' : IDL.Func([IDL.Principal], [], []),
   'updateArtistProfile' : IDL.Func([IDL.Text, SaveArtistProfileInput], [], []),
   'updateMonthlyListenerStats' : IDL.Func(
       [IDL.Text, IDL.Vec(ListenerStatsUpdate)],
       [],
       [],
     ),
+  'updateSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
+  'updateUserCategory' : IDL.Func([IDL.Principal, UserCategory], [], []),
   'updateVerificationStatus' : IDL.Func(
       [IDL.Text, VerificationStatus, IDL.Nat],
       [],
       [],
     ),
+  'updateVideoStatus' : IDL.Func(
+      [IDL.Text, VideoSubmissionStatus, IDL.Opt(IDL.Text)],
+      [],
+      [],
+    ),
+  'updateVideoSubmission' : IDL.Func([VideoSubmissionInput, IDL.Text], [], []),
   'upgradeUserToTeamMember' : IDL.Func([IDL.Principal], [], []),
 });
 
@@ -666,6 +755,12 @@ export const idlFactory = ({ IDL }) => {
     'language' : Language,
     'category' : PodcastCategory,
   });
+  const SubscriptionPlan = IDL.Record({
+    'redirectUrl' : IDL.Text,
+    'pricePerYear' : IDL.Nat,
+    'benefits' : IDL.Vec(IDL.Text),
+    'planName' : IDL.Text,
+  });
   const ArtistProfile = IDL.Record({
     'id' : IDL.Text,
     'isApproved' : IDL.Bool,
@@ -759,7 +854,40 @@ export const idlFactory = ({ IDL }) => {
     'adminRemarks' : IDL.Text,
     'featuredArtist' : IDL.Text,
   });
-  const UserProfile = IDL.Record({ 'name' : IDL.Text, 'artistId' : IDL.Text });
+  const VideoSubmissionStatus = IDL.Variant({
+    'pending' : IDL.Null,
+    'live' : IDL.Null,
+    'approved' : IDL.Null,
+    'rejected' : IDL.Null,
+    'waiting' : IDL.Null,
+  });
+  const VideoSubmission = IDL.Record({
+    'id' : IDL.Text,
+    'status' : VideoSubmissionStatus,
+    'title' : IDL.Text,
+    'thumbnail' : ExternalBlob,
+    'userId' : IDL.Principal,
+    'tags' : IDL.Vec(IDL.Text),
+    'submittedAt' : Time,
+    'description' : IDL.Text,
+    'videoFile' : ExternalBlob,
+    'artwork' : ExternalBlob,
+    'updatedAt' : Time,
+    'category' : IDL.Text,
+    'liveUrl' : IDL.Opt(IDL.Text),
+  });
+  const UserCategory = IDL.Variant({
+    'generalArtist' : IDL.Null,
+    'generalLabel' : IDL.Null,
+    'proArtist' : IDL.Null,
+    'ultraArtist' : IDL.Null,
+    'proLabel' : IDL.Null,
+  });
+  const UserProfile = IDL.Record({
+    'name' : IDL.Text,
+    'artistId' : IDL.Text,
+    'category' : UserCategory,
+  });
   const InviteCode = IDL.Record({
     'created' : Time,
     'code' : IDL.Text,
@@ -823,6 +951,15 @@ export const idlFactory = ({ IDL }) => {
     'releaseDate' : Time,
     'releaseType' : IDL.Text,
     'featuredArtist' : IDL.Text,
+  });
+  const VideoSubmissionInput = IDL.Record({
+    'title' : IDL.Text,
+    'thumbnail' : ExternalBlob,
+    'tags' : IDL.Vec(IDL.Text),
+    'description' : IDL.Text,
+    'videoFile' : ExternalBlob,
+    'artwork' : ExternalBlob,
+    'category' : IDL.Text,
   });
   const http_header = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
   const http_request_result = IDL.Record({
@@ -895,7 +1032,8 @@ export const idlFactory = ({ IDL }) => {
     'approveEpisode' : IDL.Func([IDL.Text], [], []),
     'approvePodcast' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'blockUser' : IDL.Func([IDL.Principal], [], []),
+    'blockUserPodcastSubmission' : IDL.Func([IDL.Principal], [], []),
+    'blockUserSongSubmission' : IDL.Func([IDL.Principal], [], []),
     'createArtistProfile' : IDL.Func([SaveArtistProfileInput], [IDL.Text], []),
     'createCheckoutSession' : IDL.Func(
         [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
@@ -904,13 +1042,17 @@ export const idlFactory = ({ IDL }) => {
       ),
     'createPodcastEpisode' : IDL.Func([PodcastEpisodeInput], [IDL.Text], []),
     'createPodcastShow' : IDL.Func([PodcastShowInput], [IDL.Text], []),
+    'createSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
     'deleteArtistProfile' : IDL.Func([IDL.Text], [], []),
+    'deleteSubscriptionPlan' : IDL.Func([IDL.Text], [], []),
+    'deleteVideoSubmission' : IDL.Func([IDL.Text], [], []),
     'doesUserHaveArtistProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Bool],
         ['query'],
       ),
     'downgradeTeamMember' : IDL.Func([IDL.Principal], [], []),
+    'downloadVideoFile' : IDL.Func([IDL.Text], [ExternalBlob], []),
     'editSongSubmission' : IDL.Func([SongSubmissionEditInput], [], []),
     'generateInviteCode' : IDL.Func([], [IDL.Text], []),
     'getAllArtistProfileOwnersForAdmin' : IDL.Func(
@@ -923,7 +1065,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(ArtistProfile)],
         ['query'],
       ),
-    'getAllBlockedUsers' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+    'getAllBlockedUsersAdmin' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Principal)],
+        ['query'],
+      ),
     'getAllEpisodes' : IDL.Func([], [IDL.Vec(PodcastEpisode)], ['query']),
     'getAllPendingEpisodes' : IDL.Func(
         [],
@@ -938,7 +1084,17 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(SongSubmission)],
         ['query'],
       ),
+    'getAllSubscriptionPlans' : IDL.Func(
+        [],
+        [IDL.Vec(SubscriptionPlan)],
+        ['query'],
+      ),
     'getAllTeamMembers' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+    'getAllVideoSubmissions' : IDL.Func(
+        [],
+        [IDL.Vec(VideoSubmission)],
+        ['query'],
+      ),
     'getArtistProfileByOwner' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(ArtistProfile)],
@@ -992,6 +1148,16 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'getUserVideoSubmissions' : IDL.Func(
+        [],
+        [IDL.Vec(VideoSubmission)],
+        ['query'],
+      ),
+    'getUsersByCategory' : IDL.Func(
+        [UserCategory],
+        [IDL.Vec(UserProfile)],
+        ['query'],
+      ),
     'getVerificationRequests' : IDL.Func(
         [],
         [IDL.Vec(VerificationRequest)],
@@ -1013,7 +1179,16 @@ export const idlFactory = ({ IDL }) => {
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerApproved' : IDL.Func([], [IDL.Bool], ['query']),
     'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
-    'isUserBlocked' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
+    'isUserBlockedPodcastSubmission' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Bool],
+        ['query'],
+      ),
+    'isUserBlockedSongSubmission' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Bool],
+        ['query'],
+      ),
     'isUserTeamMember' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
     'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
     'markEpisodeLive' : IDL.Func([IDL.Text], [], []),
@@ -1029,12 +1204,14 @@ export const idlFactory = ({ IDL }) => {
     'setWebsiteLogo' : IDL.Func([ExternalBlob], [], []),
     'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
     'submitSong' : IDL.Func([SongSubmissionInput], [IDL.Text], []),
+    'submitVideo' : IDL.Func([VideoSubmissionInput], [IDL.Text], []),
     'transform' : IDL.Func(
         [TransformationInput],
         [TransformationOutput],
         ['query'],
       ),
-    'unblockUser' : IDL.Func([IDL.Principal], [], []),
+    'unblockUserPodcastSubmission' : IDL.Func([IDL.Principal], [], []),
+    'unblockUserSongSubmission' : IDL.Func([IDL.Principal], [], []),
     'updateArtistProfile' : IDL.Func(
         [IDL.Text, SaveArtistProfileInput],
         [],
@@ -1045,8 +1222,20 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
+    'updateSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
+    'updateUserCategory' : IDL.Func([IDL.Principal, UserCategory], [], []),
     'updateVerificationStatus' : IDL.Func(
         [IDL.Text, VerificationStatus, IDL.Nat],
+        [],
+        [],
+      ),
+    'updateVideoStatus' : IDL.Func(
+        [IDL.Text, VideoSubmissionStatus, IDL.Opt(IDL.Text)],
+        [],
+        [],
+      ),
+    'updateVideoSubmission' : IDL.Func(
+        [VideoSubmissionInput, IDL.Text],
         [],
         [],
       ),

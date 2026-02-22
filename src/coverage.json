@@ -1,112 +1,47 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T17:54:42.713Z",
+  "generatedAt": "2026-02-22T15:36:25.091Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 4,
+    "total": 2,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a verified/blue-tick indicator next to the artist’s name across the UI, using the user-uploaded blue tick image as the source asset and rendering it via the existing VerifiedBadge component (or an equivalent shared UI element).",
+        "summary": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/components/AdminSubscriptionPlansManagement.tsx",
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ArtistNameWithVerified.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/UserArtistProfilesManager.tsx",
-          "frontend/src/components/AdminArtistManagement.tsx",
-          "frontend/src/components/VerifiedBadge.tsx"
+          "frontend/src/pages/AdminDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/ArtistNameWithVerified.tsx",
-          "frontend/src/components/Header.tsx",
-          "frontend/src/components/UserArtistProfilesManager.tsx",
-          "frontend/src/components/AdminArtistManagement.tsx",
-          "frontend/src/components/VerifiedBadge.tsx"
+          "frontend/src/hooks/useQueries.ts"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Implement backend support to determine whether a given artist (by owner Principal) is currently verified based on the verification workflow state, and expose a query API the frontend can use to render the blue tick correctly.",
-        "status": "unknown",
-        "plannedFiles": [],
+        "summary": "Display all active subscription plans publicly on the landing page in the existing PricingSection component location",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/components/PricingSection.tsx",
+          "frontend/src/pages/LandingPage.tsx"
+        ],
         "matchedFiles": []
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Ensure the admin dashboard supports toggling verification status for artists: admins can approve verification (activate) and can also reject/unverify at any time after approval.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/AdminVerificationList.tsx",
-          "frontend/src/components/ArtistNameWithVerified.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/AdminVerificationList.tsx",
-          "frontend/src/components/ArtistNameWithVerified.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Add admin-only ability to delete/remove an artist profile from the Admin Dashboard (Artist Management) without deleting the artist’s songs/submissions (songs must remain visible/unchanged).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/AdminArtistManagement.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/AdminArtistManagement.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Add the provided blue tick image to the frontend as an optimized transparent PNG asset and update the app to reference that asset consistently (including updating the existing VerifiedBadge image path).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png",
-          "frontend/public/assets/generated/blue-tick-badge-transparent.dim_20x20.png",
-          "frontend/src/components/VerifiedBadge.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png",
-          "frontend/public/assets/generated/blue-tick-badge-transparent.dim_20x20.png",
-          "frontend/src/components/VerifiedBadge.tsx"
-        ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/blue-tick-badge-transparent.dim_20x20.png",
-    "frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/AdminArtistManagement.tsx",
-    "frontend/src/components/AdminMonthlyListenersManagement.tsx",
-    "frontend/src/components/AdminVerificationList.tsx",
-    "frontend/src/components/ArtistNameWithVerified.tsx",
-    "frontend/src/components/Header.tsx",
-    "frontend/src/components/UserAnalysisPanel.tsx",
-    "frontend/src/components/UserArtistProfilesManager.tsx",
-    "frontend/src/components/VerificationBenefitsSection.tsx",
-    "frontend/src/components/VerifiedBadge.tsx",
-    "frontend/src/config.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
+    "frontend/src/components/AdminVideoSubmissions.tsx",
     "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",

@@ -1,122 +1,43 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T17:54:42.707Z",
-  "summary": "Diff adds a VerifiedBadge asset reference and a shared ArtistNameWithVerified component, and wires it into some UI surfaces (Header, Admin/User artist profile managers). It also adds migration support for an isVerified field. However, the diff summary does not provide clear evidence that the backend query API for verification status and the admin verify/unverify + admin delete-profile backend endpoints are implemented, nor that the blue tick appears everywhere artist names are rendered. Several unrelated features (monthly listeners analytics, thank-you route, footer changes, etc.) were added without being requested.",
+  "generatedAt": "2026-02-22T15:36:25.088Z",
+  "summary": "The diff shows backend subscription plan CRUD methods and frontend React Query hooks have been implemented, but there is no evidence of the admin UI component (AdminSubscriptionPlansManagement.tsx) or the PricingSection component integration for public display. The core data layer is present but the user-facing interfaces are missing.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Show a blue tick icon next to an artist’s displayed name wherever an artist name is rendered (artist profile cards/lists and header/primary artist display), using existing tooltip behavior.",
-      "reason": "Evidence shows the badge added in Header and some artist profile management screens, but the diff summary does not show updates to all places where artist names are rendered across the UI (e.g., other lists/cards such as submissions lists, etc.). Also, the new ArtistNameWithVerified renders a GreenBadge when not verified, which is not part of the requested behavior.",
-      "evidence": [
-        "frontend/src/components/Header.tsx",
-        "frontend/src/components/AdminArtistManagement.tsx",
-        "frontend/src/components/UserArtistProfilesManager.tsx",
-        "frontend/src/components/ArtistNameWithVerified.tsx",
-        "frontend-file-summaries.txt (mentions AdminSubmissionsList changes but does not show verified name rendering)"
-      ]
+      "requirement": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans",
+      "reason": "No AdminSubscriptionPlansManagement.tsx component found in diff. The BuildRequest explicitly requires using existing AdminSubscriptionPlansManagement.tsx component, but it's not shown as added or modified. Backend methods exist (createSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan) and hooks are in useQueries.ts, but the actual admin UI component is missing.",
+      "evidence": []
     },
     {
       "id": "REQ-2",
-      "requirement": "Backend exposes a query method that returns whether a provided Principal is verified (approved and not expired), and frontend calls it via React Query so invalidation updates UI without hard refresh.",
-      "reason": "Frontend hook usage is referenced (useIsArtistVerified), but the diff summary does not show any concrete backend query method implementation in backend/main.mo that takes a Principal and returns verification status. backend/main.mo content is truncated before any relevant methods are shown.",
-      "evidence": [
-        "frontend/src/components/ArtistNameWithVerified.tsx (calls useIsArtistVerified(ownerPrincipal))",
-        "frontend/src/hooks/useQueries.ts (truncated; described to include useIsArtistVerified)",
-        "backend/main.mo (truncated; no visible query method for isVerified by Principal)"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Admin dashboard supports toggling verification status for artists (approve and also reject/unverify at any time after approval).",
-      "reason": "AdminVerificationList includes actions to activate and to set status to 'rejected', but the diff summary does not clearly show that rejecting/unverifying is allowed for already-approved users (UI conditionals not visible due to truncation) and does not show the corresponding backend methods that perform these transitions.",
-      "evidence": [
-        "frontend/src/components/AdminVerificationList.tsx (handleActivate, handleReject)",
-        "frontend/src/hooks/useQueries.ts (truncated; mentions admin verification mutations)",
-        "backend/main.mo (truncated; no visible admin verification methods)"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "Admin-only ability to delete/remove an artist profile from Admin Dashboard without deleting songs/submissions; confirmation step; profile removed from admin listing and not returned by getMyArtistProfiles.",
-      "reason": "AdminArtistManagement adds a delete flow and uses useAdminDeleteArtistProfile, but the diff summary does not show the backend implementation for admin deletion nor confirm that only the profile record is removed while songs remain intact and accessible. It also shows user-side deletion hooks (useDeleteArtistProfile), which may not be admin-only.",
-      "evidence": [
-        "frontend/src/components/AdminArtistManagement.tsx (uses useAdminDeleteArtistProfile and a confirmation dialog state)",
-        "frontend/src/components/UserArtistProfilesManager.tsx (uses useDeleteArtistProfile)",
-        "frontend/src/hooks/useQueries.ts (truncated; not showing delete implementations)",
-        "backend/main.mo (truncated; no visible delete-artist-profile method)"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "requirement": "Add optimized transparent PNG blue tick assets to frontend/public/assets/generated and reference them consistently (update VerifiedBadge image path).",
-      "reason": "VerifiedBadge now references '/assets/generated/blue-tick-badge-transparent.dim_20x20.png' and '.dim_24x24.png', but the diff summary does not show the actual PNG assets being added under frontend/public/assets/generated.",
-      "evidence": [
-        "frontend/src/components/VerifiedBadge.tsx (references the generated asset paths)",
-        "ADDED FILES list does not include any frontend/public/assets/generated/*.png assets"
-      ]
+      "requirement": "Display all active subscription plans publicly on the landing page in the existing PricingSection component location",
+      "reason": "No PricingSection.tsx component found in diff. The BuildRequest explicitly requires using existing PricingSection.tsx component, but it's not shown as modified. The useGetAllSubscriptionPlans hook exists in useQueries.ts, but there's no evidence of PricingSection component fetching or displaying the plans.",
+      "evidence": []
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Rendering a GreenBadge for non-verified artists in ArtistNameWithVerified.",
-      "reason": "The request only asked to add a verified blue tick indicator for verified artists; it did not request adding any badge for unverified artists.",
+      "description": "Video submission admin interface with status management, live URLs, download, edit, and delete functionality",
+      "reason": "AdminVideoSubmissions.tsx contains extensive video submission management features (status changes, live URL input, download, edit, delete dialogs) that were not requested in BuildRequest. This appears to be from previous work unrelated to subscription plans feature.",
       "evidence": [
-        "frontend/src/components/ArtistNameWithVerified.tsx (imports and renders GreenBadge when not verified)"
+        "frontend/src/components/AdminVideoSubmissions.tsx"
       ]
     },
     {
-      "description": "Monthly listeners analytics features (admin monthly listeners management + user analysis panel + new dashboard tabs).",
-      "reason": "Not requested; outside the BuildRequest scope.",
+      "description": "Video submission query hooks and mutations",
+      "reason": "useQueries.ts includes video submission hooks (useSubmitVideo, useGetAllVideoSubmissions, useUpdateVideoStatus, useDeleteVideoSubmission, useDownloadVideoFile) that were not part of the subscription plans BuildRequest.",
       "evidence": [
-        "frontend/src/components/AdminMonthlyListenersManagement.tsx",
-        "frontend/src/components/UserAnalysisPanel.tsx",
-        "frontend-file-summaries.txt (mentions new Analysis tab and Monthly Listeners management tab)"
-      ]
-    },
-    {
-      "description": "New '/thank-you' route and related navigation changes after song submission.",
-      "reason": "Not requested by any requirement.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/App.tsx mentions new /thank-you route)"
-      ]
-    },
-    {
-      "description": "Footer content changes (removing logo attribution and adding 'Need Help?' contact section).",
-      "reason": "Not requested by any requirement.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/components/Footer.tsx summary)"
-      ]
-    },
-    {
-      "description": "Profile setup modal and landing page routing changes unrelated to verified badge/admin verification/delete profile scope.",
-      "reason": "Not requested by any requirement.",
-      "evidence": [
-        "frontend-file-summaries.txt (ProfileSetupModal.tsx, LandingPage.tsx summaries)"
-      ]
-    },
-    {
-      "description": "VerificationBenefitsSection marketing copy and pricing card for becoming a verified artist.",
-      "reason": "Not requested; BuildRequest focuses on displaying verification state and admin controls, not adding a marketing/pricing benefits section.",
-      "evidence": [
-        "frontend/src/components/VerificationBenefitsSection.tsx"
+        "frontend/src/hooks/useQueries.ts"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.85,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/AdminArtistManagement.tsx",
-    "frontend/src/components/AdminMonthlyListenersManagement.tsx",
-    "frontend/src/components/AdminVerificationList.tsx",
-    "frontend/src/components/ArtistNameWithVerified.tsx",
-    "frontend/src/components/Header.tsx",
-    "frontend/src/components/UserAnalysisPanel.tsx",
-    "frontend/src/components/UserArtistProfilesManager.tsx",
-    "frontend/src/components/VerificationBenefitsSection.tsx",
-    "frontend/src/components/VerifiedBadge.tsx",
+    "frontend/src/components/AdminVideoSubmissions.tsx",
     "frontend/src/hooks/useQueries.ts",
     "project_state.json"
   ]

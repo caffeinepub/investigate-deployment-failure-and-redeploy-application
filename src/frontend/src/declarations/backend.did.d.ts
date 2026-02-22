@@ -247,6 +247,12 @@ export type StripeSessionStatus = {
     'completed' : { 'userPrincipal' : [] | [string], 'response' : string }
   } |
   { 'failed' : { 'error' : string } };
+export interface SubscriptionPlan {
+  'redirectUrl' : string,
+  'pricePerYear' : bigint,
+  'benefits' : Array<string>,
+  'planName' : string,
+}
 export type Time = bigint;
 export interface TrackMetadata {
   'title' : string,
@@ -271,7 +277,16 @@ export interface UserApprovalInfo {
   'status' : ApprovalStatus,
   'principal' : Principal,
 }
-export interface UserProfile { 'name' : string, 'artistId' : string }
+export type UserCategory = { 'generalArtist' : null } |
+  { 'generalLabel' : null } |
+  { 'proArtist' : null } |
+  { 'ultraArtist' : null } |
+  { 'proLabel' : null };
+export interface UserProfile {
+  'name' : string,
+  'artistId' : string,
+  'category' : UserCategory,
+}
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -284,6 +299,35 @@ export interface VerificationRequest {
   'timestamp' : Time,
 }
 export type VerificationStatus = { 'pending' : null } |
+  { 'approved' : null } |
+  { 'rejected' : null } |
+  { 'waiting' : null };
+export interface VideoSubmission {
+  'id' : string,
+  'status' : VideoSubmissionStatus,
+  'title' : string,
+  'thumbnail' : ExternalBlob,
+  'userId' : Principal,
+  'tags' : Array<string>,
+  'submittedAt' : Time,
+  'description' : string,
+  'videoFile' : ExternalBlob,
+  'artwork' : ExternalBlob,
+  'updatedAt' : Time,
+  'category' : string,
+  'liveUrl' : [] | [string],
+}
+export interface VideoSubmissionInput {
+  'title' : string,
+  'thumbnail' : ExternalBlob,
+  'tags' : Array<string>,
+  'description' : string,
+  'videoFile' : ExternalBlob,
+  'artwork' : ExternalBlob,
+  'category' : string,
+}
+export type VideoSubmissionStatus = { 'pending' : null } |
+  { 'live' : null } |
   { 'approved' : null } |
   { 'rejected' : null } |
   { 'waiting' : null };
@@ -340,7 +384,8 @@ export interface _SERVICE {
   'approveEpisode' : ActorMethod<[string], undefined>,
   'approvePodcast' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'blockUser' : ActorMethod<[Principal], undefined>,
+  'blockUserPodcastSubmission' : ActorMethod<[Principal], undefined>,
+  'blockUserSongSubmission' : ActorMethod<[Principal], undefined>,
   'createArtistProfile' : ActorMethod<[SaveArtistProfileInput], string>,
   'createCheckoutSession' : ActorMethod<
     [Array<ShoppingItem>, string, string],
@@ -348,21 +393,27 @@ export interface _SERVICE {
   >,
   'createPodcastEpisode' : ActorMethod<[PodcastEpisodeInput], string>,
   'createPodcastShow' : ActorMethod<[PodcastShowInput], string>,
+  'createSubscriptionPlan' : ActorMethod<[SubscriptionPlan], undefined>,
   'deleteArtistProfile' : ActorMethod<[string], undefined>,
+  'deleteSubscriptionPlan' : ActorMethod<[string], undefined>,
+  'deleteVideoSubmission' : ActorMethod<[string], undefined>,
   'doesUserHaveArtistProfile' : ActorMethod<[Principal], boolean>,
   'downgradeTeamMember' : ActorMethod<[Principal], undefined>,
+  'downloadVideoFile' : ActorMethod<[string], ExternalBlob>,
   'editSongSubmission' : ActorMethod<[SongSubmissionEditInput], undefined>,
   'generateInviteCode' : ActorMethod<[], string>,
   'getAllArtistProfileOwnersForAdmin' : ActorMethod<[], Array<Principal>>,
   'getAllArtistProfilesForAdmin' : ActorMethod<[], Array<ArtistProfile>>,
-  'getAllBlockedUsers' : ActorMethod<[], Array<Principal>>,
+  'getAllBlockedUsersAdmin' : ActorMethod<[], Array<Principal>>,
   'getAllEpisodes' : ActorMethod<[], Array<PodcastEpisode>>,
   'getAllPendingEpisodes' : ActorMethod<[], Array<PodcastEpisode>>,
   'getAllPendingPodcasts' : ActorMethod<[], Array<PodcastShow>>,
   'getAllPodcasts' : ActorMethod<[], Array<PodcastShow>>,
   'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
   'getAllSubmissionsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
+  'getAllSubscriptionPlans' : ActorMethod<[], Array<SubscriptionPlan>>,
   'getAllTeamMembers' : ActorMethod<[], Array<Principal>>,
+  'getAllVideoSubmissions' : ActorMethod<[], Array<VideoSubmission>>,
   'getArtistProfileByOwner' : ActorMethod<[Principal], [] | [ArtistProfile]>,
   'getArtistProfileEditingAccessStatus' : ActorMethod<[], boolean>,
   'getArtistProfileIdByOwnerId' : ActorMethod<[Principal], [] | [string]>,
@@ -386,6 +437,8 @@ export interface _SERVICE {
   >,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getUserVideoSubmissions' : ActorMethod<[], Array<VideoSubmission>>,
+  'getUsersByCategory' : ActorMethod<[UserCategory], Array<UserProfile>>,
   'getVerificationRequests' : ActorMethod<[], Array<VerificationRequest>>,
   'getVerificationRequestsByUser' : ActorMethod<
     [Principal],
@@ -401,7 +454,8 @@ export interface _SERVICE {
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCallerApproved' : ActorMethod<[], boolean>,
   'isStripeConfigured' : ActorMethod<[], boolean>,
-  'isUserBlocked' : ActorMethod<[Principal], boolean>,
+  'isUserBlockedPodcastSubmission' : ActorMethod<[Principal], boolean>,
+  'isUserBlockedSongSubmission' : ActorMethod<[Principal], boolean>,
   'isUserTeamMember' : ActorMethod<[Principal], boolean>,
   'listApprovals' : ActorMethod<[], Array<UserApprovalInfo>>,
   'markEpisodeLive' : ActorMethod<[string], undefined>,
@@ -417,8 +471,10 @@ export interface _SERVICE {
   'setWebsiteLogo' : ActorMethod<[ExternalBlob], undefined>,
   'submitRSVP' : ActorMethod<[string, boolean, string], undefined>,
   'submitSong' : ActorMethod<[SongSubmissionInput], string>,
+  'submitVideo' : ActorMethod<[VideoSubmissionInput], string>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
-  'unblockUser' : ActorMethod<[Principal], undefined>,
+  'unblockUserPodcastSubmission' : ActorMethod<[Principal], undefined>,
+  'unblockUserSongSubmission' : ActorMethod<[Principal], undefined>,
   'updateArtistProfile' : ActorMethod<
     [string, SaveArtistProfileInput],
     undefined
@@ -427,8 +483,18 @@ export interface _SERVICE {
     [string, Array<ListenerStatsUpdate>],
     undefined
   >,
+  'updateSubscriptionPlan' : ActorMethod<[SubscriptionPlan], undefined>,
+  'updateUserCategory' : ActorMethod<[Principal, UserCategory], undefined>,
   'updateVerificationStatus' : ActorMethod<
     [string, VerificationStatus, bigint],
+    undefined
+  >,
+  'updateVideoStatus' : ActorMethod<
+    [string, VideoSubmissionStatus, [] | [string]],
+    undefined
+  >,
+  'updateVideoSubmission' : ActorMethod<
+    [VideoSubmissionInput, string],
     undefined
   >,
   'upgradeUserToTeamMember' : ActorMethod<[Principal], undefined>,

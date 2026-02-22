@@ -17,6 +17,7 @@ export class ExternalBlob {
 export interface UserProfile {
     name: string;
     artistId: string;
+    category: UserCategory;
 }
 export interface PodcastShow {
     id: string;
@@ -55,6 +56,21 @@ export interface PodcastEpisodeInput {
     episodeType: EpisodeType;
     mediaFile: ExternalBlob;
     isExplicit: boolean;
+}
+export interface VideoSubmission {
+    id: string;
+    status: VideoSubmissionStatus;
+    title: string;
+    thumbnail: ExternalBlob;
+    userId: Principal;
+    tags: Array<string>;
+    submittedAt: Time;
+    description: string;
+    videoFile: ExternalBlob;
+    artwork: ExternalBlob;
+    updatedAt: Time;
+    category: string;
+    liveUrl?: string;
 }
 export interface ArtistProfile {
     id: string;
@@ -117,6 +133,12 @@ export interface TransformationInput {
     context: Uint8Array;
     response: http_request_result;
 }
+export interface SubscriptionPlan {
+    redirectUrl: string;
+    pricePerYear: bigint;
+    benefits: Array<string>;
+    planName: string;
+}
 export interface TrackMetadata {
     title: string;
     lyricist: string;
@@ -155,6 +177,15 @@ export interface PodcastShowInput {
     artwork: ExternalBlob;
     language: Language;
     category: PodcastCategory;
+}
+export interface VideoSubmissionInput {
+    title: string;
+    thumbnail: ExternalBlob;
+    tags: Array<string>;
+    description: string;
+    videoFile: ExternalBlob;
+    artwork: ExternalBlob;
+    category: string;
 }
 export interface http_header {
     value: string;
@@ -320,6 +351,13 @@ export enum SongStatus {
     rejected = "rejected",
     draft = "draft"
 }
+export enum UserCategory {
+    generalArtist = "generalArtist",
+    generalLabel = "generalLabel",
+    proArtist = "proArtist",
+    ultraArtist = "ultraArtist",
+    proLabel = "proLabel"
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -327,6 +365,13 @@ export enum UserRole {
 }
 export enum VerificationStatus {
     pending = "pending",
+    approved = "approved",
+    rejected = "rejected",
+    waiting = "waiting"
+}
+export enum VideoSubmissionStatus {
+    pending = "pending",
+    live = "live",
     approved = "approved",
     rejected = "rejected",
     waiting = "waiting"
@@ -342,26 +387,33 @@ export interface backendInterface {
     approveEpisode(id: string): Promise<void>;
     approvePodcast(id: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    blockUser(user: Principal): Promise<void>;
+    blockUserPodcastSubmission(user: Principal): Promise<void>;
+    blockUserSongSubmission(user: Principal): Promise<void>;
     createArtistProfile(input: SaveArtistProfileInput): Promise<string>;
     createCheckoutSession(items: Array<ShoppingItem>, successUrl: string, cancelUrl: string): Promise<string>;
     createPodcastEpisode(input: PodcastEpisodeInput): Promise<string>;
     createPodcastShow(input: PodcastShowInput): Promise<string>;
+    createSubscriptionPlan(plan: SubscriptionPlan): Promise<void>;
     deleteArtistProfile(id: string): Promise<void>;
+    deleteSubscriptionPlan(planName: string): Promise<void>;
+    deleteVideoSubmission(videoId: string): Promise<void>;
     doesUserHaveArtistProfile(owner: Principal): Promise<boolean>;
     downgradeTeamMember(user: Principal): Promise<void>;
+    downloadVideoFile(videoId: string): Promise<ExternalBlob>;
     editSongSubmission(input: SongSubmissionEditInput): Promise<void>;
     generateInviteCode(): Promise<string>;
     getAllArtistProfileOwnersForAdmin(): Promise<Array<Principal>>;
     getAllArtistProfilesForAdmin(): Promise<Array<ArtistProfile>>;
-    getAllBlockedUsers(): Promise<Array<Principal>>;
+    getAllBlockedUsersAdmin(): Promise<Array<Principal>>;
     getAllEpisodes(): Promise<Array<PodcastEpisode>>;
     getAllPendingEpisodes(): Promise<Array<PodcastEpisode>>;
     getAllPendingPodcasts(): Promise<Array<PodcastShow>>;
     getAllPodcasts(): Promise<Array<PodcastShow>>;
     getAllRSVPs(): Promise<Array<RSVP>>;
     getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
+    getAllSubscriptionPlans(): Promise<Array<SubscriptionPlan>>;
     getAllTeamMembers(): Promise<Array<Principal>>;
+    getAllVideoSubmissions(): Promise<Array<VideoSubmission>>;
     getArtistProfileByOwner(owner: Principal): Promise<ArtistProfile | null>;
     getArtistProfileEditingAccessStatus(): Promise<boolean>;
     getArtistProfileIdByOwnerId(owner: Principal): Promise<string | null>;
@@ -379,6 +431,8 @@ export interface backendInterface {
     getSongMonthlyListenerStats(songId: string): Promise<Array<MonthlyListenerStats>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserVideoSubmissions(): Promise<Array<VideoSubmission>>;
+    getUsersByCategory(category: UserCategory): Promise<Array<UserProfile>>;
     getVerificationRequests(): Promise<Array<VerificationRequest>>;
     getVerificationRequestsByUser(user: Principal): Promise<Array<VerificationRequest>>;
     getWebsiteLogo(): Promise<ExternalBlob | null>;
@@ -388,7 +442,8 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     isCallerApproved(): Promise<boolean>;
     isStripeConfigured(): Promise<boolean>;
-    isUserBlocked(user: Principal): Promise<boolean>;
+    isUserBlockedPodcastSubmission(user: Principal): Promise<boolean>;
+    isUserBlockedSongSubmission(user: Principal): Promise<boolean>;
     isUserTeamMember(user: Principal): Promise<boolean>;
     listApprovals(): Promise<Array<UserApprovalInfo>>;
     markEpisodeLive(id: string): Promise<void>;
@@ -404,10 +459,16 @@ export interface backendInterface {
     setWebsiteLogo(logo: ExternalBlob): Promise<void>;
     submitRSVP(name: string, attending: boolean, inviteCode: string): Promise<void>;
     submitSong(input: SongSubmissionInput): Promise<string>;
+    submitVideo(input: VideoSubmissionInput): Promise<string>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
-    unblockUser(user: Principal): Promise<void>;
+    unblockUserPodcastSubmission(user: Principal): Promise<void>;
+    unblockUserSongSubmission(user: Principal): Promise<void>;
     updateArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
     updateMonthlyListenerStats(songId: string, updates: Array<ListenerStatsUpdate>): Promise<void>;
+    updateSubscriptionPlan(plan: SubscriptionPlan): Promise<void>;
+    updateUserCategory(userId: Principal, newCategory: UserCategory): Promise<void>;
     updateVerificationStatus(verificationId: string, status: VerificationStatus, expiryExtensionDays: bigint): Promise<void>;
+    updateVideoStatus(videoId: string, newStatus: VideoSubmissionStatus, liveUrl: string | null): Promise<void>;
+    updateVideoSubmission(input: VideoSubmissionInput, videoId: string): Promise<void>;
     upgradeUserToTeamMember(user: Principal): Promise<void>;
 }

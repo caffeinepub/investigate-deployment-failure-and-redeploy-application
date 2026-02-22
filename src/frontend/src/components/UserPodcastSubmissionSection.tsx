@@ -3,48 +3,71 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useGetMyPodcastShows, useGetMyEpisodes } from '../hooks/useQueries';
+import { Loader2, Plus, Radio } from 'lucide-react';
+import { useGetMyPodcastShows } from '../hooks/useQueries';
 import PodcastShowForm from './PodcastShowForm';
 import PodcastEpisodeForm from './PodcastEpisodeForm';
-import { PodcastShow, PodcastEpisode, PodcastModerationStatus } from '../backend';
-import { Loader2, Radio, ExternalLink } from 'lucide-react';
+import { PodcastShow, PodcastEpisode } from '../backend';
+import { useActor } from '../hooks/useActor';
 
 export default function UserPodcastSubmissionSection() {
   const [activeTab, setActiveTab] = useState('shows');
-  const [selectedShow, setSelectedShow] = useState<PodcastShow | null>(null);
-  const [showEpisodes, setShowEpisodes] = useState<PodcastEpisode[]>([]);
-  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [selectedShow, setSelectedShow] = useState<string | null>(null);
+  const [showEpisodes, setShowEpisodes] = useState<{ [key: string]: PodcastEpisode[] }>({});
+  const [loadingEpisodes, setLoadingEpisodes] = useState<{ [key: string]: boolean }>({});
 
-  const { data: shows = [], isLoading: showsLoading } = useGetMyPodcastShows();
-  const getEpisodesMutation = useGetMyEpisodes();
+  const { data: shows, isLoading } = useGetMyPodcastShows();
+  const { actor } = useActor();
 
-  const getStatusBadge = (status: PodcastModerationStatus) => {
-    const statusMap = {
-      pending: { label: 'Pending', variant: 'secondary' as const },
-      approved: { label: 'Approved', variant: 'default' as const },
-      rejected: { label: 'Rejected', variant: 'destructive' as const },
-      live: { label: 'Live', variant: 'default' as const },
-    };
-
-    const statusKey = Object.keys(status)[0] as keyof typeof statusMap;
-    const { label, variant } = statusMap[statusKey] || { label: 'Unknown', variant: 'secondary' as const };
-
-    return <Badge variant={variant}>{label}</Badge>;
-  };
-
-  const handleShowClick = async (show: PodcastShow) => {
-    setSelectedShow(show);
-    setLoadingEpisodes(true);
-    try {
-      const episodes = await getEpisodesMutation.mutateAsync(show.id);
-      setShowEpisodes(episodes);
-    } catch (error) {
-      console.error('Failed to load episodes:', error);
-      setShowEpisodes([]);
-    } finally {
-      setLoadingEpisodes(false);
+  const getModerationBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="secondary">Pending</Badge>;
+      case 'approved':
+        return <Badge className="bg-green-600">Approved</Badge>;
+      case 'live':
+        return <Badge className="bg-blue-600">Live</Badge>;
+      case 'rejected':
+        return <Badge variant="destructive">Rejected</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
     }
   };
+
+  const loadEpisodes = async (showId: string) => {
+    if (!actor || showEpisodes[showId]) return;
+
+    setLoadingEpisodes((prev) => ({ ...prev, [showId]: true }));
+    try {
+      const episodes = await actor.getMyEpisodes(showId);
+      setShowEpisodes((prev) => ({ ...prev, [showId]: episodes }));
+    } catch (error) {
+      console.error('Failed to load episodes:', error);
+    } finally {
+      setLoadingEpisodes((prev) => ({ ...prev, [showId]: false }));
+    }
+  };
+
+  const handleShowClick = (showId: string) => {
+    if (selectedShow === showId) {
+      setSelectedShow(null);
+    } else {
+      setSelectedShow(showId);
+      loadEpisodes(showId);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -55,83 +78,110 @@ export default function UserPodcastSubmissionSection() {
           <TabsTrigger value="add-episode">Add Episode</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="shows" className="space-y-4">
-          {showsLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : shows.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                No podcast shows yet. Create your first show to get started!
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {shows.map((show) => (
-                <Card key={show.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleShowClick(show)}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="flex items-center gap-2">
-                          <Radio className="h-5 w-5" />
-                          {show.title}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground mt-2">{show.description}</p>
-                      </div>
-                      <div className="ml-4">{getStatusBadge(show.moderationStatus)}</div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>Type: {Object.keys(show.podcastType)[0]}</span>
-                      <span>Category: {Object.keys(show.category)[0]}</span>
-                      <span>Language: {Object.keys(show.language)[0]}</span>
-                    </div>
-                    {show.liveLink && (
-                      <Button variant="link" className="mt-2 p-0 h-auto" asChild>
-                        <a href={show.liveLink} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          View Live
-                        </a>
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {selectedShow && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Episodes for: {selectedShow.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loadingEpisodes ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  </div>
-                ) : showEpisodes.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-4">No episodes yet for this show.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {showEpisodes.map((episode) => (
-                      <div key={episode.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <h4 className="font-medium">
-                            S{episode.seasonNumber.toString()} E{episode.episodeNumber.toString()}: {episode.title}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">{episode.description}</p>
+        <TabsContent value="shows">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Radio className="w-5 h-5" />
+                My Podcast Shows
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!shows || shows.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">You haven't created any podcast shows yet.</p>
+                  <Button onClick={() => setActiveTab('create-show')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Show
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {shows.map((show) => (
+                    <Card key={show.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                      <CardContent className="pt-6">
+                        <div className="flex gap-4">
+                          <img
+                            src={show.artwork.getDirectURL()}
+                            alt={show.title}
+                            className="w-24 h-24 rounded-lg object-cover"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h3 className="font-semibold text-lg">{show.title}</h3>
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                  {show.description}
+                                </p>
+                              </div>
+                              {getModerationBadge(show.moderationStatus)}
+                            </div>
+                            <div className="flex gap-4 text-sm text-muted-foreground">
+                              <span>Type: {show.podcastType}</span>
+                              <span>Category: {show.category}</span>
+                              <span>Language: {show.language}</span>
+                            </div>
+                            {show.liveLink && (
+                              <div className="mt-2">
+                                <a
+                                  href={show.liveLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary hover:underline"
+                                >
+                                  View Live Show
+                                </a>
+                              </div>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-3"
+                              onClick={() => handleShowClick(show.id)}
+                            >
+                              {selectedShow === show.id ? 'Hide Episodes' : 'View Episodes'}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="ml-4">{getStatusBadge(episode.moderationStatus)}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+
+                        {selectedShow === show.id && (
+                          <div className="mt-4 pt-4 border-t">
+                            <h4 className="font-semibold mb-3">Episodes</h4>
+                            {loadingEpisodes[show.id] ? (
+                              <div className="flex items-center justify-center py-4">
+                                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                              </div>
+                            ) : showEpisodes[show.id] && showEpisodes[show.id].length > 0 ? (
+                              <div className="space-y-2">
+                                {showEpisodes[show.id].map((episode) => (
+                                  <div
+                                    key={episode.id}
+                                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                                  >
+                                    <div>
+                                      <p className="font-medium">{episode.title}</p>
+                                      <p className="text-sm text-muted-foreground">
+                                        S{episode.seasonNumber} E{episode.episodeNumber} • {episode.episodeType}
+                                      </p>
+                                    </div>
+                                    {getModerationBadge(episode.moderationStatus)}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground text-center py-4">
+                                No episodes yet. Add your first episode!
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="create-show">

@@ -5,20 +5,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useSubmitSong, useGetMyArtistProfiles, useIsUserBlocked } from '../hooks/useQueries';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useSubmitSong, useGetMyArtistProfiles, useIsCurrentUserBlockedSongSubmission } from '../hooks/useQueries';
 import { fileToExternalBlob } from '../utils/fileToExternalBlob';
 import { SongSubmissionInput, TrackMetadata } from '../backend';
 import { Loader2, Upload, Music, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
 import AlbumTracksEditor from './AlbumTracksEditor';
+import ArtistProfilesCheckboxSelector from './ArtistProfilesCheckboxSelector';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function SongSubmissionForm() {
   const submitSong = useSubmitSong();
   const navigate = useNavigate();
   const { data: artistProfiles, isLoading: profilesLoading } = useGetMyArtistProfiles();
-  const { data: isBlocked, isLoading: blockCheckLoading } = useIsUserBlocked();
+  const { data: isBlocked, isLoading: blockCheckLoading } = useIsCurrentUserBlockedSongSubmission();
 
   const [title, setTitle] = useState('');
   const [language, setLanguage] = useState('');
@@ -27,12 +29,13 @@ export default function SongSubmissionForm() {
   const [genre, setGenre] = useState('');
   const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
   const [selectedFeaturedArtists, setSelectedFeaturedArtists] = useState<string[]>([]);
-  const [composer, setComposer] = useState('');
+  const [selectedComposers, setSelectedComposers] = useState<string[]>([]);
+  const [selectedLyricists, setSelectedLyricists] = useState<string[]>([]);
   const [producer, setProducer] = useState('');
-  const [lyricist, setLyricist] = useState('');
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [discountCode, setDiscountCode] = useState('');
   const [musicVideoLink, setMusicVideoLink] = useState('');
+  const [legalAgreementsAccepted, setLegalAgreementsAccepted] = useState(false);
 
   const [artworkFile, setArtworkFile] = useState<File | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -91,7 +94,7 @@ export default function SongSubmissionForm() {
     e.preventDefault();
 
     if (isBlocked) {
-      toast.error('Your account has been blocked. You cannot submit songs.');
+      toast.error('Your access blocked due to submission limit is full');
       return;
     }
 
@@ -125,7 +128,7 @@ export default function SongSubmissionForm() {
       toast.error('At least one artist must be selected');
       return;
     }
-    if (!composer.trim()) {
+    if (selectedComposers.length === 0) {
       toast.error('Composer is required');
       return;
     }
@@ -133,7 +136,7 @@ export default function SongSubmissionForm() {
       toast.error('Producer is required');
       return;
     }
-    if (!lyricist.trim()) {
+    if (selectedLyricists.length === 0) {
       toast.error('Lyricist is required');
       return;
     }
@@ -170,6 +173,12 @@ export default function SongSubmissionForm() {
       }
     }
 
+    // Validate legal agreements checkbox
+    if (!legalAgreementsAccepted) {
+      toast.error('You must accept the Legal Agreements & Terms to proceed');
+      return;
+    }
+
     try {
       setIsUploading(true);
 
@@ -199,6 +208,16 @@ export default function SongSubmissionForm() {
         .filter(Boolean)
         .join(', ');
 
+      const composerNames = selectedComposers
+        .map((id) => artistProfiles?.find((p) => p.id === id)?.stageName)
+        .filter(Boolean)
+        .join(', ');
+
+      const lyricistNames = selectedLyricists
+        .map((id) => artistProfiles?.find((p) => p.id === id)?.stageName)
+        .filter(Boolean)
+        .join(', ');
+
       const input: SongSubmissionInput = {
         title,
         language,
@@ -209,9 +228,9 @@ export default function SongSubmissionForm() {
         artworkFilename: artworkFile.name,
         artist: artistNames,
         featuredArtist: featuredNames,
-        composer,
+        composer: composerNames,
         producer,
-        lyricist,
+        lyricist: lyricistNames,
         audioBlob,
         audioFilename: audioFile?.name || 'album.mp3',
         additionalDetails,
@@ -230,9 +249,9 @@ export default function SongSubmissionForm() {
       setGenre('');
       setSelectedArtists([]);
       setSelectedFeaturedArtists([]);
-      setComposer('');
+      setSelectedComposers([]);
+      setSelectedLyricists([]);
       setProducer('');
-      setLyricist('');
       setAdditionalDetails('');
       setDiscountCode('');
       setMusicVideoLink('');
@@ -242,13 +261,14 @@ export default function SongSubmissionForm() {
       setArtworkProgress(0);
       setAudioProgress(0);
       setArtworkError('');
+      setLegalAgreementsAccepted(false);
 
       // Navigate to thank you page
       navigate({ to: '/thank-you' });
     } catch (error: any) {
       console.error('Submission error:', error);
-      if (error.message?.includes('blocked')) {
-        toast.error('Your account has been blocked. You cannot submit songs.');
+      if (error.message?.includes('blocked') || error.message?.includes('submission limit')) {
+        toast.error('Your access blocked due to submission limit is full');
       }
     } finally {
       setIsUploading(false);
@@ -263,6 +283,18 @@ export default function SongSubmissionForm() {
 
   const toggleFeaturedArtistSelection = (profileId: string) => {
     setSelectedFeaturedArtists((prev) =>
+      prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
+    );
+  };
+
+  const toggleComposerSelection = (profileId: string) => {
+    setSelectedComposers((prev) =>
+      prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
+    );
+  };
+
+  const toggleLyricistSelection = (profileId: string) => {
+    setSelectedLyricists((prev) =>
       prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
     );
   };
@@ -285,13 +317,13 @@ export default function SongSubmissionForm() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertCircle className="w-5 h-5" />
-            Account Blocked
+            Submission Access Blocked
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Alert variant="destructive">
             <AlertDescription>
-              Your account has been blocked. You cannot submit songs at this time. Please contact support for assistance.
+              Your access blocked due to submission limit is full
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -408,61 +440,32 @@ export default function SongSubmissionForm() {
           </div>
 
           {/* Artist Selection */}
-          <div>
-            <Label>Artist(s) *</Label>
-            <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-              {artistProfiles.map((profile) => (
-                <div key={profile.id} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`artist-${profile.id}`}
-                    checked={selectedArtists.includes(profile.id)}
-                    onChange={() => toggleArtistSelection(profile.id)}
-                    className="w-4 h-4 rounded border-gray-300"
-                  />
-                  <label htmlFor={`artist-${profile.id}`} className="text-sm cursor-pointer flex-1">
-                    {profile.stageName} ({profile.fullName})
-                  </label>
-                </div>
-              ))}
-            </div>
-            {selectedArtists.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-1">Select at least one artist</p>
-            )}
-          </div>
+          <ArtistProfilesCheckboxSelector
+            label="Artist(s)"
+            profiles={artistProfiles}
+            selectedProfileIds={selectedArtists}
+            onToggle={toggleArtistSelection}
+            required
+            helperText="Select at least one artist"
+          />
 
           {/* Featured Artist Selection */}
-          <div>
-            <Label>Featured Artist(s) (Optional)</Label>
-            <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-              {artistProfiles.map((profile) => (
-                <div key={profile.id} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`featured-${profile.id}`}
-                    checked={selectedFeaturedArtists.includes(profile.id)}
-                    onChange={() => toggleFeaturedArtistSelection(profile.id)}
-                    className="w-4 h-4 rounded border-gray-300"
-                  />
-                  <label htmlFor={`featured-${profile.id}`} className="text-sm cursor-pointer flex-1">
-                    {profile.stageName} ({profile.fullName})
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ArtistProfilesCheckboxSelector
+            label="Featured Artist(s) (Optional)"
+            profiles={artistProfiles}
+            selectedProfileIds={selectedFeaturedArtists}
+            onToggle={toggleFeaturedArtistSelection}
+          />
 
-          {/* Composer */}
-          <div>
-            <Label htmlFor="composer">Composer *</Label>
-            <Input
-              id="composer"
-              value={composer}
-              onChange={(e) => setComposer(e.target.value)}
-              placeholder="Composer name"
-              required
-            />
-          </div>
+          {/* Composer Selection */}
+          <ArtistProfilesCheckboxSelector
+            label="Composer"
+            profiles={artistProfiles}
+            selectedProfileIds={selectedComposers}
+            onToggle={toggleComposerSelection}
+            required
+            helperText="Select at least one composer"
+          />
 
           {/* Producer */}
           <div>
@@ -476,17 +479,15 @@ export default function SongSubmissionForm() {
             />
           </div>
 
-          {/* Lyricist */}
-          <div>
-            <Label htmlFor="lyricist">Lyricist *</Label>
-            <Input
-              id="lyricist"
-              value={lyricist}
-              onChange={(e) => setLyricist(e.target.value)}
-              placeholder="Lyricist name"
-              required
-            />
-          </div>
+          {/* Lyricist Selection */}
+          <ArtistProfilesCheckboxSelector
+            label="Lyricist"
+            profiles={artistProfiles}
+            selectedProfileIds={selectedLyricists}
+            onToggle={toggleLyricistSelection}
+            required
+            helperText="Select at least one lyricist"
+          />
 
           {/* Artwork Upload */}
           <div>
@@ -540,15 +541,16 @@ export default function SongSubmissionForm() {
             <Label htmlFor="musicVideoLink">Music Video Link (Optional)</Label>
             <Input
               id="musicVideoLink"
+              type="url"
               value={musicVideoLink}
               onChange={(e) => setMusicVideoLink(e.target.value)}
-              placeholder="https://..."
+              placeholder="https://youtube.com/..."
             />
           </div>
 
           {/* Additional Details */}
           <div>
-            <Label htmlFor="additionalDetails">Additional Details</Label>
+            <Label htmlFor="additionalDetails">Additional Details (Optional)</Label>
             <Textarea
               id="additionalDetails"
               value={additionalDetails}
@@ -558,27 +560,46 @@ export default function SongSubmissionForm() {
             />
           </div>
 
-          {/* Optional Fields */}
+          {/* Discount Code */}
           <div>
             <Label htmlFor="discountCode">Discount Code (Optional)</Label>
             <Input
               id="discountCode"
               value={discountCode}
               onChange={(e) => setDiscountCode(e.target.value)}
-              placeholder="Discount code"
+              placeholder="Enter discount code if available"
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Legal Agreements Checkbox */}
+          <div className="flex items-start space-x-2 p-4 border rounded-lg bg-muted/50">
+            <Checkbox
+              id="legalAgreements"
+              checked={legalAgreementsAccepted}
+              onCheckedChange={(checked) => setLegalAgreementsAccepted(checked as boolean)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="legalAgreements"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                I accept the Legal Agreements & Terms *
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                By checking this box, you confirm that you have read and agree to our terms and conditions.
+              </p>
+            </div>
+          </div>
+
           <Button type="submit" disabled={isUploading || submitSong.isPending} className="w-full">
             {isUploading || submitSong.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Submitting...
               </>
             ) : (
               <>
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload className="mr-2 h-4 w-4" />
                 Submit Song
               </>
             )}

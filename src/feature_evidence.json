@@ -2,14 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-verified-blue-tick-indicator-next-to-the-artist-s-name-across-the-ui-using-the-user-uploaded-blue-tick-image-as-the-source-asset-and-rendering-it-via-the-existing-verifiedbadge-component-or-an-equivalent-shared-ui-element",
-      "featureTitle": "Add a verified/blue-tick indicator next to the artist’s name across the UI, using the user-uploaded blue tick image as the source asset and rendering it via the existing VerifiedBadge component (or an equivalent shared UI element).",
+      "featureId": "feature-create-admin-interface-for-managing-subscription-plans-with-ability-to-add-edit-and-delete-plans-including-plan-name-pricing-benefits-list-and-redirect-url",
+      "featureTitle": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
       "files": [
-        "frontend/src/components/AdminArtistManagement.tsx",
-        "frontend/src/components/ArtistNameWithVerified.tsx",
-        "frontend/src/components/Header.tsx",
-        "frontend/src/components/UserArtistProfilesManager.tsx",
-        "frontend/src/components/VerifiedBadge.tsx",
         "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
@@ -27,81 +22,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-the-admin-dashboard-supports-toggling-verification-status-for-artists-admins-can-approve-verification-activate-and-can-also-reject-unverify-at-any-time-after-approval",
-      "featureTitle": "Ensure the admin dashboard supports toggling verification status for artists: admins can approve verification (activate) and can also reject/unverify at any time after approval.",
-      "files": [
-        "frontend/src/components/AdminVerificationList.tsx",
-        "frontend/src/components/ArtistNameWithVerified.tsx",
-        "frontend/src/hooks/useQueries.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "invite-links@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "user-approval@3.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-admin-only-ability-to-delete-remove-an-artist-profile-from-the-admin-dashboard-artist-management-without-deleting-the-artist-s-songs-submissions-songs-must-remain-visible-unchanged",
-      "featureTitle": "Add admin-only ability to delete/remove an artist profile from the Admin Dashboard (Artist Management) without deleting the artist’s songs/submissions (songs must remain visible/unchanged).",
-      "files": [
-        "frontend/src/components/AdminArtistManagement.tsx",
-        "frontend/src/hooks/useQueries.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "invite-links@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "user-approval@3.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-the-provided-blue-tick-image-to-the-frontend-as-an-optimized-transparent-png-asset-and-update-the-app-to-reference-that-asset-consistently-including-updating-the-existing-verifiedbadge-image-path",
-      "featureTitle": "Add the provided blue tick image to the frontend as an optimized transparent PNG asset and update the app to reference that asset consistently (including updating the existing VerifiedBadge image path).",
-      "files": [
-        "frontend/src/components/VerifiedBadge.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "invite-links@3.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "stripe@3.0.0",
-        "http-outcalls@3.0.0",
-        "user-approval@3.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
       ],
       "confidence": "high"
     }

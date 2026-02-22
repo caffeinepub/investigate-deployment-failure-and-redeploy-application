@@ -1,44 +1,22 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Music-industry dashboard web app for indie Tamil artists with artist profiles, submissions, podcasts, analytics, and admin management.",
+  "summary": "Video submission platform with subscription plans management",
   "architectural_notes": [
-    "Verified status is admin-managed (toggle on/off) and should reflect immediately in UI (blue tick next to artist name).",
-    "Deleting an artist removes only the profile; songs remain visible and must remain associated/accessible without the profile."
+    "Video submission feature with upload panel and admin controls implemented",
+    "Subscription plans managed manually through admin dashboard",
+    "Public subscription display integrated into existing landing page"
   ],
-  "known_issues": [],
+  "known_issues": [
+    "Recent build attempts for subscription plans feature have failed - requires retry"
+  ],
   "isFixRequest": false,
-  "imageRequirements": "## Edit Images\n- Convert uploaded blue tick image to an optimized transparent PNG at small icon size (—Pngtree—instagram bule tick insta blue_9074860-1.png > blue-tick-badge-transparent.dim_24x24.png)\n- Convert uploaded blue tick image to an optimized transparent PNG at medium icon size (—Pngtree—instagram bule tick insta blue_9074860-1.png > blue-tick-badge-transparent.dim_20x20.png)",
   "existing_features": [
     {
-      "id": "feature-add-a-verified-blue-tick-indicator-next-to-the-artist-s-name-across-the-ui-using-the-user-uploaded-blue-tick-image-as-the-source-asset-and-rendering-it-via-the-existing-verifiedbadge-component-or-an-equivalent-shared-ui-element",
-      "title": "Add a verified/blue-tick indicator next to the artist’s name across the UI, using the user-uploaded blue tick image as the source asset and rendering it via the existing VerifiedBadge component (or an equivalent shared UI element).",
+      "id": "feature-create-admin-interface-for-managing-subscription-plans-with-ability-to-add-edit-and-delete-plans-including-plan-name-pricing-benefits-list-and-redirect-url",
+      "title": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
       "reqIds": [
         "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-admin-dashboard-supports-toggling-verification-status-for-artists-admins-can-approve-verification-activate-and-can-also-reject-unverify-at-any-time-after-approval",
-      "title": "Ensure the admin dashboard supports toggling verification status for artists: admins can approve verification (activate) and can also reject/unverify at any time after approval.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-admin-only-ability-to-delete-remove-an-artist-profile-from-the-admin-dashboard-artist-management-without-deleting-the-artist-s-songs-submissions-songs-must-remain-visible-unchanged",
-      "title": "Add admin-only ability to delete/remove an artist profile from the Admin Dashboard (Artist Management) without deleting the artist’s songs/submissions (songs must remain visible/unchanged).",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-the-provided-blue-tick-image-to-the-frontend-as-an-optimized-transparent-png-asset-and-update-the-app-to-reference-that-asset-consistently-including-updating-the-existing-verifiedbadge-image-path",
-      "title": "Add the provided blue tick image to the frontend as an optimized transparent PNG asset and update the app to reference that asset consistently (including updating the existing VerifiedBadge image path).",
-      "reqIds": [
-        "REQ-5"
       ],
       "version": 1
     }
@@ -46,33 +24,26 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Show a blue tick icon next to verified artist names across the UI (using the provided blue-tick asset).",
+      "summary": "Admin panel to manually create/edit/delete subscription plans with pricing and features",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Admin dashboard control to verify/unverify (reject verification) for artists; verification state updates the UI blue tick.",
+      "summary": "Display subscription plans publicly on landing page in existing location",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-3",
-      "summary": "Admin can delete/remove an artist profile while keeping the artist’s songs visible.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Implement backend support to determine whether a given artist (by owner Principal) is currently verified based on the verification workflow state, and expose a query API the frontend can use to render the blue tick correctly.",
+      "id": "AR-4",
+      "summary": "Display all active subscription plans publicly on the landing page in the existing PricingSection component location",
       "reqIds": [
         "REQ-2"
       ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Tamil Indie Dashboard",
+  "projectName": "Indie Tamil Music Production",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -1,15 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Loader2, Clock, Zap, TrendingUp, Radio } from 'lucide-react';
+import { CheckCircle2, Loader2, Zap, TrendingUp, Radio } from 'lucide-react';
 import { useGetVerifiedArtistStatus, useApplyForVerification } from '../hooks/useQueries';
 
 export default function VerificationBenefitsSection() {
-  const { data: verifiedStatus, isLoading: statusLoading } = useGetVerifiedArtistStatus();
+  const { data: isVerified, isLoading: statusLoading } = useGetVerifiedArtistStatus();
   const applyForVerification = useApplyForVerification();
 
-  // Don't show if user has pending request
-  if (verifiedStatus?.hasPendingRequest) {
+  // Don't show if user is already verified
+  if (isVerified) {
     return null;
   }
 
@@ -74,11 +74,6 @@ export default function VerificationBenefitsSection() {
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
               Submitting...
             </>
-          ) : verifiedStatus?.hasPendingRequest ? (
-            <>
-              <Clock className="w-5 h-5 mr-2" />
-              Application Pending
-            </>
           ) : (
             <>
               <CheckCircle2 className="w-5 h-5 mr-2" />
@@ -86,12 +81,6 @@ export default function VerificationBenefitsSection() {
             </>
           )}
         </Button>
-
-        {verifiedStatus?.hasPendingRequest && (
-          <p className="text-sm text-center text-muted-foreground">
-            Your verification request is being reviewed by our team.
-          </p>
-        )}
       </CardContent>
     </Card>
   );

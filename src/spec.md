@@ -1,13 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Show a verified (blue tick) indicator next to verified artists across the app, let admins verify/unverify artists at any time, and allow admins to delete only the artist profile (without removing songs).
+**Goal:** Implement subscription plans management system with admin controls and public display.
 
 **Planned changes:**
-- Add and consistently use a shared verified badge UI (via the existing VerifiedBadge component or equivalent) next to artist names wherever artist names are displayed.
-- Add backend query support to determine whether a given artist (by owner Principal) is verified, and wire the frontend to use it with React Query invalidation for up-to-date status.
-- Update the admin dashboard to allow approving verification requests and also rejecting/unverifying already-approved artists.
-- Add an admin-only delete action in Artist Management to remove an artist profile record while leaving all song submissions intact and still visible.
-- Add the provided blue tick image as an optimized transparent PNG static asset in the frontend and update the app to reference it consistently (including VerifiedBadge).
+- Add admin interface for creating, editing, and deleting subscription plans (name, pricing, benefits, redirect URL)
+- Display all active subscription plans on the landing page in the existing PricingSection component
+- Enable public visibility of subscription plans for all visitors
 
-**User-visible outcome:** Verified artists display a blue tick next to their name across the UI; admins can verify or unverify artists at any time; admins can delete an artist’s profile without affecting the artist’s songs/submissions.
+**User-visible outcome:** Admins can manage subscription plans through the dashboard, and all visitors can view available subscription plans with pricing and benefits on the landing page.

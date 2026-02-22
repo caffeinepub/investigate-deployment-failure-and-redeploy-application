@@ -5,10 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreatePodcastShow } from '../hooks/useQueries';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCreatePodcastShow, useIsCurrentUserBlockedPodcastSubmission } from '../hooks/useQueries';
 import { PodcastType, PodcastCategory, Language } from '../backend';
 import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function PodcastShowForm() {
   const [title, setTitle] = useState('');
@@ -20,9 +22,15 @@ export default function PodcastShowForm() {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const createShow = useCreatePodcastShow();
+  const { data: isBlocked, isLoading: blockCheckLoading } = useIsCurrentUserBlockedPodcastSubmission();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isBlocked) {
+      toast.error('Your access blocked due to submission limit is full');
+      return;
+    }
 
     if (!title || !description || !category || !language || !artworkFile) {
       return;
@@ -50,12 +58,47 @@ export default function PodcastShowForm() {
       setLanguage('');
       setArtworkFile(null);
       setUploadProgress(0);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create show:', error);
+      if (error.message?.includes('blocked') || error.message?.includes('submission limit')) {
+        toast.error('Your access blocked due to submission limit is full');
+      }
     }
   };
 
   const isSubmitting = createShow.isPending;
+
+  if (blockCheckLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="w-5 h-5" />
+            Submission Access Blocked
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertDescription>
+              Your access blocked due to submission limit is full
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { UserCategory } from '../backend';
 
 export default function ProfileSetupModal() {
   const [name, setName] = useState('');
@@ -12,7 +13,11 @@ export default function ProfileSetupModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      saveProfile.mutate({ name: name.trim(), artistId: '' });
+      saveProfile.mutate({ 
+        name: name.trim(), 
+        artistId: '',
+        category: UserCategory.generalArtist
+      });
     }
   };
 

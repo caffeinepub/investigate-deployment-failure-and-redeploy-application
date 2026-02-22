@@ -1,119 +1,55 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Verified artist badge across UI + admin verify/unverify + admin delete artist profile (frontend-only)",
+  "title": "Retry subscription plans feature implementation",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Show a verified (blue-tick) indicator next to artist names across the UI using the existing VerifiedBadge shared component and a static frontend asset.",
+      "summary": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
       "acceptanceCriteria": [
-        "A blue tick icon is shown next to an artist’s displayed name wherever an artist name is rendered in artist profile cards/lists and header/primary artist display.",
-        "The tick uses a static asset served from the frontend (not fetched via backend).",
-        "The existing tooltip behavior for the verified icon remains (or is replaced with an equivalent tooltip)."
+        "Admin dashboard has a dedicated subscription plans management panel",
+        "Admins can create new subscription plans with name, price, benefits, and redirect URL",
+        "Admins can edit existing subscription plans",
+        "Admins can delete subscription plans",
+        "Changes persist in backend storage"
       ],
       "file_operations": [
         {
+          "path": "frontend/src/components/AdminSubscriptionPlansManagement.tsx",
+          "operation": "modify",
+          "description": "Verify and enhance the existing AdminSubscriptionPlansManagement component to ensure complete CRUD functionality. The component already implements create, edit, and delete dialogs for subscription plans with fields for plan name, price per year (stored as bigint cents), benefits array, and redirect URL. Ensure all React Query hooks (useGetAllSubscriptionPlans, useCreateSubscriptionPlan, useUpdateSubscriptionPlan, useDeleteSubscriptionPlan) are properly integrated and error handling is implemented. Verify form validation for required fields (plan name, price, redirect URL) and that benefits can be added/removed dynamically. Use existing UI components from shadcn/ui (Dialog, Input, Button, Textarea) for consistency."
+        },
+        {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a React Query hook to fetch verification state for a given artist owner Principal using the existing backend actor capability, with an appropriate queryKey for caching/invalidation."
+          "description": "Verify that all subscription plan-related React Query hooks are present and correctly implemented: useGetAllSubscriptionPlans (query for fetching all plans), useCreateSubscriptionPlan (mutation for creating new plans), useUpdateSubscriptionPlan (mutation for updating existing plans), and useDeleteSubscriptionPlan (mutation for deleting plans). Ensure proper query invalidation on mutations to refresh the plans list after any CRUD operation. Verify error handling and loading states are properly exposed."
         },
         {
-          "path": "frontend/src/components/ArtistNameWithVerified.tsx",
-          "operation": "create",
-          "description": "Create a shared UI component that renders an artist display name and conditionally shows the VerifiedBadge next to it by querying verification status by owner Principal (and preserving the VerifiedBadge tooltip)."
-        },
-        {
-          "path": "frontend/src/components/Header.tsx",
+          "path": "frontend/src/pages/AdminDashboard.tsx",
           "operation": "modify",
-          "description": "Replace the current primary artist name rendering with the shared ArtistNameWithVerified component so the blue tick appears next to the logged-in user’s primary artist display when verified."
-        },
-        {
-          "path": "frontend/src/components/UserArtistProfilesManager.tsx",
-          "operation": "modify",
-          "description": "Update artist profile cards to render stageName via ArtistNameWithVerified (instead of a generic badge) so verified status shows consistently in user profile lists."
-        },
-        {
-          "path": "frontend/src/components/AdminArtistManagement.tsx",
-          "operation": "modify",
-          "description": "Update admin artist profile cards to render stageName via ArtistNameWithVerified (instead of a generic badge) so verified status shows consistently in admin lists."
-        },
-        {
-          "path": "frontend/src/components/VerifiedBadge.tsx",
-          "operation": "modify",
-          "description": "Ensure VerifiedBadge continues to provide tooltip behavior and is used as the single source of truth for rendering the blue tick icon."
+          "description": "Verify that the AdminSubscriptionPlansManagement component is properly wired into the admin dashboard's tabbed interface. Ensure the subscription plans tab is accessible and labeled appropriately (e.g., 'Subscription Plans' or 'Plans'). Confirm the tab is positioned logically within the existing tabs (Artists, Song Submissions, Podcast Submissions, Video Submissions, Verification Requests, Monthly Listeners, Users). Use authorization component to ensure only admin users can access this tab."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Allow admins to toggle an artist’s verification status (approve and unverify/reject even after approval) and reflect changes across the UI via React Query invalidation.",
+      "id": "REQ-2",
+      "summary": "Display all active subscription plans publicly on the landing page in the existing PricingSection component location",
       "acceptanceCriteria": [
-        "Admin can approve a verification request for a user.",
-        "Admin can reject/unverify an already-approved user (not limited to only pending requests).",
-        "After admin changes status, the artist’s blue tick disappears/appears across the UI accordingly."
+        "Subscription plans are fetched from backend and displayed in PricingSection component",
+        "Plans show name, pricing, benefits list, and call-to-action buttons",
+        "Plans are visible to all visitors without authentication",
+        "Display uses existing pricing section styling and layout"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/PricingSection.tsx",
           "operation": "modify",
-          "description": "Ensure admin verification mutations invalidate verification-related query keys (including per-owner verification queries) so UI updates without hard refresh."
+          "description": "Modify the PricingSection component to fetch subscription plans from the backend using the useGetAllSubscriptionPlans hook. Replace any hardcoded or placeholder pricing data with dynamically fetched plans. Display each plan in a card layout showing: plan name as the heading, price per year (convert from bigint cents to readable currency format, e.g., ₹X,XXX/year), benefits as a bulleted or checkmarked list, and a call-to-action button that redirects to the plan's redirect URL using window.location.href (not router navigation). Handle loading and error states gracefully. Ensure the component remains accessible to unauthenticated users (no login required). Maintain existing Tailwind CSS styling and responsive grid layout for consistency with the landing page design."
         },
         {
-          "path": "frontend/src/components/AdminVerificationList.tsx",
+          "path": "frontend/src/pages/LandingPage.tsx",
           "operation": "modify",
-          "description": "Extend the AdminVerificationList UI to support unverify/reject actions for already-approved artists (not only pending), wiring the action to the existing admin verification mutation hook(s) and triggering query invalidation so badges update across the UI."
-        },
-        {
-          "path": "frontend/src/components/ArtistNameWithVerified.tsx",
-          "operation": "modify",
-          "description": "Wire the shared artist name + badge component to react to React Query invalidation (verification queryKey changes) so the blue tick appears/disappears across the UI after admin actions."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Add an admin-only delete action in Admin Artist Management to remove an artist profile (profile record only) with a confirmation step and UI refresh.",
-      "acceptanceCriteria": [
-        "Admin Artist Management UI shows a delete action per artist profile with a confirmation step.",
-        "Calling admin delete removes only the artist profile record; existing song submissions remain intact and still appear in user/admin submissions lists.",
-        "After deletion, the profile no longer appears in admin artist profile listings and cannot be fetched via getMyArtistProfiles for that owner."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Confirm the existing admin delete-artist-profile mutation hook invalidates artist profile listings (admin and user) so the deleted profile disappears from UI after the action."
-        },
-        {
-          "path": "frontend/src/components/AdminArtistManagement.tsx",
-          "operation": "modify",
-          "description": "Add a delete action per artist profile row/card with an AlertDialog confirmation, calling the admin delete-artist-profile mutation and updating the list via query invalidation (no changes to submissions UI/queries)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Add the provided blue tick image as optimized transparent PNG assets and reference them consistently from VerifiedBadge.",
-      "acceptanceCriteria": [
-        "A transparent, appropriately-sized blue tick icon exists in frontend/public/assets/generated and is used by VerifiedBadge.",
-        "No broken image links appear for the verified badge in any theme mode.",
-        "Asset filename/path used in code matches the generated/static asset path."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png",
-          "operation": "create",
-          "description": "Add the optimized transparent blue tick PNG asset at 24x24: frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png."
-        },
-        {
-          "path": "frontend/public/assets/generated/blue-tick-badge-transparent.dim_20x20.png",
-          "operation": "create",
-          "description": "Add the optimized transparent blue tick PNG asset at 20x20: frontend/public/assets/generated/blue-tick-badge-transparent.dim_20x20.png."
-        },
-        {
-          "path": "frontend/src/components/VerifiedBadge.tsx",
-          "operation": "modify",
-          "description": "Update VerifiedBadge to reference the generated static asset(s) consistently (frontend/public/assets/generated/blue-tick-badge-transparent.dim_24x24.png and/or frontend/public/assets/generated/blue-tick-badge-transparent.dim_20x20.png) and ensure no broken image links while preserving tooltip behavior."
+          "description": "Verify that the PricingSection component is properly imported and rendered in the LandingPage. Ensure it is positioned appropriately within the page flow (typically after hero and features sections). Confirm that the section is visible to all visitors without requiring authentication. No changes should be needed if PricingSection is already present; this operation ensures proper wiring and placement."
         }
       ]
     }
