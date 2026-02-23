@@ -24,6 +24,7 @@ import type {
   UserProfile,
   InviteCode,
   RSVP,
+  PublicSongInfo,
 } from '../backend';
 import { Principal } from '@dfinity/principal';
 
@@ -72,6 +73,81 @@ export function useIsCurrentUserAdmin() {
       return actor.isCallerAdmin();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+// ================================
+// PUBLIC SONG INFO (NO AUTH REQUIRED)
+// ================================
+export function useGetSongInfo(songId: string) {
+  const { actor } = useActor();
+
+  return useQuery<PublicSongInfo>({
+    queryKey: ['songInfo', songId],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getSongInfo(songId);
+    },
+    enabled: !!actor && !!songId,
+    retry: false,
+  });
+}
+
+// ================================
+// STREAMING LINKS MANAGEMENT
+// ================================
+export function useUpdateSongLinks() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      songId,
+      spotifyLink,
+      appleMusicLink,
+    }: {
+      songId: string;
+      spotifyLink: string | null;
+      appleMusicLink: string | null;
+    }) => {
+      if (!actor) throw new Error('Actor not available');
+      
+      // Get the current submission
+      const submissions = await actor.getAllSubmissionsForAdmin();
+      const submission = submissions.find((s) => s.id === songId);
+      if (!submission) throw new Error('Song not found');
+
+      // Create edit input with updated links
+      const editInput: SongSubmissionEditInput = {
+        songSubmissionId: songId,
+        title: submission.title,
+        releaseType: submission.releaseType,
+        genre: submission.genre,
+        language: submission.language,
+        releaseDate: submission.releaseDate,
+        artworkBlob: submission.artwork,
+        artworkFilename: submission.artworkFilename,
+        artist: submission.artist,
+        featuredArtist: submission.featuredArtist,
+        composer: submission.composer,
+        producer: submission.producer,
+        lyricist: submission.lyricist,
+        audioFile: submission.audioFile,
+        audioFilename: submission.audioFilename,
+        additionalDetails: submission.additionalDetails,
+        discountCode: submission.discountCode,
+        musicVideoLink: submission.musicVideoLink,
+        albumTracks: submission.albumTracks,
+        spotifyLink: spotifyLink ? spotifyLink : undefined,
+        appleMusicLink: appleMusicLink ? appleMusicLink : undefined,
+      };
+
+      await actor.adminEditSubmission(editInput);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
+    },
   });
 }
 
@@ -533,12 +609,12 @@ export function useIsArtistVerified() {
       if (!actor || !identity) return false;
       return actor.isArtistVerified(identity.getPrincipal());
     },
-    enabled: !!actor && !isFetching && !!identity,
+    enabled: !!actor && !!identity && !isFetching,
   });
 }
 
 // ================================
-// VERIFICATION
+// VERIFICATION WORKFLOW
 // ================================
 export function useApplyForVerification() {
   const { actor } = useActor();
@@ -552,8 +628,27 @@ export function useApplyForVerification() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
       queryClient.invalidateQueries({ queryKey: ['isArtistVerified'] });
+      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
     },
   });
+}
+
+export function useGetVerificationRequests() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery({
+    queryKey: ['verificationRequests'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getVerificationRequests();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// Alias for admin components
+export function useGetVerificationRequestsForAdmin() {
+  return useGetVerificationRequests();
 }
 
 export function useUpdateVerificationStatus() {
@@ -576,20 +671,23 @@ export function useUpdateVerificationStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
       queryClient.invalidateQueries({ queryKey: ['isArtistVerified'] });
+      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
     },
   });
 }
 
-export function useGetVerificationRequests() {
+// Hook for checking verified artist status (used by VerificationBenefitsSection and VerificationRenewalSection)
+export function useGetVerifiedArtistStatus() {
   const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
-  return useQuery({
-    queryKey: ['verificationRequests'],
+  return useQuery<boolean>({
+    queryKey: ['verifiedArtistStatus', identity?.getPrincipal().toString()],
     queryFn: async () => {
-      if (!actor) return [];
-      return actor.getVerificationRequests();
+      if (!actor || !identity) return false;
+      return actor.isArtistVerified(identity.getPrincipal());
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !!identity && !isFetching,
   });
 }
 
@@ -607,7 +705,7 @@ export function useUpdateMonthlyListenerStats() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monthlyListenerStats'] });
-      queryClient.invalidateQueries({ queryKey: ['liveSongsWithStats'] });
+      queryClient.invalidateQueries({ queryKey: ['liveSongsForAnalysis'] });
     },
   });
 }
@@ -616,36 +714,10 @@ export function useGetSongMonthlyListenerStats() {
   const { actor } = useActor();
 
   return useMutation({
-    mutationFn: async (songId: string): Promise<MonthlyListenerStats[]> => {
+    mutationFn: async (songId: string) => {
       if (!actor) throw new Error('Actor not available');
       return actor.getSongMonthlyListenerStats(songId);
     },
-  });
-}
-
-export function useGetMyLiveSongsWithStats() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery({
-    queryKey: ['liveSongsWithStats', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) return [];
-      const liveSongs = await actor.getLiveSongsForAnalysis();
-      const userSongs = liveSongs.filter(
-        (song) => song.submitter.toString() === identity.getPrincipal().toString()
-      );
-
-      const songsWithStats = await Promise.all(
-        userSongs.map(async (song) => {
-          const stats = await actor.getSongMonthlyListenerStats(song.id);
-          return { song, stats };
-        })
-      );
-
-      return songsWithStats;
-    },
-    enabled: !!actor && !isFetching && !!identity,
   });
 }
 
@@ -662,147 +734,33 @@ export function useGetLiveSongsForAnalysis() {
   });
 }
 
-// ================================
-// USER MANAGEMENT
-// ================================
-export function useUpdateUserCategory() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ userId, category }: { userId: Principal; category: UserCategory }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateUserCategory(userId, category);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
-    },
-  });
-}
-
-export function useBlockUserSongSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.blockUserSongSubmission(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-    },
-  });
-}
-
-export function useUnblockUserSongSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.unblockUserSongSubmission(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-    },
-  });
-}
-
-export function useBlockUserPodcastSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.blockUserPodcastSubmission(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-    },
-  });
-}
-
-export function useUnblockUserPodcastSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.unblockUserPodcastSubmission(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-    },
-  });
-}
-
-export function useIsCurrentUserBlockedSongSubmission() {
-  const { actor } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['isCurrentUserBlockedSongSubmission', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) return false;
-      return actor.isUserBlockedSongSubmission(identity.getPrincipal());
-    },
-    enabled: !!actor && !!identity,
-  });
-}
-
-export function useIsCurrentUserBlockedPodcastSubmission() {
-  const { actor } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['isCurrentUserBlockedPodcastSubmission', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) return false;
-      return actor.isUserBlockedPodcastSubmission(identity.getPrincipal());
-    },
-    enabled: !!actor && !!identity,
-  });
-}
-
-export function useIsUserBlockedSongSubmission() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (user: Principal): Promise<boolean> => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.isUserBlockedSongSubmission(user);
-    },
-  });
-}
-
-export function useIsUserBlockedPodcastSubmission() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (user: Principal): Promise<boolean> => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.isUserBlockedPodcastSubmission(user);
-    },
-  });
-}
-
-export function useGetAllBlockedUsers() {
+export function useGetMyLiveSongsWithStats() {
   const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
-  return useQuery<Principal[]>({
-    queryKey: ['blockedUsers'],
+  return useQuery<Array<{ song: SongSubmission; stats: MonthlyListenerStats[] }>>({
+    queryKey: ['myLiveSongsWithStats', identity?.getPrincipal().toString()],
     queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllBlockedUsersAdmin();
+      if (!actor || !identity) return [];
+      const liveSongs = await actor.getLiveSongsForAnalysis();
+      const userSongs = liveSongs.filter((song) => song.submitter.toString() === identity.getPrincipal().toString());
+
+      const songsWithStats = await Promise.all(
+        userSongs.map(async (song) => {
+          const stats = await actor.getSongMonthlyListenerStats(song.id);
+          return { song, stats };
+        })
+      );
+
+      return songsWithStats;
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !!identity && !isFetching,
   });
 }
 
+// ================================
+// TEAM MEMBER MANAGEMENT
+// ================================
 export function useUpgradeUserToTeamMember() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -814,6 +772,7 @@ export function useUpgradeUserToTeamMember() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
     },
   });
 }
@@ -829,6 +788,7 @@ export function useDowngradeTeamMember() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
+      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
     },
   });
 }
@@ -843,6 +803,143 @@ export function useGetAllTeamMembers() {
       return actor.getAllTeamMembers();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+// ================================
+// USER BLOCKING MANAGEMENT
+// ================================
+export function useBlockUserSongSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.blockUserSongSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserBlockedSong'] });
+    },
+  });
+}
+
+export function useUnblockUserSongSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.unblockUserSongSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserBlockedSong'] });
+    },
+  });
+}
+
+export function useBlockUserPodcastSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.blockUserPodcastSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserBlockedPodcast'] });
+    },
+  });
+}
+
+export function useUnblockUserPodcastSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.unblockUserPodcastSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserBlockedPodcast'] });
+    },
+  });
+}
+
+export function useIsUserBlockedSongSubmission() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.isUserBlockedSongSubmission(user);
+    },
+  });
+}
+
+export function useIsUserBlockedPodcastSubmission() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.isUserBlockedPodcastSubmission(user);
+    },
+  });
+}
+
+// Hooks for checking current user's block status
+export function useIsCurrentUserBlockedSongSubmission() {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<boolean>({
+    queryKey: ['currentUserBlockedSong', identity?.getPrincipal().toString()],
+    queryFn: async () => {
+      if (!actor || !identity) return false;
+      return actor.isUserBlockedSongSubmission(identity.getPrincipal());
+    },
+    enabled: !!actor && !!identity && !isFetching,
+  });
+}
+
+export function useIsCurrentUserBlockedPodcastSubmission() {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<boolean>({
+    queryKey: ['currentUserBlockedPodcast', identity?.getPrincipal().toString()],
+    queryFn: async () => {
+      if (!actor || !identity) return false;
+      return actor.isUserBlockedPodcastSubmission(identity.getPrincipal());
+    },
+    enabled: !!actor && !!identity && !isFetching,
+  });
+}
+
+// ================================
+// USER CATEGORY MANAGEMENT
+// ================================
+export function useUpdateUserCategory() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, category }: { userId: Principal; category: UserCategory }) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.updateUserCategory(userId, category);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
   });
 }
 
@@ -950,7 +1047,17 @@ export function useCreatePodcastEpisode() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['podcastEpisodes'] });
-      queryClient.invalidateQueries({ queryKey: ['allEpisodes'] });
+    },
+  });
+}
+
+export function useGetEpisodesByShowId() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (showId: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getEpisodesByShowId(showId);
     },
   });
 }
@@ -1034,33 +1141,12 @@ export function useGenerateInviteCode() {
   });
 }
 
-export function useGetInviteCodes() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<InviteCode[]>({
-    queryKey: ['inviteCodes'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getInviteCodes();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
 export function useSubmitRSVP() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      name,
-      attending,
-      inviteCode,
-    }: {
-      name: string;
-      attending: boolean;
-      inviteCode: string;
-    }) => {
+    mutationFn: async ({ name, attending, inviteCode }: { name: string; attending: boolean; inviteCode: string }) => {
       if (!actor) throw new Error('Actor not available');
       await actor.submitRSVP(name, attending, inviteCode);
     },
@@ -1083,6 +1169,15 @@ export function useGetAllRSVPs() {
   });
 }
 
-// Backward compatibility aliases
-export const useGetVerificationRequestsForAdmin = useGetVerificationRequests;
-export const useGetVerifiedArtistStatus = useIsArtistVerified;
+export function useGetInviteCodes() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<InviteCode[]>({
+    queryKey: ['inviteCodes'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getInviteCodes();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}

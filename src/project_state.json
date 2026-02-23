@@ -1,22 +1,48 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Video submission platform with subscription plans management",
+  "summary": "Music platform with song/podcast management, subscription plans, artist profiles, and public 'link in bio' pages for sharing songs on streaming platforms",
   "architectural_notes": [
-    "Video submission feature with upload panel and admin controls implemented",
-    "Subscription plans managed manually through admin dashboard",
-    "Public subscription display integrated into existing landing page"
+    "Public song pages at /song/[song-id] - no authentication required",
+    "Streaming platform integration with Spotify and Apple Music",
+    "Platform-specific styling with logos and brand colors for streaming buttons",
+    "Admin approval workflow gates public page visibility"
   ],
   "known_issues": [
-    "Recent build attempts for subscription plans feature have failed - requires retry"
+    "Previous builds of link in bio feature failed - using simplified approach"
   ],
   "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Spotify logo icon on white background, circular or square format suitable for button display (spotify-logo.dim_128x128.png)\n- Apple Music logo icon on white background, circular or square format suitable for button display (apple-music-logo.dim_128x128.png)",
   "existing_features": [
     {
-      "id": "feature-create-admin-interface-for-managing-subscription-plans-with-ability-to-add-edit-and-delete-plans-including-plan-name-pricing-benefits-list-and-redirect-url",
-      "title": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
+      "id": "feature-create-public-song-pages-at-song-song-id-that-display-song-artwork-title-artist-name-with-verification-badge-and-streaming-platform-links",
+      "title": "Create public song pages at `/song/[song-id]` that display song artwork, title, artist name with verification badge, and streaming platform links",
       "reqIds": [
         "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-manage-links-button-to-admin-song-list-that-opens-a-dialog-for-adding-editing-streaming-platform-urls-for-individual-songs",
+      "title": "Add 'Manage Links' button to admin song list that opens a dialog for adding/editing streaming platform URLs for individual songs",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-display-streaming-platform-links-as-styled-buttons-with-platform-logos-and-brand-colors-on-public-song-pages",
+      "title": "Display streaming platform links as styled buttons with platform logos and brand colors on public song pages",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-render-generated-platform-logo-images-as-static-assets-in-frontend-public-assets-generated",
+      "title": "Render generated platform logo images as static assets in frontend/public/assets/generated",
+      "reqIds": [
+        "REQ-6"
       ],
       "version": 1
     }
@@ -24,21 +50,29 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Admin panel to manually create/edit/delete subscription plans with pricing and features",
+      "summary": "Public 'link in bio' song pages with streaming platform links (Spotify, Apple Music) - admin approval required",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Display subscription plans publicly on landing page in existing location",
+      "summary": "Admin dashboard 'Manage Links' button for adding/editing streaming URLs",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-4",
-      "summary": "Display all active subscription plans publicly on the landing page in the existing PricingSection component location",
+      "summary": "Add streaming platform link fields to song data model for Spotify and Apple Music URLs",
       "reqIds": [
         "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Public song pages are only accessible after admin approval - songs with status other than 'live' return 404 or access denied",
+      "reqIds": [
+        "REQ-5"
       ],
       "status": "pending"
     }

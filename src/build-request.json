@@ -1,63 +1,152 @@
 {
   "kind": "build_request",
-  "title": "Retry subscription plans feature implementation",
-  "projectName": "Indie Tamil Music Production",
+  "title": "Add simplified link in bio feature for songs with admin approval",
+  "projectName": "Indie Tamil Music",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
+      "text": "Create public song pages at `/song/[song-id]` that display song artwork, title, artist name with verification badge, and streaming platform links",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-recent"
+          "msg-20"
         ],
         "quotes": [
-          "Admin will manually add it via the dedicated plans panel in the admin dashboard"
+          "Public song pages at `/song/[song-id]` with artwork, title, and artist info"
         ]
       },
       "acceptanceCriteria": [
-        "Admin dashboard has a dedicated subscription plans management panel",
-        "Admins can create new subscription plans with name, price, benefits, and redirect URL",
-        "Admins can edit existing subscription plans",
-        "Admins can delete subscription plans",
-        "Changes persist in backend storage"
+        "Public route `/song/[song-id]` is accessible without authentication",
+        "Page displays song artwork from the song's existing artwork file",
+        "Page displays song title and artist name",
+        "Artist name includes verification badge using existing ArtistNameWithVerified component pattern",
+        "Page shows streaming platform links only for platforms that have URLs configured"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Display all active subscription plans publicly on the landing page in the existing PricingSection component location",
-      "target": "frontend",
+      "text": "Add streaming platform link fields to song data model for Spotify and Apple Music URLs",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-recent"
+          "msg-20"
         ],
         "quotes": [
-          "Already existing location",
-          "Make subscription plans visible for everyone publicly. Which is displayed in landing page of this website"
+          "Streaming platform links for Spotify and Apple Music"
         ]
       },
       "acceptanceCriteria": [
-        "Subscription plans are fetched from backend and displayed in PricingSection component",
-        "Plans show name, pricing, benefits list, and call-to-action buttons",
-        "Plans are visible to all visitors without authentication",
-        "Display uses existing pricing section styling and layout"
+        "Song data model includes optional fields for Spotify URL and Apple Music URL",
+        "URLs are stored as Text type",
+        "Existing songs are compatible with the new fields (migration if needed)"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add 'Manage Links' button to admin song list that opens a dialog for adding/editing streaming platform URLs for individual songs",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-18",
+          "msg-20"
+        ],
+        "quotes": [
+          "Option A: 'Manage Links' button on song list",
+          "Admin dashboard with a 'Manage Links' button on the song list to add/edit streaming URLs"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each song row in AdminSubmissionsList has a 'Manage Links' button",
+        "Button opens a dialog with form fields for Spotify URL and Apple Music URL",
+        "Form pre-populates with existing URLs if available",
+        "Form validates that URLs start with http:// or https:// using existing isValidUrl utility",
+        "Save button updates the song's streaming platform URLs",
+        "Dialog matches existing admin dialog patterns (AdminEditSubmissionDialog style)"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Display streaming platform links as styled buttons with platform logos and brand colors on public song pages",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-16",
+          "msg-20"
+        ],
+        "quotes": [
+          "yes it should have specific styling (like platform logos, colors, etc.)",
+          "Streaming platform links for Spotify and Apple Music with platform logos and colors"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Spotify button uses Spotify green brand color (#1DB954)",
+        "Apple Music button uses Apple Music red/pink brand color",
+        "Each button displays the platform's logo icon",
+        "Buttons are visually distinct and properly sized for touch/click",
+        "Only platforms with configured URLs are displayed",
+        "Buttons link to the configured streaming platform URLs"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Public song pages are only accessible after admin approval - songs with status other than 'live' return 404 or access denied",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-18",
+          "msg-20"
+        ],
+        "quotes": [
+          "only after admin approval",
+          "pages only go live after admin approval"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Public song page endpoint checks song status before returning data",
+        "Only songs with 'live' status are accessible on public pages",
+        "Songs with 'draft', 'pending', 'rejected', or other non-live statuses return appropriate error response",
+        "Error handling prevents unauthorized access to non-approved content"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Render generated platform logo images as static assets in frontend/public/assets/generated",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-16",
+          "msg-20"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Platform logo images are loaded from frontend/public/assets/generated directory",
+        "Images are referenced with correct paths in streaming platform buttons",
+        "Fallback handling if logo images are not found"
       ]
     }
   ],
   "constraints": [
-    "Use existing AdminSubscriptionPlansManagement.tsx and PricingSection.tsx components",
-    "Backend must use single-actor architecture in main.mo",
-    "Frontend must use React Query for data fetching"
+    "Use existing ArtistNameWithVerified component for displaying artist names with verification badges",
+    "Follow existing admin dialog patterns from AdminEditSubmissionDialog and AdminEditVideoDialog",
+    "Use existing isValidUrl utility for URL validation",
+    "Maintain single-actor architecture with all backend logic in main.mo",
+    "Start with only Spotify and Apple Music - do not add other platforms yet"
   ],
   "nonGoals": [
-    "Payment processing integration beyond redirect URLs",
-    "User subscription status tracking or management",
-    "Automatic subscription renewal or billing",
-    "Email notifications for subscription changes"
+    "Podcast pages with streaming links (future iteration)",
+    "Additional streaming platforms beyond Spotify and Apple Music",
+    "Separate 'Add Streaming Links' workflow after song creation (using simplified inline approach)",
+    "YouTube Music, SoundCloud, or Amazon Music integration",
+    "Analytics or tracking for link clicks",
+    "Social sharing features",
+    "Custom URL slugs or vanity URLs"
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Spotify logo icon on white background, circular or square format suitable for button display (spotify-logo.dim_128x128.png)",
+      "Apple Music logo icon on white background, circular or square format suitable for button display (apple-music-logo.dim_128x128.png)"
+    ],
     "edits": []
   }
 }

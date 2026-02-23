@@ -17,7 +17,9 @@ import UserApproval "user-approval/approval";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Iter "mo:core/Iter";
 import List "mo:core/List";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -82,6 +84,22 @@ actor {
     publicLink : ?Text;
     adminLiveLink : ?Text;
     isManuallyRejected : Bool;
+    spotifyLink : ?Text;
+    appleMusicLink : ?Text;
+  };
+
+  public type PublicSongInfo = {
+    id : Text;
+    title : Text;
+    artist : Text;
+    featuredArtist : Text;
+    artwork : Storage.ExternalBlob;
+    spotifyLink : ?Text;
+    appleMusicLink : ?Text;
+    releaseDate : Time.Time;
+    genre : Text;
+    language : Text;
+    musicVideoLink : ?Text;
   };
 
   public type SongSubmissionInput = {
@@ -103,6 +121,8 @@ actor {
     discountCode : ?Text;
     albumTracks : ?[TrackMetadata];
     musicVideoLink : ?Text;
+    spotifyLink : ?Text;
+    appleMusicLink : ?Text;
   };
 
   public type ACRResult = {
@@ -145,6 +165,8 @@ actor {
     discountCode : ?Text;
     musicVideoLink : ?Text;
     albumTracks : ?[TrackMetadata];
+    spotifyLink : ?Text;
+    appleMusicLink : ?Text;
   };
 
   public type UpdateSongSubmissionEditStatus = {
@@ -655,6 +677,38 @@ actor {
       case (#pending) { false };
       case (#approved) { false };
       case (#live) { false };
+    };
+  };
+
+  // ================================
+  // PUBLIC SONG PAGE ACCESS
+  // ================================
+
+  // Public access to live songs only - returns sanitized data without sensitive fields
+  public query func getSongInfo(songId : Text) : async PublicSongInfo {
+    let song = switch (submissions.get(songId)) {
+      case (null) { Runtime.trap("Song not found") };
+      case (?song) { song };
+    };
+    
+    // Only allow access to live songs
+    if (song.status != #live) {
+      Runtime.trap("Song not available");
+    };
+    
+    // Return only public-safe information
+    {
+      id = song.id;
+      title = song.title;
+      artist = song.artist;
+      featuredArtist = song.featuredArtist;
+      artwork = song.artwork;
+      spotifyLink = song.spotifyLink;
+      appleMusicLink = song.appleMusicLink;
+      releaseDate = song.releaseDate;
+      genre = song.genre;
+      language = song.language;
+      musicVideoLink = song.musicVideoLink;
     };
   };
 
@@ -1319,6 +1373,8 @@ actor {
       musicVideoLink = input.musicVideoLink;
       adminLiveLink = null;
       isManuallyRejected = false;
+      spotifyLink = input.spotifyLink;
+      appleMusicLink = input.appleMusicLink;
     };
 
     submissions.add(submissionId, submission);
@@ -1362,6 +1418,8 @@ actor {
           discountCode = input.discountCode;
           musicVideoLink = input.musicVideoLink;
           albumTracks = input.albumTracks;
+          spotifyLink = input.spotifyLink;
+          appleMusicLink = input.appleMusicLink;
         };
         submissions.add(input.songSubmissionId, updatedSubmission);
       };
@@ -1458,6 +1516,8 @@ actor {
           discountCode = input.discountCode;
           musicVideoLink = input.musicVideoLink;
           albumTracks = input.albumTracks;
+          spotifyLink = input.spotifyLink;
+          appleMusicLink = input.appleMusicLink;
         };
         submissions.add(input.songSubmissionId, updatedSubmission);
       };

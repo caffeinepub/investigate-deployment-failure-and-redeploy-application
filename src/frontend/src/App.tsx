@@ -10,6 +10,7 @@ import LandingPage from './pages/LandingPage';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ThankYouPage from './pages/ThankYouPage';
+import SongPage from './pages/SongPage';
 import ProfileSetupModal from './components/ProfileSetupModal';
 import { useActor } from './hooks/useActor';
 
@@ -55,11 +56,18 @@ const thankYouRoute = createRoute({
   component: ThankYouPage,
 });
 
+const songPageRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/song/$songId',
+  component: SongPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   userDashboardRoute,
   adminDashboardRoute,
   thankYouRoute,
+  songPageRoute,
 ]);
 
 const router = createRouter({ routeTree });

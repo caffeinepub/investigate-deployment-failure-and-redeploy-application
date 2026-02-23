@@ -177,6 +177,7 @@ export interface SongSubmissionEditInput {
     title: string;
     additionalDetails: string;
     lyricist: string;
+    spotifyLink?: string;
     discountCode?: string;
     songSubmissionId: string;
     artworkFilename: string;
@@ -187,6 +188,7 @@ export interface SongSubmissionEditInput {
     genre: string;
     musicVideoLink?: string;
     artist: string;
+    appleMusicLink?: string;
     producer: string;
     releaseDate: Time;
     releaseType: string;
@@ -301,6 +303,7 @@ export interface SongSubmissionInput {
     title: string;
     additionalDetails: string;
     lyricist: string;
+    spotifyLink?: string;
     discountCode?: string;
     artworkFilename: string;
     audioBlob: ExternalBlob;
@@ -310,9 +313,23 @@ export interface SongSubmissionInput {
     genre: string;
     musicVideoLink?: string;
     artist: string;
+    appleMusicLink?: string;
     producer: string;
     releaseDate: Time;
     releaseType: string;
+    featuredArtist: string;
+}
+export interface PublicSongInfo {
+    id: string;
+    title: string;
+    spotifyLink?: string;
+    artwork: ExternalBlob;
+    language: string;
+    genre: string;
+    musicVideoLink?: string;
+    artist: string;
+    appleMusicLink?: string;
+    releaseDate: Time;
     featuredArtist: string;
 }
 export interface PodcastEpisode {
@@ -346,6 +363,7 @@ export interface SongSubmission {
     preSaveLink?: string;
     additionalDetails: string;
     lyricist: string;
+    spotifyLink?: string;
     publicLink?: string;
     submitter: Principal;
     discountCode?: string;
@@ -361,6 +379,7 @@ export interface SongSubmission {
     musicVideoLink?: string;
     timestamp: Time;
     artist: string;
+    appleMusicLink?: string;
     acrResult?: ACRResult;
     producer: string;
     releaseDate: Time;
@@ -521,6 +540,7 @@ export interface backendInterface {
     getMyPodcastShows(): Promise<Array<PodcastShow>>;
     getMySubmissions(): Promise<Array<SongSubmission>>;
     getPodcastsByCategory(category: PodcastCategory): Promise<Array<PodcastShow>>;
+    getSongInfo(songId: string): Promise<PublicSongInfo>;
     getSongMonthlyListenerStats(songId: string): Promise<Array<MonthlyListenerStats>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
@@ -565,7 +585,7 @@ export interface backendInterface {
     updateVideoSubmission(input: VideoSubmissionInput, videoId: string): Promise<void>;
     upgradeUserToTeamMember(user: Principal): Promise<void>;
 }
-import type { ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, EpisodeType as _EpisodeType, ExternalBlob as _ExternalBlob, Language as _Language, PodcastCategory as _PodcastCategory, PodcastEpisode as _PodcastEpisode, PodcastEpisodeInput as _PodcastEpisodeInput, PodcastModerationStatus as _PodcastModerationStatus, PodcastShow as _PodcastShow, PodcastShowInput as _PodcastShowInput, PodcastType as _PodcastType, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, SongSubmissionEditInput as _SongSubmissionEditInput, SongSubmissionInput as _SongSubmissionInput, StripeSessionStatus as _StripeSessionStatus, Time as _Time, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserCategory as _UserCategory, UserProfile as _UserProfile, UserRole as _UserRole, VerificationRequest as _VerificationRequest, VerificationStatus as _VerificationStatus, VideoSubmission as _VideoSubmission, VideoSubmissionInput as _VideoSubmissionInput, VideoSubmissionStatus as _VideoSubmissionStatus, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, EpisodeType as _EpisodeType, ExternalBlob as _ExternalBlob, Language as _Language, PodcastCategory as _PodcastCategory, PodcastEpisode as _PodcastEpisode, PodcastEpisodeInput as _PodcastEpisodeInput, PodcastModerationStatus as _PodcastModerationStatus, PodcastShow as _PodcastShow, PodcastShowInput as _PodcastShowInput, PodcastType as _PodcastType, PublicSongInfo as _PublicSongInfo, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, SongSubmissionEditInput as _SongSubmissionEditInput, SongSubmissionInput as _SongSubmissionInput, StripeSessionStatus as _StripeSessionStatus, Time as _Time, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserCategory as _UserCategory, UserProfile as _UserProfile, UserRole as _UserRole, VerificationRequest as _VerificationRequest, VerificationStatus as _VerificationStatus, VideoSubmission as _VideoSubmission, VideoSubmissionInput as _VideoSubmissionInput, VideoSubmissionStatus as _VideoSubmissionStatus, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -1380,6 +1400,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n43(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getSongInfo(arg0: string): Promise<PublicSongInfo> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSongInfo(arg0);
+                return from_candid_PublicSongInfo_n76(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSongInfo(arg0);
+            return from_candid_PublicSongInfo_n76(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getSongMonthlyListenerStats(arg0: string): Promise<Array<MonthlyListenerStats>> {
         if (this.processError) {
             try {
@@ -1398,14 +1432,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getStripeSessionStatus(arg0);
-                return from_candid_StripeSessionStatus_n76(this._uploadFile, this._downloadFile, result);
+                return from_candid_StripeSessionStatus_n78(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getStripeSessionStatus(arg0);
-            return from_candid_StripeSessionStatus_n76(this._uploadFile, this._downloadFile, result);
+            return from_candid_StripeSessionStatus_n78(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
@@ -1439,70 +1473,70 @@ export class Backend implements backendInterface {
     async getUsersByCategory(arg0: UserCategory): Promise<Array<UserProfile>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getUsersByCategory(to_candid_UserCategory_n79(this._uploadFile, this._downloadFile, arg0));
-                return from_candid_vec_n81(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.getUsersByCategory(to_candid_UserCategory_n81(this._uploadFile, this._downloadFile, arg0));
+                return from_candid_vec_n83(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getUsersByCategory(to_candid_UserCategory_n79(this._uploadFile, this._downloadFile, arg0));
-            return from_candid_vec_n81(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.getUsersByCategory(to_candid_UserCategory_n81(this._uploadFile, this._downloadFile, arg0));
+            return from_candid_vec_n83(this._uploadFile, this._downloadFile, result);
         }
     }
     async getVerificationRequests(): Promise<Array<VerificationRequest>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getVerificationRequests();
-                return from_candid_vec_n82(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n84(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getVerificationRequests();
-            return from_candid_vec_n82(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n84(this._uploadFile, this._downloadFile, result);
         }
     }
     async getVerificationRequestsByUser(arg0: Principal): Promise<Array<VerificationRequest>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getVerificationRequestsByUser(arg0);
-                return from_candid_vec_n82(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n84(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getVerificationRequestsByUser(arg0);
-            return from_candid_vec_n82(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n84(this._uploadFile, this._downloadFile, result);
         }
     }
     async getWebsiteLogo(): Promise<ExternalBlob | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getWebsiteLogo();
-                return from_candid_opt_n88(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n90(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getWebsiteLogo();
-            return from_candid_opt_n88(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n90(this._uploadFile, this._downloadFile, result);
         }
     }
     async handleVerificationRequest(arg0: string, arg1: boolean, arg2: string, arg3: VerificationStatus): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.handleVerificationRequest(arg0, arg1, arg2, to_candid_VerificationStatus_n89(this._uploadFile, this._downloadFile, arg3));
+                const result = await this.actor.handleVerificationRequest(arg0, arg1, arg2, to_candid_VerificationStatus_n91(this._uploadFile, this._downloadFile, arg3));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.handleVerificationRequest(arg0, arg1, arg2, to_candid_VerificationStatus_n89(this._uploadFile, this._downloadFile, arg3));
+            const result = await this.actor.handleVerificationRequest(arg0, arg1, arg2, to_candid_VerificationStatus_n91(this._uploadFile, this._downloadFile, arg3));
             return result;
         }
     }
@@ -1622,14 +1656,14 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.listApprovals();
-                return from_candid_vec_n91(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n93(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.listApprovals();
-            return from_candid_vec_n91(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n93(this._uploadFile, this._downloadFile, result);
         }
     }
     async markEpisodeLive(arg0: string): Promise<void> {
@@ -1719,28 +1753,28 @@ export class Backend implements backendInterface {
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n96(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n98(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n96(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n98(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
     async setApproval(arg0: Principal, arg1: ApprovalStatus): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n98(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n100(this._uploadFile, this._downloadFile, arg1));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n98(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.setApproval(arg0, to_candid_ApprovalStatus_n100(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
@@ -1803,28 +1837,28 @@ export class Backend implements backendInterface {
     async submitSong(arg0: SongSubmissionInput): Promise<string> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitSong(await to_candid_SongSubmissionInput_n100(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.submitSong(await to_candid_SongSubmissionInput_n102(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitSong(await to_candid_SongSubmissionInput_n100(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.submitSong(await to_candid_SongSubmissionInput_n102(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
     async submitVideo(arg0: VideoSubmissionInput): Promise<string> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitVideo(await to_candid_VideoSubmissionInput_n102(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.submitVideo(await to_candid_VideoSubmissionInput_n104(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitVideo(await to_candid_VideoSubmissionInput_n102(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.submitVideo(await to_candid_VideoSubmissionInput_n104(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -1915,56 +1949,56 @@ export class Backend implements backendInterface {
     async updateUserCategory(arg0: Principal, arg1: UserCategory): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateUserCategory(arg0, to_candid_UserCategory_n79(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.updateUserCategory(arg0, to_candid_UserCategory_n81(this._uploadFile, this._downloadFile, arg1));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateUserCategory(arg0, to_candid_UserCategory_n79(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.updateUserCategory(arg0, to_candid_UserCategory_n81(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
     async updateVerificationStatus(arg0: string, arg1: VerificationStatus, arg2: bigint): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateVerificationStatus(arg0, to_candid_VerificationStatus_n89(this._uploadFile, this._downloadFile, arg1), arg2);
+                const result = await this.actor.updateVerificationStatus(arg0, to_candid_VerificationStatus_n91(this._uploadFile, this._downloadFile, arg1), arg2);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateVerificationStatus(arg0, to_candid_VerificationStatus_n89(this._uploadFile, this._downloadFile, arg1), arg2);
+            const result = await this.actor.updateVerificationStatus(arg0, to_candid_VerificationStatus_n91(this._uploadFile, this._downloadFile, arg1), arg2);
             return result;
         }
     }
     async updateVideoStatus(arg0: string, arg1: VideoSubmissionStatus, arg2: string | null): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateVideoStatus(arg0, to_candid_VideoSubmissionStatus_n104(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n106(this._uploadFile, this._downloadFile, arg2));
+                const result = await this.actor.updateVideoStatus(arg0, to_candid_VideoSubmissionStatus_n106(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n108(this._uploadFile, this._downloadFile, arg2));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateVideoStatus(arg0, to_candid_VideoSubmissionStatus_n104(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n106(this._uploadFile, this._downloadFile, arg2));
+            const result = await this.actor.updateVideoStatus(arg0, to_candid_VideoSubmissionStatus_n106(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n108(this._uploadFile, this._downloadFile, arg2));
             return result;
         }
     }
     async updateVideoSubmission(arg0: VideoSubmissionInput, arg1: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateVideoSubmission(await to_candid_VideoSubmissionInput_n102(this._uploadFile, this._downloadFile, arg0), arg1);
+                const result = await this.actor.updateVideoSubmission(await to_candid_VideoSubmissionInput_n104(this._uploadFile, this._downloadFile, arg0), arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateVideoSubmission(await to_candid_VideoSubmissionInput_n102(this._uploadFile, this._downloadFile, arg0), arg1);
+            const result = await this.actor.updateVideoSubmission(await to_candid_VideoSubmissionInput_n104(this._uploadFile, this._downloadFile, arg0), arg1);
             return result;
         }
     }
@@ -1983,8 +2017,8 @@ export class Backend implements backendInterface {
         }
     }
 }
-function from_candid_ApprovalStatus_n94(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ApprovalStatus): ApprovalStatus {
-    return from_candid_variant_n95(_uploadFile, _downloadFile, value);
+function from_candid_ApprovalStatus_n96(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ApprovalStatus): ApprovalStatus {
+    return from_candid_variant_n97(_uploadFile, _downloadFile, value);
 }
 async function from_candid_ArtistProfile_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ArtistProfile): Promise<ArtistProfile> {
     return await from_candid_record_n35(_uploadFile, _downloadFile, value);
@@ -2013,20 +2047,23 @@ async function from_candid_PodcastShow_n44(_uploadFile: (file: ExternalBlob) => 
 function from_candid_PodcastType_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _PodcastType): PodcastType {
     return from_candid_variant_n47(_uploadFile, _downloadFile, value);
 }
+async function from_candid_PublicSongInfo_n76(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _PublicSongInfo): Promise<PublicSongInfo> {
+    return await from_candid_record_n77(_uploadFile, _downloadFile, value);
+}
 function from_candid_SongStatus_n56(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SongStatus): SongStatus {
     return from_candid_variant_n57(_uploadFile, _downloadFile, value);
 }
 async function from_candid_SongSubmission_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _SongSubmission): Promise<SongSubmission> {
     return await from_candid_record_n55(_uploadFile, _downloadFile, value);
 }
-function from_candid_StripeSessionStatus_n76(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StripeSessionStatus): StripeSessionStatus {
-    return from_candid_variant_n77(_uploadFile, _downloadFile, value);
+function from_candid_StripeSessionStatus_n78(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _StripeSessionStatus): StripeSessionStatus {
+    return from_candid_variant_n79(_uploadFile, _downloadFile, value);
 }
 async function from_candid_TrackMetadata_n60(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _TrackMetadata): Promise<TrackMetadata> {
     return await from_candid_record_n61(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserApprovalInfo_n92(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserApprovalInfo): UserApprovalInfo {
-    return from_candid_record_n93(_uploadFile, _downloadFile, value);
+function from_candid_UserApprovalInfo_n94(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserApprovalInfo): UserApprovalInfo {
+    return from_candid_record_n95(_uploadFile, _downloadFile, value);
 }
 function from_candid_UserCategory_n72(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserCategory): UserCategory {
     return from_candid_variant_n73(_uploadFile, _downloadFile, value);
@@ -2037,11 +2074,11 @@ function from_candid_UserProfile_n70(_uploadFile: (file: ExternalBlob) => Promis
 function from_candid_UserRole_n74(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
     return from_candid_variant_n75(_uploadFile, _downloadFile, value);
 }
-function from_candid_VerificationRequest_n83(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VerificationRequest): VerificationRequest {
-    return from_candid_record_n84(_uploadFile, _downloadFile, value);
+function from_candid_VerificationRequest_n85(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VerificationRequest): VerificationRequest {
+    return from_candid_record_n86(_uploadFile, _downloadFile, value);
 }
-function from_candid_VerificationStatus_n85(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VerificationStatus): VerificationStatus {
-    return from_candid_variant_n86(_uploadFile, _downloadFile, value);
+function from_candid_VerificationStatus_n87(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VerificationStatus): VerificationStatus {
+    return from_candid_variant_n88(_uploadFile, _downloadFile, value);
 }
 function from_candid_VideoSubmissionStatus_n66(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _VideoSubmissionStatus): VideoSubmissionStatus {
     return from_candid_variant_n67(_uploadFile, _downloadFile, value);
@@ -2073,10 +2110,10 @@ function from_candid_opt_n69(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n87(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Time]): Time | null {
+function from_candid_opt_n89(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Time]): Time | null {
     return value.length === 0 ? null : value[0];
 }
-async function from_candid_opt_n88(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExternalBlob]): Promise<ExternalBlob | null> {
+async function from_candid_opt_n90(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExternalBlob]): Promise<ExternalBlob | null> {
     return value.length === 0 ? null : await from_candid_ExternalBlob_n32(_uploadFile, _downloadFile, value[0]);
 }
 async function from_candid_record_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -2244,6 +2281,7 @@ async function from_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promi
     preSaveLink: [] | [string];
     additionalDetails: string;
     lyricist: string;
+    spotifyLink: [] | [string];
     publicLink: [] | [string];
     submitter: Principal;
     discountCode: [] | [string];
@@ -2259,6 +2297,7 @@ async function from_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promi
     musicVideoLink: [] | [string];
     timestamp: _Time;
     artist: string;
+    appleMusicLink: [] | [string];
     acrResult: [] | [_ACRResult];
     producer: string;
     releaseDate: _Time;
@@ -2275,6 +2314,7 @@ async function from_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promi
     preSaveLink?: string;
     additionalDetails: string;
     lyricist: string;
+    spotifyLink?: string;
     publicLink?: string;
     submitter: Principal;
     discountCode?: string;
@@ -2290,6 +2330,7 @@ async function from_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promi
     musicVideoLink?: string;
     timestamp: Time;
     artist: string;
+    appleMusicLink?: string;
     acrResult?: ACRResult;
     producer: string;
     releaseDate: Time;
@@ -2307,6 +2348,7 @@ async function from_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promi
         preSaveLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.preSaveLink)),
         additionalDetails: value.additionalDetails,
         lyricist: value.lyricist,
+        spotifyLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.spotifyLink)),
         publicLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.publicLink)),
         submitter: value.submitter,
         discountCode: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.discountCode)),
@@ -2322,6 +2364,7 @@ async function from_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promi
         musicVideoLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.musicVideoLink)),
         timestamp: value.timestamp,
         artist: value.artist,
+        appleMusicLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.appleMusicLink)),
         acrResult: record_opt_to_undefined(from_candid_opt_n62(_uploadFile, _downloadFile, value.acrResult)),
         producer: value.producer,
         releaseDate: value.releaseDate,
@@ -2421,7 +2464,46 @@ function from_candid_record_n71(_uploadFile: (file: ExternalBlob) => Promise<Uin
         category: from_candid_UserCategory_n72(_uploadFile, _downloadFile, value.category)
     };
 }
-function from_candid_record_n78(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n77(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: string;
+    title: string;
+    spotifyLink: [] | [string];
+    artwork: _ExternalBlob;
+    language: string;
+    genre: string;
+    musicVideoLink: [] | [string];
+    artist: string;
+    appleMusicLink: [] | [string];
+    releaseDate: _Time;
+    featuredArtist: string;
+}): Promise<{
+    id: string;
+    title: string;
+    spotifyLink?: string;
+    artwork: ExternalBlob;
+    language: string;
+    genre: string;
+    musicVideoLink?: string;
+    artist: string;
+    appleMusicLink?: string;
+    releaseDate: Time;
+    featuredArtist: string;
+}> {
+    return {
+        id: value.id,
+        title: value.title,
+        spotifyLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.spotifyLink)),
+        artwork: await from_candid_ExternalBlob_n32(_uploadFile, _downloadFile, value.artwork),
+        language: value.language,
+        genre: value.genre,
+        musicVideoLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.musicVideoLink)),
+        artist: value.artist,
+        appleMusicLink: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.appleMusicLink)),
+        releaseDate: value.releaseDate,
+        featuredArtist: value.featuredArtist
+    };
+}
+function from_candid_record_n80(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     userPrincipal: [] | [string];
     response: string;
 }): {
@@ -2433,7 +2515,7 @@ function from_candid_record_n78(_uploadFile: (file: ExternalBlob) => Promise<Uin
         response: value.response
     };
 }
-function from_candid_record_n84(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n86(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: string;
     status: _VerificationStatus;
     expiryExtensionDays: bigint;
@@ -2450,14 +2532,14 @@ function from_candid_record_n84(_uploadFile: (file: ExternalBlob) => Promise<Uin
 } {
     return {
         id: value.id,
-        status: from_candid_VerificationStatus_n85(_uploadFile, _downloadFile, value.status),
+        status: from_candid_VerificationStatus_n87(_uploadFile, _downloadFile, value.status),
         expiryExtensionDays: value.expiryExtensionDays,
         user: value.user,
-        verificationApprovedTimestamp: record_opt_to_undefined(from_candid_opt_n87(_uploadFile, _downloadFile, value.verificationApprovedTimestamp)),
+        verificationApprovedTimestamp: record_opt_to_undefined(from_candid_opt_n89(_uploadFile, _downloadFile, value.verificationApprovedTimestamp)),
         timestamp: value.timestamp
     };
 }
-function from_candid_record_n93(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n95(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     status: _ApprovalStatus;
     principal: Principal;
 }): {
@@ -2465,7 +2547,7 @@ function from_candid_record_n93(_uploadFile: (file: ExternalBlob) => Promise<Uin
     principal: Principal;
 } {
     return {
-        status: from_candid_ApprovalStatus_n94(_uploadFile, _downloadFile, value.status),
+        status: from_candid_ApprovalStatus_n96(_uploadFile, _downloadFile, value.status),
         principal: value.principal
     };
 }
@@ -2600,7 +2682,7 @@ function from_candid_variant_n75(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function from_candid_variant_n77(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n79(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     completed: {
         userPrincipal: [] | [string];
         response: string;
@@ -2623,13 +2705,13 @@ function from_candid_variant_n77(_uploadFile: (file: ExternalBlob) => Promise<Ui
 } {
     return "completed" in value ? {
         __kind__: "completed",
-        completed: from_candid_record_n78(_uploadFile, _downloadFile, value.completed)
+        completed: from_candid_record_n80(_uploadFile, _downloadFile, value.completed)
     } : "failed" in value ? {
         __kind__: "failed",
         failed: value.failed
     } : value;
 }
-function from_candid_variant_n86(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n88(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     pending: null;
 } | {
     approved: null;
@@ -2640,7 +2722,7 @@ function from_candid_variant_n86(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): VerificationStatus {
     return "pending" in value ? VerificationStatus.pending : "approved" in value ? VerificationStatus.approved : "rejected" in value ? VerificationStatus.rejected : "waiting" in value ? VerificationStatus.waiting : value;
 }
-function from_candid_variant_n95(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n97(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     pending: null;
 } | {
     approved: null;
@@ -2667,17 +2749,17 @@ async function from_candid_vec_n59(_uploadFile: (file: ExternalBlob) => Promise<
 async function from_candid_vec_n63(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_VideoSubmission>): Promise<Array<VideoSubmission>> {
     return await Promise.all(value.map(async (x)=>await from_candid_VideoSubmission_n64(_uploadFile, _downloadFile, x)));
 }
-function from_candid_vec_n81(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserProfile>): Array<UserProfile> {
+function from_candid_vec_n83(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserProfile>): Array<UserProfile> {
     return value.map((x)=>from_candid_UserProfile_n70(_uploadFile, _downloadFile, x));
 }
-function from_candid_vec_n82(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_VerificationRequest>): Array<VerificationRequest> {
-    return value.map((x)=>from_candid_VerificationRequest_n83(_uploadFile, _downloadFile, x));
+function from_candid_vec_n84(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_VerificationRequest>): Array<VerificationRequest> {
+    return value.map((x)=>from_candid_VerificationRequest_n85(_uploadFile, _downloadFile, x));
 }
-function from_candid_vec_n91(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserApprovalInfo>): Array<UserApprovalInfo> {
-    return value.map((x)=>from_candid_UserApprovalInfo_n92(_uploadFile, _downloadFile, x));
+function from_candid_vec_n93(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_UserApprovalInfo>): Array<UserApprovalInfo> {
+    return value.map((x)=>from_candid_UserApprovalInfo_n94(_uploadFile, _downloadFile, x));
 }
-function to_candid_ApprovalStatus_n98(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): _ApprovalStatus {
-    return to_candid_variant_n99(_uploadFile, _downloadFile, value);
+function to_candid_ApprovalStatus_n100(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): _ApprovalStatus {
+    return to_candid_variant_n101(_uploadFile, _downloadFile, value);
 }
 function to_candid_EpisodeType_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: EpisodeType): _EpisodeType {
     return to_candid_variant_n23(_uploadFile, _downloadFile, value);
@@ -2709,29 +2791,29 @@ function to_candid_SongStatus_n16(_uploadFile: (file: ExternalBlob) => Promise<U
 async function to_candid_SongSubmissionEditInput_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongSubmissionEditInput): Promise<_SongSubmissionEditInput> {
     return await to_candid_record_n12(_uploadFile, _downloadFile, value);
 }
-async function to_candid_SongSubmissionInput_n100(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongSubmissionInput): Promise<_SongSubmissionInput> {
-    return await to_candid_record_n101(_uploadFile, _downloadFile, value);
+async function to_candid_SongSubmissionInput_n102(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SongSubmissionInput): Promise<_SongSubmissionInput> {
+    return await to_candid_record_n103(_uploadFile, _downloadFile, value);
 }
 async function to_candid_TrackMetadata_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: TrackMetadata): Promise<_TrackMetadata> {
     return await to_candid_record_n15(_uploadFile, _downloadFile, value);
 }
-function to_candid_UserCategory_n79(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserCategory): _UserCategory {
-    return to_candid_variant_n80(_uploadFile, _downloadFile, value);
+function to_candid_UserCategory_n81(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserCategory): _UserCategory {
+    return to_candid_variant_n82(_uploadFile, _downloadFile, value);
 }
-function to_candid_UserProfile_n96(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
-    return to_candid_record_n97(_uploadFile, _downloadFile, value);
+function to_candid_UserProfile_n98(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
+    return to_candid_record_n99(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n19(_uploadFile, _downloadFile, value);
 }
-function to_candid_VerificationStatus_n89(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VerificationStatus): _VerificationStatus {
-    return to_candid_variant_n90(_uploadFile, _downloadFile, value);
+function to_candid_VerificationStatus_n91(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VerificationStatus): _VerificationStatus {
+    return to_candid_variant_n92(_uploadFile, _downloadFile, value);
 }
-async function to_candid_VideoSubmissionInput_n102(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VideoSubmissionInput): Promise<_VideoSubmissionInput> {
-    return await to_candid_record_n103(_uploadFile, _downloadFile, value);
+async function to_candid_VideoSubmissionInput_n104(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VideoSubmissionInput): Promise<_VideoSubmissionInput> {
+    return await to_candid_record_n105(_uploadFile, _downloadFile, value);
 }
-function to_candid_VideoSubmissionStatus_n104(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VideoSubmissionStatus): _VideoSubmissionStatus {
-    return to_candid_variant_n105(_uploadFile, _downloadFile, value);
+function to_candid_VideoSubmissionStatus_n106(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VideoSubmissionStatus): _VideoSubmissionStatus {
+    return to_candid_variant_n107(_uploadFile, _downloadFile, value);
 }
 function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation): __CaffeineStorageRefillInformation {
     return to_candid_record_n3(_uploadFile, _downloadFile, value);
@@ -2739,15 +2821,16 @@ function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: Exte
 function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
     return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
 }
-function to_candid_opt_n106(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
+function to_candid_opt_n108(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
     return value === null ? candid_none() : candid_some(value);
 }
-async function to_candid_record_n101(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function to_candid_record_n103(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     artworkBlob: ExternalBlob;
     albumTracks?: Array<TrackMetadata>;
     title: string;
     additionalDetails: string;
     lyricist: string;
+    spotifyLink?: string;
     discountCode?: string;
     artworkFilename: string;
     audioBlob: ExternalBlob;
@@ -2757,6 +2840,7 @@ async function to_candid_record_n101(_uploadFile: (file: ExternalBlob) => Promis
     genre: string;
     musicVideoLink?: string;
     artist: string;
+    appleMusicLink?: string;
     producer: string;
     releaseDate: Time;
     releaseType: string;
@@ -2767,6 +2851,7 @@ async function to_candid_record_n101(_uploadFile: (file: ExternalBlob) => Promis
     title: string;
     additionalDetails: string;
     lyricist: string;
+    spotifyLink: [] | [string];
     discountCode: [] | [string];
     artworkFilename: string;
     audioBlob: _ExternalBlob;
@@ -2776,6 +2861,7 @@ async function to_candid_record_n101(_uploadFile: (file: ExternalBlob) => Promis
     genre: string;
     musicVideoLink: [] | [string];
     artist: string;
+    appleMusicLink: [] | [string];
     producer: string;
     releaseDate: _Time;
     releaseType: string;
@@ -2787,6 +2873,7 @@ async function to_candid_record_n101(_uploadFile: (file: ExternalBlob) => Promis
         title: value.title,
         additionalDetails: value.additionalDetails,
         lyricist: value.lyricist,
+        spotifyLink: value.spotifyLink ? candid_some(value.spotifyLink) : candid_none(),
         discountCode: value.discountCode ? candid_some(value.discountCode) : candid_none(),
         artworkFilename: value.artworkFilename,
         audioBlob: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.audioBlob),
@@ -2796,13 +2883,14 @@ async function to_candid_record_n101(_uploadFile: (file: ExternalBlob) => Promis
         genre: value.genre,
         musicVideoLink: value.musicVideoLink ? candid_some(value.musicVideoLink) : candid_none(),
         artist: value.artist,
+        appleMusicLink: value.appleMusicLink ? candid_some(value.appleMusicLink) : candid_none(),
         producer: value.producer,
         releaseDate: value.releaseDate,
         releaseType: value.releaseType,
         featuredArtist: value.featuredArtist
     };
 }
-async function to_candid_record_n103(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function to_candid_record_n105(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     title: string;
     thumbnail: ExternalBlob;
     tags: Array<string>;
@@ -2835,6 +2923,7 @@ async function to_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise
     title: string;
     additionalDetails: string;
     lyricist: string;
+    spotifyLink?: string;
     discountCode?: string;
     songSubmissionId: string;
     artworkFilename: string;
@@ -2845,6 +2934,7 @@ async function to_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise
     genre: string;
     musicVideoLink?: string;
     artist: string;
+    appleMusicLink?: string;
     producer: string;
     releaseDate: Time;
     releaseType: string;
@@ -2855,6 +2945,7 @@ async function to_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise
     title: string;
     additionalDetails: string;
     lyricist: string;
+    spotifyLink: [] | [string];
     discountCode: [] | [string];
     songSubmissionId: string;
     artworkFilename: string;
@@ -2865,6 +2956,7 @@ async function to_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise
     genre: string;
     musicVideoLink: [] | [string];
     artist: string;
+    appleMusicLink: [] | [string];
     producer: string;
     releaseDate: _Time;
     releaseType: string;
@@ -2876,6 +2968,7 @@ async function to_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise
         title: value.title,
         additionalDetails: value.additionalDetails,
         lyricist: value.lyricist,
+        spotifyLink: value.spotifyLink ? candid_some(value.spotifyLink) : candid_none(),
         discountCode: value.discountCode ? candid_some(value.discountCode) : candid_none(),
         songSubmissionId: value.songSubmissionId,
         artworkFilename: value.artworkFilename,
@@ -2886,6 +2979,7 @@ async function to_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise
         genre: value.genre,
         musicVideoLink: value.musicVideoLink ? candid_some(value.musicVideoLink) : candid_none(),
         artist: value.artist,
+        appleMusicLink: value.appleMusicLink ? candid_some(value.appleMusicLink) : candid_none(),
         producer: value.producer,
         releaseDate: value.releaseDate,
         releaseType: value.releaseType,
@@ -3039,7 +3133,7 @@ async function to_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<
         stageName: value.stageName
     };
 }
-function to_candid_record_n97(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n99(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     name: string;
     artistId: string;
     category: UserCategory;
@@ -3051,10 +3145,25 @@ function to_candid_record_n97(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     return {
         name: value.name,
         artistId: value.artistId,
-        category: to_candid_UserCategory_n79(_uploadFile, _downloadFile, value.category)
+        category: to_candid_UserCategory_n81(_uploadFile, _downloadFile, value.category)
     };
 }
-function to_candid_variant_n105(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VideoSubmissionStatus): {
+function to_candid_variant_n101(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): {
+    pending: null;
+} | {
+    approved: null;
+} | {
+    rejected: null;
+} {
+    return value == ApprovalStatus.pending ? {
+        pending: null
+    } : value == ApprovalStatus.approved ? {
+        approved: null
+    } : value == ApprovalStatus.rejected ? {
+        rejected: null
+    } : value;
+}
+function to_candid_variant_n107(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VideoSubmissionStatus): {
     pending: null;
 } | {
     live: null;
@@ -3247,7 +3356,7 @@ function to_candid_variant_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint
         science: null
     } : value;
 }
-function to_candid_variant_n80(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserCategory): {
+function to_candid_variant_n82(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserCategory): {
     generalArtist: null;
 } | {
     generalLabel: null;
@@ -3270,7 +3379,7 @@ function to_candid_variant_n80(_uploadFile: (file: ExternalBlob) => Promise<Uint
         proLabel: null
     } : value;
 }
-function to_candid_variant_n90(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VerificationStatus): {
+function to_candid_variant_n92(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: VerificationStatus): {
     pending: null;
 } | {
     approved: null;
@@ -3287,21 +3396,6 @@ function to_candid_variant_n90(_uploadFile: (file: ExternalBlob) => Promise<Uint
         rejected: null
     } : value == VerificationStatus.waiting ? {
         waiting: null
-    } : value;
-}
-function to_candid_variant_n99(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ApprovalStatus): {
-    pending: null;
-} | {
-    approved: null;
-} | {
-    rejected: null;
-} {
-    return value == ApprovalStatus.pending ? {
-        pending: null
-    } : value == ApprovalStatus.approved ? {
-        approved: null
-    } : value == ApprovalStatus.rejected ? {
-        rejected: null
     } : value;
 }
 async function to_candid_vec_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TrackMetadata>): Promise<Array<_TrackMetadata>> {

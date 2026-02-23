@@ -134,6 +134,19 @@ export interface PodcastShowInput {
 }
 export type PodcastType = { 'audio' : null } |
   { 'video' : null };
+export interface PublicSongInfo {
+  'id' : string,
+  'title' : string,
+  'spotifyLink' : [] | [string],
+  'artwork' : ExternalBlob,
+  'language' : string,
+  'genre' : string,
+  'musicVideoLink' : [] | [string],
+  'artist' : string,
+  'appleMusicLink' : [] | [string],
+  'releaseDate' : Time,
+  'featuredArtist' : string,
+}
 export interface RSVP {
   'name' : string,
   'inviteCode' : string,
@@ -175,6 +188,7 @@ export interface SongSubmission {
   'preSaveLink' : [] | [string],
   'additionalDetails' : string,
   'lyricist' : string,
+  'spotifyLink' : [] | [string],
   'publicLink' : [] | [string],
   'submitter' : Principal,
   'discountCode' : [] | [string],
@@ -190,6 +204,7 @@ export interface SongSubmission {
   'musicVideoLink' : [] | [string],
   'timestamp' : Time,
   'artist' : string,
+  'appleMusicLink' : [] | [string],
   'acrResult' : [] | [ACRResult],
   'producer' : string,
   'releaseDate' : Time,
@@ -204,6 +219,7 @@ export interface SongSubmissionEditInput {
   'title' : string,
   'additionalDetails' : string,
   'lyricist' : string,
+  'spotifyLink' : [] | [string],
   'discountCode' : [] | [string],
   'songSubmissionId' : string,
   'artworkFilename' : string,
@@ -214,6 +230,7 @@ export interface SongSubmissionEditInput {
   'genre' : string,
   'musicVideoLink' : [] | [string],
   'artist' : string,
+  'appleMusicLink' : [] | [string],
   'producer' : string,
   'releaseDate' : Time,
   'releaseType' : string,
@@ -225,6 +242,7 @@ export interface SongSubmissionInput {
   'title' : string,
   'additionalDetails' : string,
   'lyricist' : string,
+  'spotifyLink' : [] | [string],
   'discountCode' : [] | [string],
   'artworkFilename' : string,
   'audioBlob' : ExternalBlob,
@@ -234,6 +252,7 @@ export interface SongSubmissionInput {
   'genre' : string,
   'musicVideoLink' : [] | [string],
   'artist' : string,
+  'appleMusicLink' : [] | [string],
   'producer' : string,
   'releaseDate' : Time,
   'releaseType' : string,
@@ -431,6 +450,7 @@ export interface _SERVICE {
   'getMyPodcastShows' : ActorMethod<[], Array<PodcastShow>>,
   'getMySubmissions' : ActorMethod<[], Array<SongSubmission>>,
   'getPodcastsByCategory' : ActorMethod<[PodcastCategory], Array<PodcastShow>>,
+  'getSongInfo' : ActorMethod<[string], PublicSongInfo>,
   'getSongMonthlyListenerStats' : ActorMethod<
     [string],
     Array<MonthlyListenerStats>

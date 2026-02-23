@@ -2,10 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-create-admin-interface-for-managing-subscription-plans-with-ability-to-add-edit-and-delete-plans-including-plan-name-pricing-benefits-list-and-redirect-url",
-      "featureTitle": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
+      "featureId": "feature-create-public-song-pages-at-song-song-id-that-display-song-artwork-title-artist-name-with-verification-badge-and-streaming-platform-links",
+      "featureTitle": "Create public song pages at `/song/[song-id]` that display song artwork, title, artist name with verification badge, and streaming platform links",
       "files": [
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/SongPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,6 +24,81 @@
       ],
       "testIds": [
         "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-manage-links-button-to-admin-song-list-that-opens-a-dialog-for-adding-editing-streaming-platform-urls-for-individual-songs",
+      "featureTitle": "Add 'Manage Links' button to admin song list that opens a dialog for adding/editing streaming platform URLs for individual songs",
+      "files": [
+        "frontend/src/components/AdminManageLinksDialog.tsx",
+        "frontend/src/components/AdminSubmissionsList.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-display-streaming-platform-links-as-styled-buttons-with-platform-logos-and-brand-colors-on-public-song-pages",
+      "featureTitle": "Display streaming platform links as styled buttons with platform logos and brand colors on public song pages",
+      "files": [
+        "frontend/src/components/StreamingPlatformButton.tsx",
+        "frontend/src/pages/SongPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-render-generated-platform-logo-images-as-static-assets-in-frontend-public-assets-generated",
+      "featureTitle": "Render generated platform logo images as static assets in frontend/public/assets/generated",
+      "files": [
+        "frontend/src/components/StreamingPlatformButton.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
       ],
       "confidence": "high"
     }

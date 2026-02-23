@@ -1,55 +1,102 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Retry subscription plans feature implementation",
+  "title": "Add simplified link in bio feature for songs with admin approval",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Create admin interface for managing subscription plans with ability to add, edit, and delete plans including plan name, pricing, benefits list, and redirect URL",
+      "summary": "Create public song pages at `/song/[song-id]` that display song artwork, title, artist name with verification badge, and streaming platform links",
       "acceptanceCriteria": [
-        "Admin dashboard has a dedicated subscription plans management panel",
-        "Admins can create new subscription plans with name, price, benefits, and redirect URL",
-        "Admins can edit existing subscription plans",
-        "Admins can delete subscription plans",
-        "Changes persist in backend storage"
+        "Public route `/song/[song-id]` is accessible without authentication",
+        "Page displays song artwork from the song's existing artwork file",
+        "Page displays song title and artist name",
+        "Artist name includes verification badge using existing ArtistNameWithVerified component pattern",
+        "Page shows streaming platform links only for platforms that have URLs configured"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/AdminSubscriptionPlansManagement.tsx",
+          "path": "frontend/src/pages/SongPage.tsx",
+          "operation": "create",
+          "description": "Create a public song page component that displays song information including artwork, title, artist name with verification badge using the ArtistNameWithVerified component, and streaming platform links. Use the getSongInfo backend capability to fetch song data. Display platform links as styled buttons with generated logo images from frontend/public/assets/generated/spotify-logo.dim_128x128.png and frontend/public/assets/generated/apple-music-logo.dim_128x128.png. Only render platform buttons when the corresponding URL exists (spotifyLink or appleMusicLink). Handle loading and error states appropriately. This page should be accessible without authentication."
+        },
+        {
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Verify and enhance the existing AdminSubscriptionPlansManagement component to ensure complete CRUD functionality. The component already implements create, edit, and delete dialogs for subscription plans with fields for plan name, price per year (stored as bigint cents), benefits array, and redirect URL. Ensure all React Query hooks (useGetAllSubscriptionPlans, useCreateSubscriptionPlan, useUpdateSubscriptionPlan, useDeleteSubscriptionPlan) are properly integrated and error handling is implemented. Verify form validation for required fields (plan name, price, redirect URL) and that benefits can be added/removed dynamically. Use existing UI components from shadcn/ui (Dialog, Input, Button, Textarea) for consistency."
+          "description": "Add a new public route for `/song/:songId` that renders the SongPage component. This route should be accessible without authentication, unlike the existing authenticated routes (/user-dashboard, /admin-dashboard). Wire the route into the TanStack Router setup alongside existing routes."
         },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Verify that all subscription plan-related React Query hooks are present and correctly implemented: useGetAllSubscriptionPlans (query for fetching all plans), useCreateSubscriptionPlan (mutation for creating new plans), useUpdateSubscriptionPlan (mutation for updating existing plans), and useDeleteSubscriptionPlan (mutation for deleting plans). Ensure proper query invalidation on mutations to refresh the plans list after any CRUD operation. Verify error handling and loading states are properly exposed."
-        },
-        {
-          "path": "frontend/src/pages/AdminDashboard.tsx",
-          "operation": "modify",
-          "description": "Verify that the AdminSubscriptionPlansManagement component is properly wired into the admin dashboard's tabbed interface. Ensure the subscription plans tab is accessible and labeled appropriately (e.g., 'Subscription Plans' or 'Plans'). Confirm the tab is positioned logically within the existing tabs (Artists, Song Submissions, Podcast Submissions, Video Submissions, Verification Requests, Monthly Listeners, Users). Use authorization component to ensure only admin users can access this tab."
+          "description": "Add a new query hook useGetSongInfo that accepts a songId parameter and calls the getSongInfo backend method. This hook should fetch PublicSongInfo data including id, title, artist, artwork, spotifyLink, appleMusicLink, and other metadata. Include proper error handling for songs that are not accessible (non-live status returns error from backend)."
         }
       ]
     },
     {
-      "id": "REQ-2",
-      "summary": "Display all active subscription plans publicly on the landing page in the existing PricingSection component location",
+      "id": "REQ-3",
+      "summary": "Add 'Manage Links' button to admin song list that opens a dialog for adding/editing streaming platform URLs for individual songs",
       "acceptanceCriteria": [
-        "Subscription plans are fetched from backend and displayed in PricingSection component",
-        "Plans show name, pricing, benefits list, and call-to-action buttons",
-        "Plans are visible to all visitors without authentication",
-        "Display uses existing pricing section styling and layout"
+        "Each song row in AdminSubmissionsList has a 'Manage Links' button",
+        "Button opens a dialog with form fields for Spotify URL and Apple Music URL",
+        "Form pre-populates with existing URLs if available",
+        "Form validates that URLs start with http:// or https:// using existing isValidUrl utility",
+        "Save button updates the song's streaming platform URLs",
+        "Dialog matches existing admin dialog patterns (AdminEditSubmissionDialog style)"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PricingSection.tsx",
-          "operation": "modify",
-          "description": "Modify the PricingSection component to fetch subscription plans from the backend using the useGetAllSubscriptionPlans hook. Replace any hardcoded or placeholder pricing data with dynamically fetched plans. Display each plan in a card layout showing: plan name as the heading, price per year (convert from bigint cents to readable currency format, e.g., ₹X,XXX/year), benefits as a bulleted or checkmarked list, and a call-to-action button that redirects to the plan's redirect URL using window.location.href (not router navigation). Handle loading and error states gracefully. Ensure the component remains accessible to unauthenticated users (no login required). Maintain existing Tailwind CSS styling and responsive grid layout for consistency with the landing page design."
+          "path": "frontend/src/components/AdminManageLinksDialog.tsx",
+          "operation": "create",
+          "description": "Create a dialog component for managing streaming platform links for individual songs. Include form fields for Spotify URL and Apple Music URL with validation using the existing isValidUrl utility from frontend/src/utils/isValidUrl.ts. Pre-populate fields with existing spotifyLink and appleMusicLink values from the song data. Follow the existing admin dialog patterns from AdminEditSubmissionDialog and AdminEditVideoDialog including styling, layout, and form handling. On save, call a mutation to update the song's streaming links in the backend."
         },
         {
-          "path": "frontend/src/pages/LandingPage.tsx",
+          "path": "frontend/src/components/AdminSubmissionsList.tsx",
           "operation": "modify",
-          "description": "Verify that the PricingSection component is properly imported and rendered in the LandingPage. Ensure it is positioned appropriately within the page flow (typically after hero and features sections). Confirm that the section is visible to all visitors without requiring authentication. No changes should be needed if PricingSection is already present; this operation ensures proper wiring and placement."
+          "description": "Add a 'Manage Links' button to each song row in the submissions list. The button should open the AdminManageLinksDialog component and pass the selected song data. Position the button alongside existing action buttons (edit, delete). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a mutation hook useUpdateSongLinks that accepts songId, spotifyLink, and appleMusicLink parameters. This hook should call a backend method to update the streaming platform URLs for a song. Include cache invalidation for getAllSubmissionsForAdmin after successful update to refresh the admin submissions list."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Display streaming platform links as styled buttons with platform logos and brand colors on public song pages",
+      "acceptanceCriteria": [
+        "Spotify button uses Spotify green brand color (#1DB954)",
+        "Apple Music button uses Apple Music red/pink brand color",
+        "Each button displays the platform's logo icon",
+        "Buttons are visually distinct and properly sized for touch/click",
+        "Only platforms with configured URLs are displayed",
+        "Buttons link to the configured streaming platform URLs"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/StreamingPlatformButton.tsx",
+          "operation": "create",
+          "description": "Create a reusable button component for streaming platform links. Accept props for platform type (spotify or appleMusic), URL, and platform name. Render the button with appropriate brand colors: Spotify green (#1DB954) for Spotify, and Apple Music red/pink for Apple Music. Display the platform logo using the generated images at frontend/public/assets/generated/spotify-logo.dim_128x128.png and frontend/public/assets/generated/apple-music-logo.dim_128x128.png. Style the button to be visually distinct and properly sized for touch/click interactions. The button should link to the provided URL. Include fallback handling if logo images are not found."
+        },
+        {
+          "path": "frontend/src/pages/SongPage.tsx",
+          "operation": "modify",
+          "description": "Import and use the StreamingPlatformButton component to display streaming platform links. Only render buttons for platforms that have configured URLs (check if spotifyLink or appleMusicLink exists in the PublicSongInfo data). Display the buttons in a horizontal layout below the song artwork and title. Ensure buttons are properly spaced and aligned."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Render generated platform logo images as static assets in frontend/public/assets/generated",
+      "acceptanceCriteria": [
+        "Platform logo images are loaded from frontend/public/assets/generated directory",
+        "Images are referenced with correct paths in streaming platform buttons",
+        "Fallback handling if logo images are not found"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/StreamingPlatformButton.tsx",
+          "operation": "modify",
+          "description": "Ensure the component references the generated platform logo images using the correct workspace paths: frontend/public/assets/generated/spotify-logo.dim_128x128.png for Spotify and frontend/public/assets/generated/apple-music-logo.dim_128x128.png for Apple Music. Include error handling and fallback display if the images fail to load. The images should be rendered at an appropriate size within the button (e.g., 24x24 or 32x32 pixels for display)."
         }
       ]
     }
