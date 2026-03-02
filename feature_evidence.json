@@ -1,0 +1,105 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-artwork-upload-support-for-top-vibing-songs-when-an-admin-submits-the-form-upload-the-artwork-image-as-an-externalblob-via-the-existing-file-upload-utility-filetoexternalblob-store-the-blob-in-the-backend-and-persist-the-resulting-url-reference-in-the-artworkurl-field-of-the-topvibingsong-entry",
+      "featureTitle": "Add artwork upload support for Top Vibing Songs. When an admin submits the form, upload the artwork image as an ExternalBlob via the existing file upload utility (`fileToExternalBlob`), store the blob in the backend, and persist the resulting URL/reference in the `artworkUrl` field of the TopVibingSong entry.",
+      "files": [
+        "frontend/src/components/AdminTopVibingSongsManagement.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-top-vibing-songs-management-section-to-the-admin-dashboard-the-section-must-include-1-a-form-to-add-a-new-entry-with-fields-song-title-text-required-artist-name-text-required-genre-text-required-artwork-upload-required-streaming-link-url-required-tagline-text-optional-2-a-list-of-all-current-top-vibing-songs-displayed-as-draggable-cards-that-can-be-reordered-via-drag-and-drop-to-set-rank-order-3-edit-and-delete-actions-per-entry-use-dnd-kit-or-equivalent-supported-drag-and-drop-approach-consistent-with-the-codebase",
+      "featureTitle": "Add a 'Top Vibing Songs' management section to the Admin Dashboard. The section must include: (1) A form to add a new entry with fields — Song Title (text, required), Artist Name (text, required), Genre (text, required), Artwork Upload (required), Streaming Link (URL, required), Tagline (text, optional); (2) A list of all current Top Vibing Songs displayed as draggable cards that can be reordered via drag-and-drop to set rank order; (3) Edit and Delete actions per entry. Use `dnd-kit` or equivalent supported drag-and-drop approach consistent with the codebase.",
+      "files": [
+        "frontend/src/components/AdminTopVibingSongsManagement.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/AdminDashboard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-display-a-top-vibing-songs-section-on-the-public-landing-page-fetch-entries-via-gettopvibingsongs-and-render-them-ordered-by-rank-each-card-should-show-artwork-image-song-title-artist-name-genre-tagline-if-present-and-a-listen-now-button-that-opens-the-streaming-link-in-a-new-tab-style-consistently-with-the-existing-mostvibingartistscarousel-aesthetic",
+      "featureTitle": "Display a 'Top Vibing Songs' section on the public Landing Page. Fetch entries via `getTopVibingSongs` and render them ordered by rank. Each card should show: artwork image, song title, artist name, genre, tagline (if present), and a 'Listen Now' button that opens the streaming link in a new tab. Style consistently with the existing MostVibingArtistsCarousel aesthetic.",
+      "files": [
+        "frontend/src/components/TopVibingSongsSection.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/LandingPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-display-the-same-top-vibing-songs-section-inside-the-user-dashboard-reuse-the-same-ranked-card-layout-as-the-landing-page-place-it-as-a-distinct-tab-or-section-within-the-user-dashboard-so-authenticated-users-can-browse-the-curated-vibing-songs",
+      "featureTitle": "Display the same 'Top Vibing Songs' section inside the User Dashboard. Reuse the same ranked card layout as the Landing Page. Place it as a distinct tab or section within the User Dashboard so authenticated users can browse the curated vibing songs.",
+      "files": [
+        "frontend/src/pages/UserDashboard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "invite-links@3.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "stripe@3.0.0",
+        "http-outcalls@3.0.0",
+        "user-approval@3.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

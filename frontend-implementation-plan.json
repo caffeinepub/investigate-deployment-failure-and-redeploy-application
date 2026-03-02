@@ -1,0 +1,97 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Add Top Vibing Songs – Frontend Admin Form & Public Display",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Add artwork upload support for Top Vibing Songs using ExternalBlob",
+      "acceptanceCriteria": [
+        "Admin form artwork field is required — form cannot be submitted without it",
+        "Artwork is uploaded before the song entry is saved",
+        "Saved TopVibingSong entry contains a valid artworkUrl referencing the uploaded file"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AdminTopVibingSongsManagement.tsx",
+          "operation": "create",
+          "description": "Create admin management component for Top Vibing Songs with a form that includes artwork upload (required field). Use the existing fileToExternalBlob utility (frontend/src/utils/fileToExternalBlob.ts) to convert the uploaded artwork file to ExternalBlob. The form must validate that artwork is present before allowing submission. Call addTopVibingSong with the uploaded ExternalBlob's direct URL stored in artworkUrl field. Verify the component's usage instructions for fileToExternalBlob before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add Top Vibing Songs management section to Admin Dashboard with drag-and-drop reordering",
+      "acceptanceCriteria": [
+        "Admin form renders all required fields with correct validation",
+        "Submitting the form calls addTopVibingSong and refreshes the list",
+        "Cards in the list can be dragged to reorder; on drop, reorderTopVibingSongs is called",
+        "Delete button calls deleteTopVibingSong and removes the card from the list",
+        "Edit action opens the form pre-populated with existing values and calls updateTopVibingSong on save",
+        "New 'Top Vibing Songs' tab or section is visible in the Admin Dashboard"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/AdminTopVibingSongsManagement.tsx",
+          "operation": "modify",
+          "description": "Expand the component to include: (1) A form with required fields — Song Title (text, required), Artist Name (text, required), Genre (text, required), Artwork Upload (file input, required), Streaming Link (URL input with validation, required), Tagline (text, optional). (2) A draggable list of existing Top Vibing Songs rendered as cards using dnd-kit or an equivalent drag-and-drop library consistent with the codebase. Each card displays artwork thumbnail, title, artist, genre, tagline (if present), and rank. (3) Edit and Delete action buttons per card. On drag-and-drop reorder, call reorderTopVibingSongs with the new ordered array of IDs. On edit, pre-populate the form with existing song data (including artwork preview) and call updateTopVibingSong on save. On delete, show confirmation and call deleteTopVibingSong. Ensure artwork file is uploaded using fileToExternalBlob before saving. Use the blob-storage component to manage artwork uploads. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add TanStack Query hooks for Top Vibing Songs management: useGetAllTopVibingSongs (query), useAddTopVibingSong (mutation), useUpdateTopVibingSong (mutation), useDeleteTopVibingSong (mutation), and useReorderTopVibingSongs (mutation). Each mutation should invalidate the 'topVibingSongs' query key on success to refresh the list. Follow the existing pattern in this file for query and mutation hooks."
+        },
+        {
+          "path": "frontend/src/pages/AdminDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a new 'Top Vibing Songs' tab to the admin dashboard tabs list. Import and render AdminTopVibingSongsManagement component in the corresponding TabsContent section. Place the new tab after the 'Featured Artists' tab and before the 'Admin Roles' tab to maintain logical grouping."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Display Top Vibing Songs section on the public Landing Page",
+      "acceptanceCriteria": [
+        "Top Vibing Songs section appears on the Landing Page below the featured artists carousel",
+        "Songs are displayed in rank order (rank 1 first)",
+        "Each card shows artwork, title, artist name, genre, and tagline when present",
+        "Listen Now button opens the streaming link in a new browser tab",
+        "Section is hidden or shows an empty state when no songs have been added"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TopVibingSongsSection.tsx",
+          "operation": "create",
+          "description": "Create a public display component for Top Vibing Songs. Fetch songs via useGetRankedTopVibingSongs query hook (which calls getRankedTopVibingSongs). Render songs in rank order (ascending) as cards in a responsive grid. Each card displays: artwork image (using ExternalBlob.getDirectURL()), song title, artist name, genre, tagline (conditionally if present), and a 'Listen Now' button that opens streamingLink in a new tab (target='_blank' rel='noopener noreferrer'). Style consistently with MostVibingArtistsCarousel aesthetic (refer to frontend/src/components/MostVibingArtistsCarousel.tsx for styling patterns). Show an empty state message or hide the section when no songs are returned."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add useGetRankedTopVibingSongs query hook that calls actor.getRankedTopVibingSongs() with query key ['topVibingSongs', 'ranked']. Return the list of TopVibingSong entries sorted by rank ascending. Follow the existing query hook pattern in this file."
+        },
+        {
+          "path": "frontend/src/pages/LandingPage.tsx",
+          "operation": "modify",
+          "description": "Import and render the TopVibingSongsSection component below the MostVibingArtistsCarousel section. Add a section heading (e.g., 'Top Vibing Songs') styled consistently with the existing 'Most Vibing Artists' heading. Ensure the section integrates seamlessly into the landing page layout without disrupting existing sections."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Display Top Vibing Songs section inside the User Dashboard",
+      "acceptanceCriteria": [
+        "Top Vibing Songs section is accessible from the User Dashboard",
+        "Displays the same data and rank order as the Landing Page section",
+        "Listen Now button opens the streaming link in a new tab",
+        "Section renders without errors when the song list is empty"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/UserDashboard.tsx",
+          "operation": "modify",
+          "description": "Add a new 'Top Vibing Songs' tab to the User Dashboard tabs. Import and render the TopVibingSongsSection component (created in REQ-4) in the corresponding TabsContent. Place the tab after 'Video Submissions' and before 'Analysis' to maintain logical grouping. Reuse the same component to ensure consistency with the Landing Page display."
+        }
+      ]
+    }
+  ]
+}

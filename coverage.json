@@ -1,0 +1,99 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-03-02T15:07:52.757Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 5,
+    "implemented": 4,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Add a `TopVibingSong` type to the backend with fields: id (Nat), title (Text), artistName (Text), genre (Text), artworkUrl (Text), streamingLink (Text), tagline (opt Text), rank (Nat). Store a stable list of TopVibingSong entries in the main actor. Expose the following update/query functions: `addTopVibingSong`, `updateTopVibingSong`, `deleteTopVibingSong`, `reorderTopVibingSongs` (accepts full ordered list of IDs), and `getTopVibingSongs` (returns list sorted by rank ascending).",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Add artwork upload support for Top Vibing Songs. When an admin submits the form, upload the artwork image as an ExternalBlob via the existing file upload utility (`fileToExternalBlob`), store the blob in the backend, and persist the resulting URL/reference in the `artworkUrl` field of the TopVibingSong entry.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdminTopVibingSongsManagement.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdminTopVibingSongsManagement.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Add a 'Top Vibing Songs' management section to the Admin Dashboard. The section must include: (1) A form to add a new entry with fields — Song Title (text, required), Artist Name (text, required), Genre (text, required), Artwork Upload (required), Streaming Link (URL, required), Tagline (text, optional); (2) A list of all current Top Vibing Songs displayed as draggable cards that can be reordered via drag-and-drop to set rank order; (3) Edit and Delete actions per entry. Use `dnd-kit` or equivalent supported drag-and-drop approach consistent with the codebase.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/AdminTopVibingSongsManagement.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/AdminDashboard.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/AdminTopVibingSongsManagement.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/AdminDashboard.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Display a 'Top Vibing Songs' section on the public Landing Page. Fetch entries via `getTopVibingSongs` and render them ordered by rank. Each card should show: artwork image, song title, artist name, genre, tagline (if present), and a 'Listen Now' button that opens the streaming link in a new tab. Style consistently with the existing MostVibingArtistsCarousel aesthetic.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/TopVibingSongsSection.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/LandingPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/TopVibingSongsSection.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/LandingPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Display the same 'Top Vibing Songs' section inside the User Dashboard. Reuse the same ranked card layout as the Landing Page. Place it as a distinct tab or section within the User Dashboard so authenticated users can browse the curated vibing songs.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/UserDashboard.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/UserDashboard.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/AdminMonthlyListenersManagement.tsx",
+    "frontend/src/components/AdminTopVibingSongsManagement.tsx",
+    "frontend/src/components/AdminUserManagement.tsx",
+    "frontend/src/components/AdminVideoSubmissions.tsx",
+    "frontend/src/components/TopVibingSongsSection.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AdminDashboard.tsx",
+    "frontend/src/pages/LandingPage.tsx",
+    "frontend/src/pages/UserDashboard.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}
