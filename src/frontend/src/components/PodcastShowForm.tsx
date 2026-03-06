@@ -1,34 +1,44 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useCreatePodcastShow, useIsCurrentUserBlockedPodcastSubmission } from '../hooks/useQueries';
-import { PodcastType, PodcastCategory, Language } from '../backend';
-import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Language, PodcastCategory, PodcastType } from "../backend";
+import {
+  useCreatePodcastShow,
+  useIsCurrentUserBlockedPodcastSubmission,
+} from "../hooks/useQueries";
+import { fileToExternalBlob } from "../utils/fileToExternalBlob";
 
 export default function PodcastShowForm() {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [podcastType, setPodcastType] = useState<'audio' | 'video'>('audio');
-  const [category, setCategory] = useState<string>('');
-  const [language, setLanguage] = useState<string>('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [podcastType, setPodcastType] = useState<"audio" | "video">("audio");
+  const [category, setCategory] = useState<string>("");
+  const [language, setLanguage] = useState<string>("");
   const [artworkFile, setArtworkFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const createShow = useCreatePodcastShow();
-  const { data: isBlocked, isLoading: blockCheckLoading } = useIsCurrentUserBlockedPodcastSubmission();
+  const { data: isBlocked, isLoading: blockCheckLoading } =
+    useIsCurrentUserBlockedPodcastSubmission();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isBlocked) {
-      toast.error('Your access blocked due to submission limit is full');
+      toast.error("Your access blocked due to submission limit is full");
       return;
     }
 
@@ -51,17 +61,20 @@ export default function PodcastShowForm() {
       });
 
       // Reset form
-      setTitle('');
-      setDescription('');
-      setPodcastType('audio');
-      setCategory('');
-      setLanguage('');
+      setTitle("");
+      setDescription("");
+      setPodcastType("audio");
+      setCategory("");
+      setLanguage("");
       setArtworkFile(null);
       setUploadProgress(0);
     } catch (error: any) {
-      console.error('Failed to create show:', error);
-      if (error.message?.includes('blocked') || error.message?.includes('submission limit')) {
-        toast.error('Your access blocked due to submission limit is full');
+      console.error("Failed to create show:", error);
+      if (
+        error.message?.includes("blocked") ||
+        error.message?.includes("submission limit")
+      ) {
+        toast.error("Your access blocked due to submission limit is full");
       }
     }
   };
@@ -132,7 +145,12 @@ export default function PodcastShowForm() {
 
           <div>
             <Label htmlFor="podcastType">Podcast Type *</Label>
-            <Select value={podcastType} onValueChange={(value: 'audio' | 'video') => setPodcastType(value)}>
+            <Select
+              value={podcastType}
+              onValueChange={(value: "audio" | "video") =>
+                setPodcastType(value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select podcast type" />
               </SelectTrigger>
@@ -158,7 +176,9 @@ export default function PodcastShowForm() {
                 <SelectItem value="kidsFamily">Kids & Family</SelectItem>
                 <SelectItem value="music">Music</SelectItem>
                 <SelectItem value="newsPolitics">News & Politics</SelectItem>
-                <SelectItem value="religionSpirituality">Religion & Spirituality</SelectItem>
+                <SelectItem value="religionSpirituality">
+                  Religion & Spirituality
+                </SelectItem>
                 <SelectItem value="science">Science</SelectItem>
                 <SelectItem value="sports">Sports</SelectItem>
                 <SelectItem value="technology">Technology</SelectItem>
@@ -207,7 +227,9 @@ export default function PodcastShowForm() {
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{uploadProgress}% uploaded</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {uploadProgress}% uploaded
+                </p>
               </div>
             )}
           </div>
@@ -219,7 +241,7 @@ export default function PodcastShowForm() {
                 Creating Show...
               </>
             ) : (
-              'Create Show'
+              "Create Show"
             )}
           </Button>
         </form>

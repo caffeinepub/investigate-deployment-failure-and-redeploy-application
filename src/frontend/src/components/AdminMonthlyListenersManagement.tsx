@@ -1,16 +1,31 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, Trash2, Save, Music, Calendar } from 'lucide-react';
-import { useGetLiveSongsForAnalysis, useUpdateMonthlyListenerStats, useGetSongMonthlyListenerStats } from '../hooks/useQueries';
-import { toast } from 'sonner';
-import type { MonthlyListenerStats } from '../backend';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar, Loader2, Music, Plus, Save, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  useGetLiveSongsForAnalysis,
+  useGetSongMonthlyListenerStats,
+  useUpdateMonthlyListenerStats,
+} from "../hooks/useQueries";
 
 interface ListenerEntry {
+  month: number;
+  year: number;
+  value: number;
+}
+
+interface MonthlyListenerStat {
   month: number;
   year: number;
   value: number;
@@ -21,35 +36,36 @@ export default function AdminMonthlyListenersManagement() {
   const updateStats = useUpdateMonthlyListenerStats();
   const getStats = useGetSongMonthlyListenerStats();
 
-  const [selectedSongId, setSelectedSongId] = useState<string>('');
+  const [selectedSongId, setSelectedSongId] = useState<string>("");
   const [entries, setEntries] = useState<ListenerEntry[]>([]);
-  const [existingStats, setExistingStats] = useState<MonthlyListenerStats[]>([]);
+  const [existingStats, setExistingStats] = useState<MonthlyListenerStat[]>([]);
 
   const selectedSong = liveSongs?.find((s) => s.id === selectedSongId);
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
   const months = [
-    { value: 1, label: 'January' },
-    { value: 2, label: 'February' },
-    { value: 3, label: 'March' },
-    { value: 4, label: 'April' },
-    { value: 5, label: 'May' },
-    { value: 6, label: 'June' },
-    { value: 7, label: 'July' },
-    { value: 8, label: 'August' },
-    { value: 9, label: 'September' },
-    { value: 10, label: 'October' },
-    { value: 11, label: 'November' },
-    { value: 12, label: 'December' },
+    { value: 1, label: "January" },
+    { value: 2, label: "February" },
+    { value: 3, label: "March" },
+    { value: 4, label: "April" },
+    { value: 5, label: "May" },
+    { value: 6, label: "June" },
+    { value: 7, label: "July" },
+    { value: 8, label: "August" },
+    { value: 9, label: "September" },
+    { value: 10, label: "October" },
+    { value: 11, label: "November" },
+    { value: 12, label: "December" },
   ];
 
   // Fetch existing stats when song is selected
+  // biome-ignore lint/correctness/useExhaustiveDependencies: getStats.mutate is stable
   useEffect(() => {
     if (selectedSongId) {
       getStats.mutate(selectedSongId, {
-        onSuccess: (stats) => {
-          setExistingStats(stats);
+        onSuccess: (stats: MonthlyListenerStat[]) => {
+          setExistingStats(stats ?? []);
         },
       });
     } else {
@@ -65,7 +81,11 @@ export default function AdminMonthlyListenersManagement() {
     setEntries(entries.filter((_, i) => i !== index));
   };
 
-  const updateEntry = (index: number, field: keyof ListenerEntry, value: number) => {
+  const updateEntry = (
+    index: number,
+    field: keyof ListenerEntry,
+    value: number,
+  ) => {
     const updated = [...entries];
     updated[index] = { ...updated[index], [field]: value };
     setEntries(updated);
@@ -73,19 +93,19 @@ export default function AdminMonthlyListenersManagement() {
 
   const handleSave = async () => {
     if (!selectedSongId) {
-      toast.error('Please select a song');
+      toast.error("Please select a song");
       return;
     }
 
     if (entries.length === 0) {
-      toast.error('Please add at least one listener entry');
+      toast.error("Please add at least one listener entry");
       return;
     }
 
     // Validate entries
     for (const entry of entries) {
       if (entry.value < 0) {
-        toast.error('Listener count cannot be negative');
+        toast.error("Listener count cannot be negative");
         return;
       }
     }
@@ -93,21 +113,22 @@ export default function AdminMonthlyListenersManagement() {
     try {
       await updateStats.mutateAsync({
         songId: selectedSongId,
-        updates: entries.map((e) => ({
-          month: BigInt(e.month),
-          year: BigInt(e.year),
-          value: BigInt(e.value),
+        stats: entries.map((e) => ({
+          month: e.month,
+          year: e.year,
+          value: e.value,
         })),
       });
       setEntries([]);
       // Refresh existing stats
       getStats.mutate(selectedSongId, {
-        onSuccess: (stats) => {
-          setExistingStats(stats);
+        onSuccess: (stats: MonthlyListenerStat[]) => {
+          setExistingStats(stats ?? []);
         },
       });
-    } catch (error) {
-      // Error handled by mutation
+      toast.success("Monthly listener stats saved successfully");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save stats");
     }
   };
 
@@ -133,9 +154,12 @@ export default function AdminMonthlyListenersManagement() {
         <CardContent>
           <div className="text-center py-12">
             <Music className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground text-lg font-medium mb-2">No Live Songs Available</p>
+            <p className="text-muted-foreground text-lg font-medium mb-2">
+              No Live Songs Available
+            </p>
             <p className="text-sm text-muted-foreground">
-              Monthly listener stats can only be added for songs with Live status.
+              Monthly listener stats can only be added for songs with Live
+              status.
             </p>
           </div>
         </CardContent>
@@ -171,7 +195,9 @@ export default function AdminMonthlyListenersManagement() {
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
-                    <h3 className="font-semibold text-lg">{selectedSong.title}</h3>
+                    <h3 className="font-semibold text-lg">
+                      {selectedSong.title}
+                    </h3>
                     <p className="text-sm text-muted-foreground">
                       {selectedSong.artist} • {selectedSong.genre}
                     </p>
@@ -181,7 +207,9 @@ export default function AdminMonthlyListenersManagement() {
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-sm">Add Monthly Listener Stats</h4>
+                    <h4 className="font-semibold text-sm">
+                      Add Monthly Listener Stats
+                    </h4>
                     <Button size="sm" onClick={addEntry} variant="outline">
                       <Plus className="w-4 h-4 mr-2" />
                       Add Entry
@@ -191,25 +219,40 @@ export default function AdminMonthlyListenersManagement() {
                   {entries.length === 0 ? (
                     <div className="text-center py-8 bg-background rounded-lg border-2 border-dashed">
                       <Calendar className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
-                      <p className="text-muted-foreground">No entries yet. Click "Add Entry" to start.</p>
+                      <p className="text-muted-foreground">
+                        No entries yet. Click "Add Entry" to start.
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {entries.map((entry, index) => (
-                        <div key={index} className="flex gap-3 items-end p-4 bg-background rounded-lg border">
+                        <div
+                          // biome-ignore lint/suspicious/noArrayIndexKey: entries have no stable id
+                          key={index}
+                          className="flex gap-3 items-end p-4 bg-background rounded-lg border"
+                        >
                           <div className="flex-1 grid grid-cols-3 gap-3">
                             <div className="space-y-2">
                               <Label className="text-xs">Month</Label>
                               <Select
                                 value={entry.month.toString()}
-                                onValueChange={(value) => updateEntry(index, 'month', parseInt(value))}
+                                onValueChange={(value) =>
+                                  updateEntry(
+                                    index,
+                                    "month",
+                                    Number.parseInt(value),
+                                  )
+                                }
                               >
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {months.map((m) => (
-                                    <SelectItem key={m.value} value={m.value.toString()}>
+                                    <SelectItem
+                                      key={m.value}
+                                      value={m.value.toString()}
+                                    >
                                       {m.label}
                                     </SelectItem>
                                   ))}
@@ -220,7 +263,13 @@ export default function AdminMonthlyListenersManagement() {
                               <Label className="text-xs">Year</Label>
                               <Select
                                 value={entry.year.toString()}
-                                onValueChange={(value) => updateEntry(index, 'year', parseInt(value))}
+                                onValueChange={(value) =>
+                                  updateEntry(
+                                    index,
+                                    "year",
+                                    Number.parseInt(value),
+                                  )
+                                }
                               >
                                 <SelectTrigger>
                                   <SelectValue />
@@ -240,12 +289,22 @@ export default function AdminMonthlyListenersManagement() {
                                 type="number"
                                 min="0"
                                 value={entry.value}
-                                onChange={(e) => updateEntry(index, 'value', parseInt(e.target.value) || 0)}
+                                onChange={(e) =>
+                                  updateEntry(
+                                    index,
+                                    "value",
+                                    Number.parseInt(e.target.value) || 0,
+                                  )
+                                }
                                 placeholder="0"
                               />
                             </div>
                           </div>
-                          <Button size="icon" variant="destructive" onClick={() => removeEntry(index)}>
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            onClick={() => removeEntry(index)}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -254,7 +313,11 @@ export default function AdminMonthlyListenersManagement() {
                   )}
 
                   {entries.length > 0 && (
-                    <Button onClick={handleSave} disabled={updateStats.isPending} className="w-full">
+                    <Button
+                      onClick={handleSave}
+                      disabled={updateStats.isPending}
+                      className="w-full"
+                    >
                       {updateStats.isPending ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -284,25 +347,30 @@ export default function AdminMonthlyListenersManagement() {
             <div className="grid gap-3">
               {existingStats
                 .sort((a, b) => {
-                  if (Number(b.year) !== Number(a.year)) {
-                    return Number(b.year) - Number(a.year);
+                  if (b.year !== a.year) {
+                    return b.year - a.year;
                   }
-                  return Number(b.month) - Number(a.month);
+                  return b.month - a.month;
                 })
                 .map((stat, index) => {
-                  const monthName = months.find((m) => m.value === Number(stat.month))?.label || 'Unknown';
+                  const monthName =
+                    months.find((m) => m.value === stat.month)?.label ||
+                    "Unknown";
                   return (
                     <div
+                      // biome-ignore lint/suspicious/noArrayIndexKey: stats have no stable id
                       key={index}
                       className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
                     >
                       <div className="flex items-center gap-3">
                         <Calendar className="w-5 h-5 text-primary" />
                         <p className="font-medium">
-                          {monthName} {stat.year.toString()}
+                          {monthName} {stat.year}
                         </p>
                       </div>
-                      <p className="text-xl font-bold text-primary">{stat.value.toString()} listeners</p>
+                      <p className="text-xl font-bold text-primary">
+                        {stat.value} listeners
+                      </p>
                     </div>
                   );
                 })}

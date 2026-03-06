@@ -1,56 +1,67 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Loader2,
+  XCircle,
+} from "lucide-react";
+import { useState } from "react";
+import { VerificationStatus } from "../backend";
+import {
+  useGetAllArtistsWithUserIds,
   useGetVerificationRequestsForAdmin,
   useUpdateVerificationStatus,
-  useGetAllArtistsWithUserIds,
-} from '../hooks/useQueries';
-import { VerificationStatus } from '../backend';
+} from "../hooks/useQueries";
 
 export default function AdminVerificationList() {
   const { data: requests, isLoading } = useGetVerificationRequestsForAdmin();
   const { data: artistProfiles } = useGetAllArtistsWithUserIds();
   const updateStatus = useUpdateVerificationStatus();
 
-  const [extensionDays, setExtensionDays] = useState<{ [key: string]: number }>({});
+  const [extensionDays, setExtensionDays] = useState<{ [key: string]: number }>(
+    {},
+  );
 
-  const pendingCount = requests?.filter((r) => r.status === 'pending').length || 0;
+  const pendingCount =
+    requests?.filter((r) => r.status === "pending").length || 0;
 
   const getUserFullName = (userPrincipal: string): string => {
-    const profile = artistProfiles?.find((p) => p.owner.toString() === userPrincipal);
-    return profile?.fullName || 'Unknown User';
+    const profile = artistProfiles?.find(
+      (p) => p.owner.toString() === userPrincipal,
+    );
+    return profile?.fullName || "Unknown User";
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return (
           <Badge variant="secondary" className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             Pending
           </Badge>
         );
-      case 'approved':
+      case "approved":
         return (
           <Badge className="bg-green-600 flex items-center gap-1">
             <CheckCircle className="w-3 h-3" />
             Approved
           </Badge>
         );
-      case 'rejected':
+      case "rejected":
         return (
           <Badge variant="destructive" className="flex items-center gap-1">
             <XCircle className="w-3 h-3" />
             Rejected
           </Badge>
         );
-      case 'waiting':
+      case "waiting":
         return (
           <Badge variant="outline" className="flex items-center gap-1">
             <AlertCircle className="w-3 h-3" />
@@ -69,12 +80,15 @@ export default function AdminVerificationList() {
         status: VerificationStatus.approved,
         expiryExtensionDays: BigInt(0),
       });
-    } catch (error) {
+    } catch {
       // Error handled by mutation
     }
   };
 
-  const handleExtend = async (verificationId: string, userPrincipalStr: string) => {
+  const handleExtend = async (
+    verificationId: string,
+    userPrincipalStr: string,
+  ) => {
     const days = extensionDays[userPrincipalStr] || 30;
     try {
       await updateStatus.mutateAsync({
@@ -87,7 +101,7 @@ export default function AdminVerificationList() {
         delete updated[userPrincipalStr];
         return updated;
       });
-    } catch (error) {
+    } catch {
       // Error handled by mutation
     }
   };
@@ -99,7 +113,7 @@ export default function AdminVerificationList() {
         status: VerificationStatus.rejected,
         expiryExtensionDays: BigInt(0),
       });
-    } catch (error) {
+    } catch {
       // Error handled by mutation
     }
   };
@@ -123,7 +137,7 @@ export default function AdminVerificationList() {
           <CardTitle>Verification List</CardTitle>
           {pendingCount > 0 && (
             <Badge className="bg-orange-600 text-white">
-              {pendingCount} Pending Request{pendingCount !== 1 ? 's' : ''}
+              {pendingCount} Pending Request{pendingCount !== 1 ? "s" : ""}
             </Badge>
           )}
         </div>
@@ -133,21 +147,29 @@ export default function AdminVerificationList() {
           <Alert className="bg-orange-50 border-orange-200">
             <AlertCircle className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-orange-800">
-              You have {pendingCount} pending verification request{pendingCount !== 1 ? 's' : ''} awaiting review.
+              You have {pendingCount} pending verification request
+              {pendingCount !== 1 ? "s" : ""} awaiting review.
             </AlertDescription>
           </Alert>
         )}
 
         {!requests || requests.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No verification requests yet.</p>
+          <p className="text-center text-muted-foreground py-8">
+            No verification requests yet.
+          </p>
         ) : (
           <div className="space-y-4">
             {requests.map((request) => {
               const userPrincipalStr = request.user.toString();
               const fullName = getUserFullName(userPrincipalStr);
-              const isApproved = request.status === 'approved';
+              const isApproved = request.status === "approved";
               const expiryDate = request.verificationApprovedTimestamp
-                ? new Date(Number(request.verificationApprovedTimestamp / BigInt(1000000)) + 30 * 24 * 60 * 60 * 1000)
+                ? new Date(
+                    Number(
+                      request.verificationApprovedTimestamp / BigInt(1000000),
+                    ) +
+                      30 * 24 * 60 * 60 * 1000,
+                  )
                 : null;
 
               return (
@@ -157,16 +179,22 @@ export default function AdminVerificationList() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{fullName}</h3>
-                          <p className="text-xs text-muted-foreground font-mono mt-1">{userPrincipalStr}</p>
+                          <p className="text-xs text-muted-foreground font-mono mt-1">
+                            {userPrincipalStr}
+                          </p>
                           <p className="text-sm text-muted-foreground mt-2">
-                            Requested: {new Date(Number(request.timestamp / BigInt(1000000))).toLocaleDateString()}
+                            Requested:{" "}
+                            {new Date(
+                              Number(request.timestamp / BigInt(1000000)),
+                            ).toLocaleDateString()}
                           </p>
                           {isApproved && expiryDate && (
                             <p className="text-sm text-muted-foreground">
                               Expires: {expiryDate.toLocaleDateString()}
                               {request.expiryExtensionDays > 0 && (
                                 <span className="text-green-600 ml-2">
-                                  (+{request.expiryExtensionDays.toString()} days extended)
+                                  (+{request.expiryExtensionDays.toString()}{" "}
+                                  days extended)
                                 </span>
                               )}
                             </p>
@@ -175,7 +203,7 @@ export default function AdminVerificationList() {
                         {getStatusBadge(request.status)}
                       </div>
 
-                      {request.status === 'pending' && (
+                      {request.status === "pending" && (
                         <div className="flex flex-wrap gap-2 pt-2 border-t">
                           <Button
                             size="sm"
@@ -238,7 +266,9 @@ export default function AdminVerificationList() {
                               )}
                             </Button>
                           </div>
-                          <Label className="text-sm">Extend Expiry (days)</Label>
+                          <Label className="text-sm">
+                            Extend Expiry (days)
+                          </Label>
                           <div className="flex gap-2">
                             <Input
                               type="number"
@@ -247,14 +277,17 @@ export default function AdminVerificationList() {
                               onChange={(e) =>
                                 setExtensionDays((prev) => ({
                                   ...prev,
-                                  [userPrincipalStr]: parseInt(e.target.value) || 30,
+                                  [userPrincipalStr]:
+                                    Number.parseInt(e.target.value) || 30,
                                 }))
                               }
                               className="w-24"
                             />
                             <Button
                               size="sm"
-                              onClick={() => handleExtend(request.id, userPrincipalStr)}
+                              onClick={() =>
+                                handleExtend(request.id, userPrincipalStr)
+                              }
                               disabled={updateStatus.isPending}
                             >
                               {updateStatus.isPending ? (
@@ -263,7 +296,7 @@ export default function AdminVerificationList() {
                                   Extending...
                                 </>
                               ) : (
-                                'Extend'
+                                "Extend"
                               )}
                             </Button>
                           </div>

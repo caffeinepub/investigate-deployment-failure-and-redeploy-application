@@ -1,40 +1,54 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useSubmitSong, useGetMyArtistProfiles, useIsCurrentUserBlockedSongSubmission } from '../hooks/useQueries';
-import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { SongSubmissionInput, TrackMetadata } from '../backend';
-import { Loader2, Upload, Music, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { useNavigate } from '@tanstack/react-router';
-import AlbumTracksEditor from './AlbumTracksEditor';
-import ArtistProfilesCheckboxSelector from './ArtistProfilesCheckboxSelector';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "@tanstack/react-router";
+import { AlertCircle, Loader2, Music, Upload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import type { SongSubmissionInput, TrackMetadata } from "../backend";
+import {
+  useGetMyArtistProfiles,
+  useIsCurrentUserBlockedSongSubmission,
+  useSubmitSong,
+} from "../hooks/useQueries";
+import { fileToExternalBlob } from "../utils/fileToExternalBlob";
+import AlbumTracksEditor from "./AlbumTracksEditor";
+import ArtistProfilesCheckboxSelector from "./ArtistProfilesCheckboxSelector";
 
 export default function SongSubmissionForm() {
   const submitSong = useSubmitSong();
   const navigate = useNavigate();
-  const { data: artistProfiles, isLoading: profilesLoading } = useGetMyArtistProfiles();
-  const { data: isBlocked, isLoading: blockCheckLoading } = useIsCurrentUserBlockedSongSubmission();
+  const { data: artistProfiles, isLoading: profilesLoading } =
+    useGetMyArtistProfiles();
+  const { data: isBlocked, isLoading: blockCheckLoading } =
+    useIsCurrentUserBlockedSongSubmission();
 
-  const [title, setTitle] = useState('');
-  const [language, setLanguage] = useState('');
-  const [releaseDate, setReleaseDate] = useState('');
-  const [releaseType, setReleaseType] = useState('');
-  const [genre, setGenre] = useState('');
+  const [title, setTitle] = useState("");
+  const [language, setLanguage] = useState("");
+  const [releaseDate, setReleaseDate] = useState("");
+  const [releaseType, setReleaseType] = useState("");
+  const [genre, setGenre] = useState("");
   const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
-  const [selectedFeaturedArtists, setSelectedFeaturedArtists] = useState<string[]>([]);
+  const [selectedFeaturedArtists, setSelectedFeaturedArtists] = useState<
+    string[]
+  >([]);
   const [selectedComposers, setSelectedComposers] = useState<string[]>([]);
   const [selectedLyricists, setSelectedLyricists] = useState<string[]>([]);
-  const [producer, setProducer] = useState('');
-  const [additionalDetails, setAdditionalDetails] = useState('');
-  const [discountCode, setDiscountCode] = useState('');
-  const [musicVideoLink, setMusicVideoLink] = useState('');
+  const [producer, setProducer] = useState("");
+  const [additionalDetails, setAdditionalDetails] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [musicVideoLink, setMusicVideoLink] = useState("");
   const [legalAgreementsAccepted, setLegalAgreementsAccepted] = useState(false);
 
   const [artworkFile, setArtworkFile] = useState<File | null>(null);
@@ -44,17 +58,17 @@ export default function SongSubmissionForm() {
   const [artworkProgress, setArtworkProgress] = useState(0);
   const [audioProgress, setAudioProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [artworkError, setArtworkError] = useState('');
+  const [artworkError, setArtworkError] = useState("");
 
-  const isAlbum = releaseType === 'Album';
+  const isAlbum = releaseType === "Album";
 
   // Validate artwork dimensions and format
   const validateArtwork = (file: File): Promise<boolean> => {
     return new Promise((resolve) => {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-      
+      const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+
       if (!validTypes.includes(file.type)) {
-        setArtworkError('Artwork must be JPG or PNG format');
+        setArtworkError("Artwork must be JPG or PNG format");
         resolve(false);
         return;
       }
@@ -62,22 +76,26 @@ export default function SongSubmissionForm() {
       const img = new Image();
       img.onload = () => {
         if (img.width === 3000 && img.height === 3000) {
-          setArtworkError('');
+          setArtworkError("");
           resolve(true);
         } else {
-          setArtworkError(`Artwork must be exactly 3000×3000 pixels. Current: ${img.width}×${img.height}`);
+          setArtworkError(
+            `Artwork must be exactly 3000×3000 pixels. Current: ${img.width}×${img.height}`,
+          );
           resolve(false);
         }
       };
       img.onerror = () => {
-        setArtworkError('Failed to load image');
+        setArtworkError("Failed to load image");
         resolve(false);
       };
       img.src = URL.createObjectURL(file);
     });
   };
 
-  const handleArtworkChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleArtworkChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       const isValid = await validateArtwork(file);
@@ -85,7 +103,7 @@ export default function SongSubmissionForm() {
         setArtworkFile(file);
       } else {
         setArtworkFile(null);
-        e.target.value = '';
+        e.target.value = "";
       }
     }
   };
@@ -94,54 +112,54 @@ export default function SongSubmissionForm() {
     e.preventDefault();
 
     if (isBlocked) {
-      toast.error('Your access blocked due to submission limit is full');
+      toast.error("Your access blocked due to submission limit is full");
       return;
     }
 
     if (!artistProfiles || artistProfiles.length === 0) {
-      toast.error('Please create an artist profile before submitting a song');
+      toast.error("Please create an artist profile before submitting a song");
       return;
     }
 
     // Validation
     if (!title.trim()) {
-      toast.error('Title is required');
+      toast.error("Title is required");
       return;
     }
     if (!language) {
-      toast.error('Language is required');
+      toast.error("Language is required");
       return;
     }
     if (!releaseDate) {
-      toast.error('Release date is required');
+      toast.error("Release date is required");
       return;
     }
     if (!releaseType) {
-      toast.error('Release type is required');
+      toast.error("Release type is required");
       return;
     }
     if (!genre) {
-      toast.error('Genre is required');
+      toast.error("Genre is required");
       return;
     }
     if (selectedArtists.length === 0) {
-      toast.error('At least one artist must be selected');
+      toast.error("At least one artist must be selected");
       return;
     }
     if (selectedComposers.length === 0) {
-      toast.error('Composer is required');
+      toast.error("Composer is required");
       return;
     }
     if (!producer.trim()) {
-      toast.error('Producer is required');
+      toast.error("Producer is required");
       return;
     }
     if (selectedLyricists.length === 0) {
-      toast.error('Lyricist is required');
+      toast.error("Lyricist is required");
       return;
     }
     if (!artworkFile) {
-      toast.error('Artwork is required');
+      toast.error("Artwork is required");
       return;
     }
     if (artworkError) {
@@ -152,30 +170,30 @@ export default function SongSubmissionForm() {
     // For albums, validate tracks
     if (isAlbum) {
       if (albumTracks.length === 0) {
-        toast.error('At least one album track is required');
+        toast.error("At least one album track is required");
         return;
       }
       for (const track of albumTracks) {
         if (!track.title.trim()) {
-          toast.error('All album tracks must have a title');
+          toast.error("All album tracks must have a title");
           return;
         }
         if (!track.artist.trim()) {
-          toast.error('All album tracks must have an artist');
+          toast.error("All album tracks must have an artist");
           return;
         }
       }
     } else {
       // For non-albums, audio file is required
       if (!audioFile) {
-        toast.error('Audio file is required');
+        toast.error("Audio file is required");
         return;
       }
     }
 
     // Validate legal agreements checkbox
     if (!legalAgreementsAccepted) {
-      toast.error('You must accept the Legal Agreements & Terms to proceed');
+      toast.error("You must accept the Legal Agreements & Terms to proceed");
       return;
     }
 
@@ -188,35 +206,35 @@ export default function SongSubmissionForm() {
       });
 
       // Convert audio file (only for non-albums)
-      let audioBlob;
+      let audioBlob: Awaited<ReturnType<typeof fileToExternalBlob>>;
       if (!isAlbum && audioFile) {
         audioBlob = await fileToExternalBlob(audioFile, (progress) => {
           setAudioProgress(progress);
         });
       } else {
         // For albums, create a dummy audio blob (backend expects it)
-        audioBlob = await fileToExternalBlob(new Blob(['dummy']), () => {});
+        audioBlob = await fileToExternalBlob(new Blob(["dummy"]), () => {});
       }
 
       const artistNames = selectedArtists
         .map((id) => artistProfiles?.find((p) => p.id === id)?.stageName)
         .filter(Boolean)
-        .join(', ');
+        .join(", ");
 
       const featuredNames = selectedFeaturedArtists
         .map((id) => artistProfiles?.find((p) => p.id === id)?.stageName)
         .filter(Boolean)
-        .join(', ');
+        .join(", ");
 
       const composerNames = selectedComposers
         .map((id) => artistProfiles?.find((p) => p.id === id)?.stageName)
         .filter(Boolean)
-        .join(', ');
+        .join(", ");
 
       const lyricistNames = selectedLyricists
         .map((id) => artistProfiles?.find((p) => p.id === id)?.stageName)
         .filter(Boolean)
-        .join(', ');
+        .join(", ");
 
       const input: SongSubmissionInput = {
         title,
@@ -232,43 +250,47 @@ export default function SongSubmissionForm() {
         producer,
         lyricist: lyricistNames,
         audioBlob,
-        audioFilename: audioFile?.name || 'album.mp3',
+        audioFilename: audioFile?.name || "album.mp3",
         additionalDetails,
         discountCode: discountCode.trim() ? discountCode : undefined,
-        albumTracks: isAlbum && albumTracks.length > 0 ? albumTracks : undefined,
+        albumTracks:
+          isAlbum && albumTracks.length > 0 ? albumTracks : undefined,
         musicVideoLink: musicVideoLink.trim() ? musicVideoLink : undefined,
       };
 
       await submitSong.mutateAsync(input);
 
       // Reset form
-      setTitle('');
-      setLanguage('');
-      setReleaseDate('');
-      setReleaseType('');
-      setGenre('');
+      setTitle("");
+      setLanguage("");
+      setReleaseDate("");
+      setReleaseType("");
+      setGenre("");
       setSelectedArtists([]);
       setSelectedFeaturedArtists([]);
       setSelectedComposers([]);
       setSelectedLyricists([]);
-      setProducer('');
-      setAdditionalDetails('');
-      setDiscountCode('');
-      setMusicVideoLink('');
+      setProducer("");
+      setAdditionalDetails("");
+      setDiscountCode("");
+      setMusicVideoLink("");
       setArtworkFile(null);
       setAudioFile(null);
       setAlbumTracks([]);
       setArtworkProgress(0);
       setAudioProgress(0);
-      setArtworkError('');
+      setArtworkError("");
       setLegalAgreementsAccepted(false);
 
       // Navigate to thank you page
-      navigate({ to: '/thank-you' });
+      navigate({ to: "/thank-you" });
     } catch (error: any) {
-      console.error('Submission error:', error);
-      if (error.message?.includes('blocked') || error.message?.includes('submission limit')) {
-        toast.error('Your access blocked due to submission limit is full');
+      console.error("Submission error:", error);
+      if (
+        error.message?.includes("blocked") ||
+        error.message?.includes("submission limit")
+      ) {
+        toast.error("Your access blocked due to submission limit is full");
       }
     } finally {
       setIsUploading(false);
@@ -277,25 +299,33 @@ export default function SongSubmissionForm() {
 
   const toggleArtistSelection = (profileId: string) => {
     setSelectedArtists((prev) =>
-      prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
+      prev.includes(profileId)
+        ? prev.filter((id) => id !== profileId)
+        : [...prev, profileId],
     );
   };
 
   const toggleFeaturedArtistSelection = (profileId: string) => {
     setSelectedFeaturedArtists((prev) =>
-      prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
+      prev.includes(profileId)
+        ? prev.filter((id) => id !== profileId)
+        : [...prev, profileId],
     );
   };
 
   const toggleComposerSelection = (profileId: string) => {
     setSelectedComposers((prev) =>
-      prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
+      prev.includes(profileId)
+        ? prev.filter((id) => id !== profileId)
+        : [...prev, profileId],
     );
   };
 
   const toggleLyricistSelection = (profileId: string) => {
     setSelectedLyricists((prev) =>
-      prev.includes(profileId) ? prev.filter((id) => id !== profileId) : [...prev, profileId]
+      prev.includes(profileId)
+        ? prev.filter((id) => id !== profileId)
+        : [...prev, profileId],
     );
   };
 
@@ -344,7 +374,9 @@ export default function SongSubmissionForm() {
           <Alert>
             <AlertCircle className="w-4 h-4" />
             <AlertDescription>
-              You must create at least one artist profile before submitting a song. Please go to the "Artist Profiles" tab to create your profile.
+              You must create at least one artist profile before submitting a
+              song. Please go to the "Artist Profiles" tab to create your
+              profile.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -491,7 +523,9 @@ export default function SongSubmissionForm() {
 
           {/* Artwork Upload */}
           <div>
-            <Label htmlFor="artwork">Artwork * (JPG/PNG, 3000×3000 pixels)</Label>
+            <Label htmlFor="artwork">
+              Artwork * (JPG/PNG, 3000×3000 pixels)
+            </Label>
             <Input
               id="artwork"
               type="file"
@@ -532,7 +566,10 @@ export default function SongSubmissionForm() {
           {isAlbum && (
             <div>
               <Label>Album Tracks *</Label>
-              <AlbumTracksEditor tracks={albumTracks} onChange={setAlbumTracks} />
+              <AlbumTracksEditor
+                tracks={albumTracks}
+                onChange={setAlbumTracks}
+              />
             </div>
           )}
 
@@ -550,7 +587,9 @@ export default function SongSubmissionForm() {
 
           {/* Additional Details */}
           <div>
-            <Label htmlFor="additionalDetails">Additional Details (Optional)</Label>
+            <Label htmlFor="additionalDetails">
+              Additional Details (Optional)
+            </Label>
             <Textarea
               id="additionalDetails"
               value={additionalDetails}
@@ -576,7 +615,9 @@ export default function SongSubmissionForm() {
             <Checkbox
               id="legalAgreements"
               checked={legalAgreementsAccepted}
-              onCheckedChange={(checked) => setLegalAgreementsAccepted(checked as boolean)}
+              onCheckedChange={(checked) =>
+                setLegalAgreementsAccepted(checked as boolean)
+              }
             />
             <div className="grid gap-1.5 leading-none">
               <Label
@@ -586,12 +627,17 @@ export default function SongSubmissionForm() {
                 I accept the Legal Agreements & Terms *
               </Label>
               <p className="text-sm text-muted-foreground">
-                By checking this box, you confirm that you have read and agree to our terms and conditions.
+                By checking this box, you confirm that you have read and agree
+                to our terms and conditions.
               </p>
             </div>
           </div>
 
-          <Button type="submit" disabled={isUploading || submitSong.isPending} className="w-full">
+          <Button
+            type="submit"
+            disabled={isUploading || submitSong.isPending}
+            className="w-full"
+          >
             {isUploading || submitSong.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

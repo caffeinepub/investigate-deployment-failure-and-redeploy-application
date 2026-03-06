@@ -1,7 +1,13 @@
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from "lucide-react";
 
 interface StreamingPlatformButtonProps {
-  platform: 'spotify' | 'appleMusic';
+  platform:
+    | "spotify"
+    | "appleMusic"
+    | "amazonMusic"
+    | "soundcloud"
+    | "youtube"
+    | "youtubeMusic";
   url: string;
   platformName: string;
 }
@@ -13,12 +19,28 @@ export default function StreamingPlatformButton({
 }: StreamingPlatformButtonProps) {
   const platformStyles = {
     spotify: {
-      bg: 'bg-[#1DB954] hover:bg-[#1ed760]',
-      logo: '/assets/generated/spotify-logo.dim_128x128.png',
+      bg: "bg-[#1DB954] hover:bg-[#1ed760]",
+      logo: "/assets/generated/spotify-logo.dim_128x128.png",
     },
     appleMusic: {
-      bg: 'bg-[#FA243C] hover:bg-[#fb4458]',
-      logo: '/assets/generated/apple-music-logo.dim_128x128.png',
+      bg: "bg-[#FA243C] hover:bg-[#fb4458]",
+      logo: "/assets/generated/apple-music-logo.dim_128x128.png",
+    },
+    amazonMusic: {
+      bg: "bg-[#00A8E1] hover:bg-[#1ab5e8]",
+      logo: "/assets/generated/amazon-music-logo.dim_120x120.png",
+    },
+    soundcloud: {
+      bg: "bg-[#FF5500] hover:bg-[#ff6a1f]",
+      logo: "/assets/generated/soundcloud-logo.dim_120x120.png",
+    },
+    youtube: {
+      bg: "bg-[#FF0000] hover:bg-[#ff1a1a]",
+      logo: "/assets/generated/youtube-logo.dim_120x120.png",
+    },
+    youtubeMusic: {
+      bg: "bg-[#FF0000] hover:bg-[#ff1a1a]",
+      logo: "/assets/generated/youtube-music-logo.dim_120x120.png",
     },
   };
 
@@ -37,7 +59,7 @@ export default function StreamingPlatformButton({
           alt={`${platformName} logo`}
           className="w-8 h-8 object-contain"
           onError={(e) => {
-            e.currentTarget.style.display = 'none';
+            e.currentTarget.style.display = "none";
           }}
         />
         <span className="font-semibold text-lg">Listen on {platformName}</span>

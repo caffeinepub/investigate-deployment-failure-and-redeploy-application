@@ -1,11 +1,11 @@
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetMyArtistProfiles } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Moon, Sun, LogOut, LogIn } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import ArtistNameWithVerified from './ArtistNameWithVerified';
+import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { LogIn, LogOut, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useGetMyArtistProfiles } from "../hooks/useQueries";
+import ArtistNameWithVerified from "./ArtistNameWithVerified";
 
 export default function Header() {
   const { login, clear, loginStatus, identity } = useInternetIdentity();
@@ -15,20 +15,21 @@ export default function Header() {
   const navigate = useNavigate();
 
   const isAuthenticated = !!identity;
-  const isLoggingIn = loginStatus === 'logging-in';
-  const firstProfile = artistProfiles && artistProfiles.length > 0 ? artistProfiles[0] : null;
+  const isLoggingIn = loginStatus === "logging-in";
+  const firstProfile =
+    artistProfiles && artistProfiles.length > 0 ? artistProfiles[0] : null;
 
   const handleAuth = async () => {
     if (isAuthenticated) {
       await clear();
       queryClient.clear();
-      navigate({ to: '/' });
+      navigate({ to: "/" });
     } else {
       try {
         await login();
       } catch (error: any) {
-        console.error('Login error:', error);
-        if (error.message === 'User is already authenticated') {
+        console.error("Login error:", error);
+        if (error.message === "User is already authenticated") {
           await clear();
           setTimeout(() => login(), 300);
         }
@@ -37,7 +38,7 @@ export default function Header() {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
@@ -80,12 +81,12 @@ export default function Header() {
           <Button
             onClick={handleAuth}
             disabled={isLoggingIn}
-            variant={isAuthenticated ? 'outline' : 'default'}
+            variant={isAuthenticated ? "outline" : "default"}
             size="sm"
             className="rounded-full"
           >
             {isLoggingIn ? (
-              'Logging in...'
+              "Logging in..."
             ) : isAuthenticated ? (
               <>
                 <LogOut className="w-4 h-4 mr-2" />

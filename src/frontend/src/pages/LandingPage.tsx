@@ -1,54 +1,74 @@
-import { useEffect, useState } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Music, Users, Headphones, LogIn } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
-import { useIsCurrentUserAdmin } from '../hooks/useQueries';
-import PricingSection from '../components/PricingSection';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { Headphones, LogIn, Music, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import MostVibingArtistsCarousel from "../components/MostVibingArtistsCarousel";
+import PricingSection from "../components/PricingSection";
+import TopVibingSongsSection from "../components/TopVibingSongsSection";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useIsCurrentUserAdmin } from "../hooks/useQueries";
 
 export default function LandingPage() {
   const { login, loginStatus, identity } = useInternetIdentity();
   const navigate = useNavigate();
   const isAuthenticated = !!identity;
-  const isLoggingIn = loginStatus === 'logging-in';
-  
-  const { data: isAdmin, isLoading: isAdminLoading, isFetched: isAdminFetched } = useIsCurrentUserAdmin();
+  const isLoggingIn = loginStatus === "logging-in";
+
+  const {
+    data: isAdmin,
+    isLoading: isAdminLoading,
+    isFetched: isAdminFetched,
+  } = useIsCurrentUserAdmin();
   const [redirectIntent, setRedirectIntent] = useState(false);
 
   // Handle post-login navigation based on admin status
   useEffect(() => {
-    if (redirectIntent && isAuthenticated && isAdminFetched && !isAdminLoading) {
+    if (
+      redirectIntent &&
+      isAuthenticated &&
+      isAdminFetched &&
+      !isAdminLoading
+    ) {
       if (isAdmin) {
-        navigate({ to: '/admin-dashboard' });
+        navigate({ to: "/admin-dashboard" });
       } else {
-        navigate({ to: '/user-dashboard' });
+        navigate({ to: "/user-dashboard" });
       }
       setRedirectIntent(false);
     }
-  }, [redirectIntent, isAuthenticated, isAdmin, isAdminFetched, isAdminLoading, navigate]);
+  }, [
+    redirectIntent,
+    isAuthenticated,
+    isAdmin,
+    isAdminFetched,
+    isAdminLoading,
+    navigate,
+  ]);
 
   const handleGetStarted = async () => {
     if (isAuthenticated) {
-      // User is already logged in, check admin status and navigate
       if (isAdminFetched && !isAdminLoading) {
         if (isAdmin) {
-          navigate({ to: '/admin-dashboard' });
+          navigate({ to: "/admin-dashboard" });
         } else {
-          navigate({ to: '/user-dashboard' });
+          navigate({ to: "/user-dashboard" });
         }
       } else {
-        // Admin status not yet loaded, set intent to redirect once loaded
         setRedirectIntent(true);
       }
     } else {
-      // User needs to log in first
       try {
         await login();
-        // After successful login, set redirect intent
         setRedirectIntent(true);
       } catch (error: any) {
-        console.error('Login error:', error);
+        console.error("Login error:", error);
       }
     }
   };
@@ -71,11 +91,9 @@ export default function LandingPage() {
             className="bg-white text-purple-600 hover:bg-gray-100 text-lg px-8 py-6"
           >
             {isLoggingIn || (redirectIntent && isAdminLoading) ? (
-              'Loading...'
+              "Loading..."
             ) : isAuthenticated ? (
-              <>
-                Go to Dashboard
-              </>
+              "Go to Dashboard"
             ) : (
               <>
                 <LogIn className="w-5 h-5 mr-2" />
@@ -85,6 +103,12 @@ export default function LandingPage() {
           </Button>
         </div>
       </section>
+
+      {/* Most Vibing Artists Carousel */}
+      <MostVibingArtistsCarousel />
+
+      {/* Top Vibing Songs Section */}
+      <TopVibingSongsSection />
 
       {/* Features Section */}
       <section className="py-20 px-4 bg-background">
@@ -98,12 +122,14 @@ export default function LandingPage() {
                 <Music className="w-12 h-12 text-purple-600 mb-4" />
                 <CardTitle>Multiple Artist Profiles</CardTitle>
                 <CardDescription>
-                  Create and manage multiple artist identities from a single account
+                  Create and manage multiple artist identities from a single
+                  account
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Perfect for artists with different musical personas or collaborative projects
+                  Perfect for artists with different musical personas or
+                  collaborative projects
                 </p>
               </CardContent>
             </Card>
@@ -118,7 +144,8 @@ export default function LandingPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Update your profile photo, contact details, and streaming platform links
+                  Update your profile photo, contact details, and streaming
+                  platform links
                 </p>
               </CardContent>
             </Card>
@@ -151,7 +178,8 @@ export default function LandingPage() {
             Ready to Get Started?
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join INDIE TAMIL MUSIC PRODUCTION today and take control of your artist profiles
+            Join INDIE TAMIL MUSIC PRODUCTION today and take control of your
+            artist profiles
           </p>
           <Button
             size="lg"
@@ -160,9 +188,9 @@ export default function LandingPage() {
             className="text-lg px-8 py-6"
           >
             {isLoggingIn || (redirectIntent && isAdminLoading) ? (
-              'Loading...'
+              "Loading..."
             ) : isAuthenticated ? (
-              'Go to Dashboard'
+              "Go to Dashboard"
             ) : (
               <>
                 <LogIn className="w-5 h-5 mr-2" />

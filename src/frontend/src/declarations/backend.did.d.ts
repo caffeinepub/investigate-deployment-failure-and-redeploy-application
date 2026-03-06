@@ -35,6 +35,23 @@ export type EpisodeType = { 'full' : null } |
   { 'trailer' : null } |
   { 'bonus' : null };
 export type ExternalBlob = Uint8Array;
+export interface FeaturedArtist {
+  'id' : bigint,
+  'aboutBlurb' : string,
+  'photoUrl' : string,
+  'isActive' : boolean,
+  'songs' : Array<FeaturedArtistSong>,
+  'slotIndex' : bigint,
+  'artistName' : string,
+}
+export interface FeaturedArtistInput {
+  'aboutBlurb' : string,
+  'photoUrl' : string,
+  'isActive' : boolean,
+  'songs' : Array<FeaturedArtistSong>,
+  'artistName' : string,
+}
+export interface FeaturedArtistSong { 'title' : string, 'link' : string }
 export interface InviteCode {
   'created' : Time,
   'code' : string,
@@ -51,16 +68,6 @@ export type Language = { 'tamil' : null } |
   { 'telugu' : null } |
   { 'bengali' : null } |
   { 'english' : null };
-export interface ListenerStatsUpdate {
-  'month' : bigint,
-  'value' : bigint,
-  'year' : bigint,
-}
-export interface MonthlyListenerStats {
-  'month' : bigint,
-  'value' : bigint,
-  'year' : bigint,
-}
 export type PodcastCategory = { 'kidsFamily' : null } |
   { 'music' : null } |
   { 'newsPolitics' : null } |
@@ -273,6 +280,16 @@ export interface SubscriptionPlan {
   'planName' : string,
 }
 export type Time = bigint;
+export interface TopVibingSong {
+  'id' : bigint,
+  'title' : string,
+  'streamingLink' : string,
+  'tagline' : [] | [string],
+  'rank' : bigint,
+  'artworkUrl' : string,
+  'genre' : string,
+  'artistName' : string,
+}
 export interface TrackMetadata {
   'title' : string,
   'lyricist' : string,
@@ -384,6 +401,7 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'addTopVibingSong' : ActorMethod<[TopVibingSong], bigint>,
   'adminDeleteArtistProfile' : ActorMethod<[string], undefined>,
   'adminDeleteSubmission' : ActorMethod<[string], undefined>,
   'adminEditArtistProfile' : ActorMethod<
@@ -415,12 +433,15 @@ export interface _SERVICE {
   'createSubscriptionPlan' : ActorMethod<[SubscriptionPlan], undefined>,
   'deleteArtistProfile' : ActorMethod<[string], undefined>,
   'deleteSubscriptionPlan' : ActorMethod<[string], undefined>,
+  'deleteTopVibingSong' : ActorMethod<[bigint], undefined>,
   'deleteVideoSubmission' : ActorMethod<[string], undefined>,
+  'demoteFromAdmin' : ActorMethod<[Principal], undefined>,
   'doesUserHaveArtistProfile' : ActorMethod<[Principal], boolean>,
   'downgradeTeamMember' : ActorMethod<[Principal], undefined>,
   'downloadVideoFile' : ActorMethod<[string], ExternalBlob>,
   'editSongSubmission' : ActorMethod<[SongSubmissionEditInput], undefined>,
   'generateInviteCode' : ActorMethod<[], string>,
+  'getActiveFeaturedArtists' : ActorMethod<[], Array<FeaturedArtist>>,
   'getAllArtistProfileOwnersForAdmin' : ActorMethod<[], Array<Principal>>,
   'getAllArtistProfilesForAdmin' : ActorMethod<[], Array<ArtistProfile>>,
   'getAllBlockedUsersAdmin' : ActorMethod<[], Array<Principal>>,
@@ -432,6 +453,7 @@ export interface _SERVICE {
   'getAllSubmissionsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
   'getAllSubscriptionPlans' : ActorMethod<[], Array<SubscriptionPlan>>,
   'getAllTeamMembers' : ActorMethod<[], Array<Principal>>,
+  'getAllTopVibingSongs' : ActorMethod<[], Array<TopVibingSong>>,
   'getAllVideoSubmissions' : ActorMethod<[], Array<VideoSubmission>>,
   'getArtistProfileByOwner' : ActorMethod<[Principal], [] | [ArtistProfile]>,
   'getArtistProfileEditingAccessStatus' : ActorMethod<[], boolean>,
@@ -443,19 +465,17 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getEpisodesByShowId' : ActorMethod<[string], Array<PodcastEpisode>>,
+  'getFeaturedArtists' : ActorMethod<[], Array<FeaturedArtist>>,
   'getInviteCodes' : ActorMethod<[], Array<InviteCode>>,
-  'getLiveSongsForAnalysis' : ActorMethod<[], Array<SongSubmission>>,
   'getMyArtistProfiles' : ActorMethod<[], Array<ArtistProfile>>,
   'getMyEpisodes' : ActorMethod<[string], Array<PodcastEpisode>>,
   'getMyPodcastShows' : ActorMethod<[], Array<PodcastShow>>,
   'getMySubmissions' : ActorMethod<[], Array<SongSubmission>>,
   'getPodcastsByCategory' : ActorMethod<[PodcastCategory], Array<PodcastShow>>,
+  'getRankedTopVibingSongs' : ActorMethod<[], Array<TopVibingSong>>,
   'getSongInfo' : ActorMethod<[string], PublicSongInfo>,
-  'getSongMonthlyListenerStats' : ActorMethod<
-    [string],
-    Array<MonthlyListenerStats>
-  >,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
+  'getTopVibingSong' : ActorMethod<[bigint], TopVibingSong>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'getUserVideoSubmissions' : ActorMethod<[], Array<VideoSubmission>>,
   'getUsersByCategory' : ActorMethod<[UserCategory], Array<UserProfile>>,
@@ -477,21 +497,26 @@ export interface _SERVICE {
   'isUserBlockedPodcastSubmission' : ActorMethod<[Principal], boolean>,
   'isUserBlockedSongSubmission' : ActorMethod<[Principal], boolean>,
   'isUserTeamMember' : ActorMethod<[Principal], boolean>,
+  'listAdmins' : ActorMethod<[], Array<Principal>>,
   'listApprovals' : ActorMethod<[], Array<UserApprovalInfo>>,
   'markEpisodeLive' : ActorMethod<[string], undefined>,
   'markPodcastLive' : ActorMethod<[string, string], undefined>,
+  'promoteToAdmin' : ActorMethod<[Principal], undefined>,
   'rejectEpisode' : ActorMethod<[string], undefined>,
   'rejectPodcast' : ActorMethod<[string], undefined>,
   'removeWebsiteLogo' : ActorMethod<[], undefined>,
+  'reorderTopVibingSongs' : ActorMethod<[Array<bigint>], undefined>,
   'requestApproval' : ActorMethod<[], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'setApproval' : ActorMethod<[Principal, ApprovalStatus], undefined>,
   'setArtistProfileEditingAccess' : ActorMethod<[boolean], undefined>,
+  'setFeaturedArtist' : ActorMethod<[bigint, FeaturedArtistInput], undefined>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
   'setWebsiteLogo' : ActorMethod<[ExternalBlob], undefined>,
   'submitRSVP' : ActorMethod<[string, boolean, string], undefined>,
   'submitSong' : ActorMethod<[SongSubmissionInput], string>,
   'submitVideo' : ActorMethod<[VideoSubmissionInput], string>,
+  'toggleFeaturedArtistSlot' : ActorMethod<[bigint, boolean], undefined>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'unblockUserPodcastSubmission' : ActorMethod<[Principal], undefined>,
   'unblockUserSongSubmission' : ActorMethod<[Principal], undefined>,
@@ -499,11 +524,8 @@ export interface _SERVICE {
     [string, SaveArtistProfileInput],
     undefined
   >,
-  'updateMonthlyListenerStats' : ActorMethod<
-    [string, Array<ListenerStatsUpdate>],
-    undefined
-  >,
   'updateSubscriptionPlan' : ActorMethod<[SubscriptionPlan], undefined>,
+  'updateTopVibingSong' : ActorMethod<[TopVibingSong], undefined>,
   'updateUserCategory' : ActorMethod<[Principal, UserCategory], undefined>,
   'updateVerificationStatus' : ActorMethod<
     [string, VerificationStatus, bigint],

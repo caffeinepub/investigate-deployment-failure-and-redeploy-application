@@ -1,5 +1,5 @@
-import { Label } from '@/components/ui/label';
-import { ArtistProfile } from '../backend';
+import { Label } from "@/components/ui/label";
+import type { ArtistProfile } from "../backend";
 
 interface ArtistProfilesCheckboxSelectorProps {
   label: string;
@@ -21,7 +21,7 @@ export default function ArtistProfilesCheckboxSelector({
   return (
     <div>
       <Label>
-        {label} {required && '*'}
+        {label} {required && "*"}
       </Label>
       <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
         {profiles.map((profile) => (
@@ -33,7 +33,10 @@ export default function ArtistProfilesCheckboxSelector({
               onChange={() => onToggle(profile.id)}
               className="w-4 h-4 rounded border-gray-300"
             />
-            <label htmlFor={`${label}-${profile.id}`} className="text-sm cursor-pointer flex-1">
+            <label
+              htmlFor={`${label}-${profile.id}`}
+              className="text-sm cursor-pointer flex-1"
+            >
               {profile.stageName} ({profile.fullName})
             </label>
           </div>

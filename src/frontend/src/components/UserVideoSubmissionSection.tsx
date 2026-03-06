@@ -1,28 +1,30 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useGetUserVideoSubmissions } from '../hooks/useQueries';
-import { VideoSubmission } from '../backend';
-import { Loader2, Edit } from 'lucide-react';
-import { useState } from 'react';
-import UserEditVideoDialog from './UserEditVideoDialog';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Edit, Loader2 } from "lucide-react";
+import { useState } from "react";
+import type { VideoSubmission } from "../backend";
+import { useGetUserVideoSubmissions } from "../hooks/useQueries";
+import UserEditVideoDialog from "./UserEditVideoDialog";
 
 export default function UserVideoSubmissionSection() {
   const { data: videos, isLoading } = useGetUserVideoSubmissions();
-  const [editingVideo, setEditingVideo] = useState<VideoSubmission | null>(null);
+  const [editingVideo, setEditingVideo] = useState<VideoSubmission | null>(
+    null,
+  );
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return <Badge variant="secondary">Pending</Badge>;
-      case 'approved':
+      case "approved":
         return <Badge className="bg-blue-500">Approved</Badge>;
-      case 'rejected':
+      case "rejected":
         return <Badge variant="destructive">Rejected</Badge>;
-      case 'waiting':
+      case "waiting":
         return <Badge className="bg-yellow-500">Waiting</Badge>;
-      case 'live':
+      case "live":
         return <Badge className="bg-green-500">Live</Badge>;
       default:
         return <Badge>{status}</Badge>;
@@ -30,7 +32,7 @@ export default function UserVideoSubmissionSection() {
   };
 
   const canEdit = (status: string) => {
-    return status === 'pending' || status === 'rejected';
+    return status === "pending" || status === "rejected";
   };
 
   const handleEdit = (video: VideoSubmission) => {
@@ -51,7 +53,8 @@ export default function UserVideoSubmissionSection() {
       <Card>
         <CardContent className="py-12">
           <p className="text-center text-muted-foreground">
-            You haven't submitted any videos yet. Use the form above to submit your first video!
+            You haven't submitted any videos yet. Use the form above to submit
+            your first video!
           </p>
         </CardContent>
       </Card>
@@ -68,7 +71,10 @@ export default function UserVideoSubmissionSection() {
                 <div className="flex-1">
                   <CardTitle className="text-lg">{video.title}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Submitted on {new Date(Number(video.submittedAt / BigInt(1000000))).toLocaleDateString()}
+                    Submitted on{" "}
+                    {new Date(
+                      Number(video.submittedAt / BigInt(1000000)),
+                    ).toLocaleDateString()}
                   </p>
                 </div>
                 {getStatusBadge(video.status)}
@@ -88,13 +94,17 @@ export default function UserVideoSubmissionSection() {
                 {/* Description */}
                 <div>
                   <p className="text-sm font-medium">Description:</p>
-                  <p className="text-sm text-muted-foreground">{video.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {video.description}
+                  </p>
                 </div>
 
                 {/* Category */}
                 <div>
                   <p className="text-sm font-medium">Category:</p>
-                  <p className="text-sm text-muted-foreground">{video.category}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {video.category}
+                  </p>
                 </div>
 
                 {/* Tags */}
@@ -103,7 +113,11 @@ export default function UserVideoSubmissionSection() {
                     <p className="text-sm font-medium mb-2">Tags:</p>
                     <div className="flex flex-wrap gap-2">
                       {video.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline">
+                        <Badge
+                          // biome-ignore lint/suspicious/noArrayIndexKey: tags are plain strings
+                          key={index}
+                          variant="outline"
+                        >
                           {tag}
                         </Badge>
                       ))}

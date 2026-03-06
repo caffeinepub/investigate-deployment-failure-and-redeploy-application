@@ -1,17 +1,23 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -19,29 +25,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
+import type { Principal } from "@dfinity/principal";
+import { Ban, CheckCircle, Filter, Loader2, Search, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import type { ArtistProfile, UserCategory } from "../backend";
+import { useActor } from "../hooks/useActor";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Loader2, Search, User, Ban, CheckCircle, Filter } from 'lucide-react';
-import {
-  useGetAllArtistsWithUserIds,
-  useBlockUserSongSubmission,
-  useUnblockUserSongSubmission,
   useBlockUserPodcastSubmission,
+  useBlockUserSongSubmission,
+  useGetAllArtistProfiles,
   useUnblockUserPodcastSubmission,
-  useIsUserBlockedSongSubmission,
-  useIsUserBlockedPodcastSubmission,
+  useUnblockUserSongSubmission,
   useUpdateUserCategory,
-  useGetCallerUserProfile,
-} from '../hooks/useQueries';
-import { Principal } from '@dfinity/principal';
-import { UserCategory } from '../backend';
-import { toast } from 'sonner';
+} from "../hooks/useQueries";
 
 interface UserBlockStatus {
   songBlocked: boolean;
@@ -53,46 +51,53 @@ interface UserCategoryMap {
 }
 
 const CATEGORY_LABELS: Record<UserCategory, string> = {
-  generalArtist: 'General Artist',
-  proArtist: 'Pro Artist',
-  ultraArtist: 'Ultra Artist',
-  generalLabel: 'General Label',
-  proLabel: 'Pro Label',
+  generalArtist: "General Artist",
+  proArtist: "Pro Artist",
+  ultraArtist: "Ultra Artist",
+  generalLabel: "General Label",
+  proLabel: "Pro Label",
 };
 
 const CATEGORY_COLORS: Record<UserCategory, string> = {
-  generalArtist: 'bg-blue-100 text-blue-800 border-blue-200',
-  proArtist: 'bg-purple-100 text-purple-800 border-purple-200',
-  ultraArtist: 'bg-green-100 text-green-800 border-green-200',
-  generalLabel: 'bg-orange-100 text-orange-800 border-orange-200',
-  proLabel: 'bg-pink-100 text-pink-800 border-pink-200',
+  generalArtist: "bg-blue-100 text-blue-800 border-blue-200",
+  proArtist: "bg-purple-100 text-purple-800 border-purple-200",
+  ultraArtist: "bg-green-100 text-green-800 border-green-200",
+  generalLabel: "bg-orange-100 text-orange-800 border-orange-200",
+  proLabel: "bg-pink-100 text-pink-800 border-pink-200",
 };
 
 export default function AdminUserManagement() {
-  const { data: artistProfiles, isLoading } = useGetAllArtistsWithUserIds();
-  const [searchTerm, setSearchTerm] = useState('');
+  const { data: artistProfiles, isLoading } = useGetAllArtistProfiles();
+  const { actor } = useActor();
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<Principal | null>(null);
-  const [blockStatuses, setBlockStatuses] = useState<Map<string, UserBlockStatus>>(new Map());
+  const [blockStatuses, setBlockStatuses] = useState<
+    Map<string, UserBlockStatus>
+  >(new Map());
   const [userCategories, setUserCategories] = useState<UserCategoryMap>({});
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
 
   const blockSongMutation = useBlockUserSongSubmission();
   const unblockSongMutation = useUnblockUserSongSubmission();
   const blockPodcastMutation = useBlockUserPodcastSubmission();
   const unblockPodcastMutation = useUnblockUserPodcastSubmission();
-  const checkSongBlockMutation = useIsUserBlockedSongSubmission();
-  const checkPodcastBlockMutation = useIsUserBlockedPodcastSubmission();
   const updateCategoryMutation = useUpdateUserCategory();
 
   // Get unique users
-  const uniqueUsers = artistProfiles
+  const uniqueUsers: ArtistProfile[] = artistProfiles
     ? Array.from(
-        new Map(artistProfiles.map((profile) => [profile.owner.toString(), profile])).values()
+        new Map(
+          artistProfiles.map((profile: ArtistProfile) => [
+            profile.owner.toString(),
+            profile,
+          ]),
+        ).values(),
       )
     : [];
 
   // Filter users based on search and category
-  const filteredUsers = uniqueUsers.filter((profile) => {
+  const filteredUsers = uniqueUsers.filter((profile: ArtistProfile) => {
     const matchesSearch =
       profile.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       profile.stageName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -102,52 +107,50 @@ export default function AdminUserManagement() {
     const userCategory = userCategories[userKey];
 
     const matchesCategory =
-      categoryFilter === 'all' || (userCategory && userCategory === categoryFilter);
+      categoryFilter === "all" ||
+      (userCategory && userCategory === categoryFilter);
 
     return matchesSearch && matchesCategory;
   });
 
-  // Load block statuses and user categories for all users
+  // Load block statuses for all users using the actor directly
   useEffect(() => {
+    if (!actor || uniqueUsers.length === 0) return;
+
     const loadUserData = async () => {
+      setLoadingStatuses(true);
       const newStatuses = new Map<string, UserBlockStatus>();
       const newCategories: UserCategoryMap = {};
 
       for (const profile of uniqueUsers) {
         try {
-          const songBlocked = await checkSongBlockMutation.mutateAsync(profile.owner);
-          const podcastBlocked = await checkPodcastBlockMutation.mutateAsync(profile.owner);
-          newStatuses.set(profile.owner.toString(), { songBlocked, podcastBlocked });
-
-          // Fetch user profile to get category
-          const userProfileResponse = await fetch(
-            `/api/getUserProfile?principal=${profile.owner.toString()}`
-          ).catch(() => null);
-
-          if (userProfileResponse) {
-            const userProfile = await userProfileResponse.json();
-            if (userProfile?.category) {
-              newCategories[profile.owner.toString()] = userProfile.category;
-            } else {
-              newCategories[profile.owner.toString()] = 'generalArtist' as UserCategory;
-            }
-          } else {
-            newCategories[profile.owner.toString()] = 'generalArtist' as UserCategory;
-          }
-        } catch (error) {
-          console.error('Failed to load user data:', error);
-          newCategories[profile.owner.toString()] = 'generalArtist' as UserCategory;
+          const [songBlocked, podcastBlocked] = await Promise.all([
+            actor.isUserBlockedSongSubmission(profile.owner),
+            actor.isUserBlockedPodcastSubmission(profile.owner),
+          ]);
+          newStatuses.set(profile.owner.toString(), {
+            songBlocked,
+            podcastBlocked,
+          });
+        } catch {
+          newStatuses.set(profile.owner.toString(), {
+            songBlocked: false,
+            podcastBlocked: false,
+          });
         }
+
+        newCategories[profile.owner.toString()] =
+          "generalArtist" as UserCategory;
       }
 
       setBlockStatuses(newStatuses);
       setUserCategories(newCategories);
+      setLoadingStatuses(false);
     };
 
-    if (uniqueUsers.length > 0) {
-      loadUserData();
-    }
-  }, [uniqueUsers.length]);
+    loadUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actor, uniqueUsers]);
 
   const handleToggleSongBlock = async (user: Principal) => {
     const userKey = user.toString();
@@ -160,7 +163,6 @@ export default function AdminUserManagement() {
         await blockSongMutation.mutateAsync(user);
       }
 
-      // Update local state
       setBlockStatuses((prev) => {
         const newMap = new Map(prev);
         newMap.set(userKey, {
@@ -169,8 +171,12 @@ export default function AdminUserManagement() {
         } as UserBlockStatus);
         return newMap;
       });
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update block status');
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Failed to update block status";
+      toast.error(msg);
     }
   };
 
@@ -185,7 +191,6 @@ export default function AdminUserManagement() {
         await blockPodcastMutation.mutateAsync(user);
       }
 
-      // Update local state
       setBlockStatuses((prev) => {
         const newMap = new Map(prev);
         newMap.set(userKey, {
@@ -194,24 +199,32 @@ export default function AdminUserManagement() {
         } as UserBlockStatus);
         return newMap;
       });
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update block status');
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Failed to update block status";
+      toast.error(msg);
     }
   };
 
-  const handleCategoryChange = async (user: Principal, newCategory: UserCategory) => {
+  const handleCategoryChange = async (
+    user: Principal,
+    newCategory: UserCategory,
+  ) => {
     const userKey = user.toString();
 
     try {
-      await updateCategoryMutation.mutateAsync({ userId: user, category: newCategory });
+      await updateCategoryMutation.mutateAsync({ userId: user, newCategory });
 
-      // Update local state
       setUserCategories((prev) => ({
         ...prev,
         [userKey]: newCategory,
       }));
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update category');
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error ? error.message : "Failed to update category";
+      toast.error(msg);
     }
   };
 
@@ -224,7 +237,7 @@ export default function AdminUserManagement() {
   };
 
   const selectedUserProfile = artistProfiles?.find(
-    (p) => p.owner.toString() === selectedUser?.toString()
+    (p: ArtistProfile) => p.owner.toString() === selectedUser?.toString(),
   );
 
   if (isLoading) {
@@ -268,13 +281,18 @@ export default function AdminUserManagement() {
               <Label htmlFor="category-filter">Filter by Category</Label>
               <div className="relative">
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <Select
+                  value={categoryFilter}
+                  onValueChange={setCategoryFilter}
+                >
                   <SelectTrigger id="category-filter" className="pl-10">
                     <SelectValue placeholder="All Users" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Users</SelectItem>
-                    <SelectItem value="generalArtist">General Artist</SelectItem>
+                    <SelectItem value="generalArtist">
+                      General Artist
+                    </SelectItem>
                     <SelectItem value="proArtist">Pro Artist</SelectItem>
                     <SelectItem value="ultraArtist">Ultra Artist</SelectItem>
                     <SelectItem value="generalLabel">General Label</SelectItem>
@@ -285,7 +303,12 @@ export default function AdminUserManagement() {
             </div>
           </div>
 
-          {filteredUsers.length === 0 ? (
+          {loadingStatuses ? (
+            <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Loading user statuses...</span>
+            </div>
+          ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No users found
             </div>
@@ -298,16 +321,22 @@ export default function AdminUserManagement() {
                     <TableHead>Stage Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Principal ID</TableHead>
-                    <TableHead className="text-center">Block Song Submissions</TableHead>
-                    <TableHead className="text-center">Block Podcast Submissions</TableHead>
+                    <TableHead className="text-center">
+                      Block Song Submissions
+                    </TableHead>
+                    <TableHead className="text-center">
+                      Block Podcast Submissions
+                    </TableHead>
                     <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((profile) => {
+                  {filteredUsers.map((profile: ArtistProfile) => {
                     const userKey = profile.owner.toString();
                     const status = blockStatuses.get(userKey);
-                    const category = userCategories[userKey] || ('generalArtist' as UserCategory);
+                    const category =
+                      userCategories[userKey] ||
+                      ("generalArtist" as UserCategory);
 
                     return (
                       <TableRow key={userKey}>
@@ -327,7 +356,10 @@ export default function AdminUserManagement() {
                           <Select
                             value={category}
                             onValueChange={(value) =>
-                              handleCategoryChange(profile.owner, value as UserCategory)
+                              handleCategoryChange(
+                                profile.owner,
+                                value as UserCategory,
+                              )
                             }
                             disabled={updateCategoryMutation.isPending}
                           >
@@ -335,11 +367,21 @@ export default function AdminUserManagement() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="generalArtist">General Artist</SelectItem>
-                              <SelectItem value="proArtist">Pro Artist</SelectItem>
-                              <SelectItem value="ultraArtist">Ultra Artist</SelectItem>
-                              <SelectItem value="generalLabel">General Label</SelectItem>
-                              <SelectItem value="proLabel">Pro Label</SelectItem>
+                              <SelectItem value="generalArtist">
+                                General Artist
+                              </SelectItem>
+                              <SelectItem value="proArtist">
+                                Pro Artist
+                              </SelectItem>
+                              <SelectItem value="ultraArtist">
+                                Ultra Artist
+                              </SelectItem>
+                              <SelectItem value="generalLabel">
+                                General Label
+                              </SelectItem>
+                              <SelectItem value="proLabel">
+                                Pro Label
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -350,9 +392,12 @@ export default function AdminUserManagement() {
                           <div className="flex items-center justify-center gap-2">
                             <Switch
                               checked={status?.songBlocked || false}
-                              onCheckedChange={() => handleToggleSongBlock(profile.owner)}
+                              onCheckedChange={() =>
+                                handleToggleSongBlock(profile.owner)
+                              }
                               disabled={
-                                blockSongMutation.isPending || unblockSongMutation.isPending
+                                blockSongMutation.isPending ||
+                                unblockSongMutation.isPending
                               }
                             />
                             {status?.songBlocked ? (
@@ -372,7 +417,9 @@ export default function AdminUserManagement() {
                           <div className="flex items-center justify-center gap-2">
                             <Switch
                               checked={status?.podcastBlocked || false}
-                              onCheckedChange={() => handleTogglePodcastBlock(profile.owner)}
+                              onCheckedChange={() =>
+                                handleTogglePodcastBlock(profile.owner)
+                              }
                               disabled={
                                 blockPodcastMutation.isPending ||
                                 unblockPodcastMutation.isPending
@@ -415,7 +462,10 @@ export default function AdminUserManagement() {
       </Card>
 
       {/* User Details Dialog */}
-      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && closeUserDetails()}>
+      <Dialog
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && closeUserDetails()}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>User Details</DialogTitle>
@@ -424,15 +474,19 @@ export default function AdminUserManagement() {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedUserProfile && (
+          {selectedUserProfile && selectedUser && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm text-muted-foreground">Full Name</Label>
+                  <Label className="text-sm text-muted-foreground">
+                    Full Name
+                  </Label>
                   <p className="font-medium">{selectedUserProfile.fullName}</p>
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Stage Name</Label>
+                  <Label className="text-sm text-muted-foreground">
+                    Stage Name
+                  </Label>
                   <p className="font-medium">{selectedUserProfile.stageName}</p>
                 </div>
                 <div>
@@ -440,8 +494,12 @@ export default function AdminUserManagement() {
                   <p className="font-medium">{selectedUserProfile.email}</p>
                 </div>
                 <div>
-                  <Label className="text-sm text-muted-foreground">Mobile</Label>
-                  <p className="font-medium">{selectedUserProfile.mobileNumber}</p>
+                  <Label className="text-sm text-muted-foreground">
+                    Mobile
+                  </Label>
+                  <p className="font-medium">
+                    {selectedUserProfile.mobileNumber}
+                  </p>
                 </div>
               </div>
 
@@ -449,9 +507,11 @@ export default function AdminUserManagement() {
                 <h3 className="font-semibold mb-3">User Category</h3>
                 <div className="flex items-center gap-3">
                   <Select
-                    value={userCategories[selectedUser?.toString() || ''] || 'generalArtist'}
+                    value={
+                      userCategories[selectedUser.toString()] || "generalArtist"
+                    }
                     onValueChange={(value) =>
-                      selectedUser && handleCategoryChange(selectedUser, value as UserCategory)
+                      handleCategoryChange(selectedUser, value as UserCategory)
                     }
                     disabled={updateCategoryMutation.isPending}
                   >
@@ -459,19 +519,20 @@ export default function AdminUserManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="generalArtist">General Artist</SelectItem>
+                      <SelectItem value="generalArtist">
+                        General Artist
+                      </SelectItem>
                       <SelectItem value="proArtist">Pro Artist</SelectItem>
                       <SelectItem value="ultraArtist">Ultra Artist</SelectItem>
-                      <SelectItem value="generalLabel">General Label</SelectItem>
+                      <SelectItem value="generalLabel">
+                        General Label
+                      </SelectItem>
                       <SelectItem value="proLabel">Pro Label</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Badge
-                    variant="outline"
-                    className={CATEGORY_COLORS[userCategories[selectedUser?.toString() || ''] || 'generalArtist']}
-                  >
-                    {CATEGORY_LABELS[userCategories[selectedUser?.toString() || ''] || 'generalArtist']}
-                  </Badge>
+                  {updateCategoryMutation.isPending && (
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
                 </div>
               </div>
 
@@ -480,29 +541,60 @@ export default function AdminUserManagement() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Song Submissions</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Block user from submitting songs
+                      <p className="font-medium text-sm">Song Submissions</p>
+                      <p className="text-xs text-muted-foreground">
+                        Allow or block song submission access
                       </p>
                     </div>
-                    <Switch
-                      checked={blockStatuses.get(selectedUser?.toString() || '')?.songBlocked || false}
-                      onCheckedChange={() => selectedUser && handleToggleSongBlock(selectedUser)}
-                      disabled={blockSongMutation.isPending || unblockSongMutation.isPending}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={
+                          blockStatuses.get(selectedUser.toString())
+                            ?.songBlocked || false
+                        }
+                        onCheckedChange={() =>
+                          handleToggleSongBlock(selectedUser)
+                        }
+                        disabled={
+                          blockSongMutation.isPending ||
+                          unblockSongMutation.isPending
+                        }
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {blockStatuses.get(selectedUser.toString())?.songBlocked
+                          ? "Blocked"
+                          : "Active"}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Podcast Submissions</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Block user from submitting podcasts
+                      <p className="font-medium text-sm">Podcast Submissions</p>
+                      <p className="text-xs text-muted-foreground">
+                        Allow or block podcast submission access
                       </p>
                     </div>
-                    <Switch
-                      checked={blockStatuses.get(selectedUser?.toString() || '')?.podcastBlocked || false}
-                      onCheckedChange={() => selectedUser && handleTogglePodcastBlock(selectedUser)}
-                      disabled={blockPodcastMutation.isPending || unblockPodcastMutation.isPending}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={
+                          blockStatuses.get(selectedUser.toString())
+                            ?.podcastBlocked || false
+                        }
+                        onCheckedChange={() =>
+                          handleTogglePodcastBlock(selectedUser)
+                        }
+                        disabled={
+                          blockPodcastMutation.isPending ||
+                          unblockPodcastMutation.isPending
+                        }
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {blockStatuses.get(selectedUser.toString())
+                          ?.podcastBlocked
+                          ? "Blocked"
+                          : "Active"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

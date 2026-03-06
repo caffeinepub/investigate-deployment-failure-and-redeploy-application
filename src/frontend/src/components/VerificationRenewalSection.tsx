@@ -1,14 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { useGetVerifiedArtistStatus, useApplyForVerification } from '../hooks/useQueries';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, Loader2 } from "lucide-react";
+import {
+  useApplyForVerification,
+  useIsArtistVerified,
+} from "../hooks/useQueries";
 
 export default function VerificationRenewalSection() {
-  const { data: isVerified, isLoading: statusLoading } = useGetVerifiedArtistStatus();
+  const { data: isVerified, isLoading: statusLoading } = useIsArtistVerified();
   const renewVerification = useApplyForVerification();
 
   // Only show if user is not verified (could be expired)
-  // Note: The backend doesn't track expiry separately, so we show this for non-verified users
   if (isVerified || statusLoading) {
     return null;
   }
@@ -16,7 +18,7 @@ export default function VerificationRenewalSection() {
   const handleRenew = async () => {
     try {
       await renewVerification.mutateAsync();
-    } catch (error) {
+    } catch {
       // Error already handled by mutation
     }
   };
@@ -27,9 +29,12 @@ export default function VerificationRenewalSection() {
         <div className="flex items-center gap-3">
           <AlertCircle className="w-6 h-6 text-orange-600" />
           <div className="flex-1">
-            <CardTitle className="text-xl">Verified Artist Status Expired</CardTitle>
+            <CardTitle className="text-xl">
+              Verified Artist Status Expired
+            </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Your verified artist benefits have expired. Renew to continue enjoying premium features.
+              Your verified artist benefits have expired. Renew to continue
+              enjoying premium features.
             </p>
           </div>
         </div>
@@ -58,12 +63,13 @@ export default function VerificationRenewalSection() {
               Submitting...
             </>
           ) : (
-            'Renew Verified Artist'
+            "Renew Verified Artist"
           )}
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          Monthly charge: ₹200 (informational only, no payment required at this time)
+          Monthly charge: ₹200 (informational only, no payment required at this
+          time)
         </p>
       </CardContent>
     </Card>

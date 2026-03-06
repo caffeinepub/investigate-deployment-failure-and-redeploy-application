@@ -1,31 +1,34 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Trash2, Music } from 'lucide-react';
-import { TrackMetadata } from '../backend';
-import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Music, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { TrackMetadata } from "../backend";
+import { fileToExternalBlob } from "../utils/fileToExternalBlob";
 
 interface AlbumTracksEditorProps {
   tracks: TrackMetadata[];
   onChange: (tracks: TrackMetadata[]) => void;
 }
 
-export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEditorProps) {
+export default function AlbumTracksEditor({
+  tracks,
+  onChange,
+}: AlbumTracksEditorProps) {
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const addTrack = () => {
     const newTrack: Partial<TrackMetadata> = {
-      title: '',
-      artist: '',
-      featuredArtist: '',
-      composer: '',
-      producer: '',
-      lyricist: '',
-      audioFilename: '',
+      title: "",
+      artist: "",
+      featuredArtist: "",
+      composer: "",
+      producer: "",
+      lyricist: "",
+      audioFilename: "",
     };
     onChange([...tracks, newTrack as TrackMetadata]);
   };
@@ -34,7 +37,11 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
     onChange(tracks.filter((_, i) => i !== index));
   };
 
-  const updateTrack = (index: number, field: keyof TrackMetadata, value: any) => {
+  const updateTrack = (
+    index: number,
+    field: keyof TrackMetadata,
+    value: any,
+  ) => {
     const updated = [...tracks];
     updated[index] = { ...updated[index], [field]: value };
     onChange(updated);
@@ -49,11 +56,11 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
         setUploadProgress(progress);
       });
 
-      updateTrack(index, 'audioFile', audioBlob);
-      updateTrack(index, 'audioFilename', file.name);
-      toast.success('Audio file uploaded');
-    } catch (error) {
-      toast.error('Failed to upload audio file');
+      updateTrack(index, "audioFile", audioBlob);
+      updateTrack(index, "audioFilename", file.name);
+      toast.success("Audio file uploaded");
+    } catch {
+      toast.error("Failed to upload audio file");
     } finally {
       setUploadingIndex(null);
       setUploadProgress(0);
@@ -63,6 +70,7 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
   return (
     <div className="space-y-4">
       {tracks.map((track, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: tracks have no stable id
         <Card key={index}>
           <CardContent className="pt-6 space-y-3">
             <div className="flex items-center justify-between mb-2">
@@ -85,7 +93,7 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
                 <Label>Title *</Label>
                 <Input
                   value={track.title}
-                  onChange={(e) => updateTrack(index, 'title', e.target.value)}
+                  onChange={(e) => updateTrack(index, "title", e.target.value)}
                   placeholder="Track title"
                   required
                 />
@@ -95,7 +103,7 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
                 <Label>Artist *</Label>
                 <Input
                   value={track.artist}
-                  onChange={(e) => updateTrack(index, 'artist', e.target.value)}
+                  onChange={(e) => updateTrack(index, "artist", e.target.value)}
                   placeholder="Artist name"
                   required
                 />
@@ -105,7 +113,9 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
                 <Label>Featured Artist</Label>
                 <Input
                   value={track.featuredArtist}
-                  onChange={(e) => updateTrack(index, 'featuredArtist', e.target.value)}
+                  onChange={(e) =>
+                    updateTrack(index, "featuredArtist", e.target.value)
+                  }
                   placeholder="Featured artist"
                 />
               </div>
@@ -114,7 +124,9 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
                 <Label>Composer</Label>
                 <Input
                   value={track.composer}
-                  onChange={(e) => updateTrack(index, 'composer', e.target.value)}
+                  onChange={(e) =>
+                    updateTrack(index, "composer", e.target.value)
+                  }
                   placeholder="Composer"
                 />
               </div>
@@ -123,7 +135,9 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
                 <Label>Producer</Label>
                 <Input
                   value={track.producer}
-                  onChange={(e) => updateTrack(index, 'producer', e.target.value)}
+                  onChange={(e) =>
+                    updateTrack(index, "producer", e.target.value)
+                  }
                   placeholder="Producer"
                 />
               </div>
@@ -132,7 +146,9 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
                 <Label>Lyricist</Label>
                 <Input
                   value={track.lyricist}
-                  onChange={(e) => updateTrack(index, 'lyricist', e.target.value)}
+                  onChange={(e) =>
+                    updateTrack(index, "lyricist", e.target.value)
+                  }
                   placeholder="Lyricist"
                 />
               </div>
@@ -164,7 +180,12 @@ export default function AlbumTracksEditor({ tracks, onChange }: AlbumTracksEdito
         </Card>
       ))}
 
-      <Button type="button" variant="outline" onClick={addTrack} className="w-full">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={addTrack}
+        className="w-full"
+      >
         <Plus className="w-4 h-4 mr-2" />
         Add Track
       </Button>

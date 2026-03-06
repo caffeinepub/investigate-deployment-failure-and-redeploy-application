@@ -1,48 +1,54 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import { useInternetIdentity } from './useInternetIdentity';
+import type { Principal } from "@dfinity/principal";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  SongSubmissionInput,
-  SongSubmission,
-  SongStatus,
-  SaveArtistProfileInput,
   ArtistProfile,
-  VerificationStatus,
-  ListenerStatsUpdate,
-  MonthlyListenerStats,
-  UserCategory,
-  PodcastShowInput,
-  PodcastShow,
-  PodcastEpisodeInput,
-  PodcastEpisode,
-  PodcastModerationStatus,
-  SubscriptionPlan,
-  VideoSubmissionInput,
-  VideoSubmission,
-  VideoSubmissionStatus,
-  SongSubmissionEditInput,
-  UserProfile,
+  FeaturedArtist,
+  FeaturedArtistInput,
   InviteCode,
-  RSVP,
+  PodcastEpisode,
+  PodcastEpisodeInput,
+  PodcastShow,
+  PodcastShowInput,
   PublicSongInfo,
-} from '../backend';
-import { Principal } from '@dfinity/principal';
+  RSVP,
+  SaveArtistProfileInput,
+  SongSubmission,
+  SongSubmissionEditInput,
+  SongSubmissionInput,
+  SubscriptionPlan,
+  TopVibingSong,
+  UserCategory,
+  UserProfile,
+  VerificationRequest,
+  VerificationStatus,
+  VideoSubmission,
+  VideoSubmissionInput,
+  VideoSubmissionStatus,
+} from "../backend";
+import { useActor } from "./useActor";
+import { useInternetIdentity } from "./useInternetIdentity";
 
 // ================================
-// USER PROFILE MANAGEMENT
+// USER PROFILE HOOKS
 // ================================
 export function useGetCallerUserProfile() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching: actorFetching } = useActor();
 
-  return useQuery<UserProfile | null>({
-    queryKey: ['currentUserProfile'],
+  const query = useQuery<UserProfile | null>({
+    queryKey: ["currentUserProfile"],
     queryFn: async () => {
-      if (!actor) return null;
+      if (!actor) throw new Error("Actor not available");
       return actor.getCallerUserProfile();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !actorFetching,
     retry: false,
   });
+
+  return {
+    ...query,
+    isLoading: actorFetching || query.isLoading,
+    isFetched: !!actor && query.isFetched,
+  };
 }
 
 export function useSaveCallerUserProfile() {
@@ -51,11 +57,11 @@ export function useSaveCallerUserProfile() {
 
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.saveCallerUserProfile(profile);
+      if (!actor) throw new Error("Actor not available");
+      return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
@@ -67,7 +73,20 @@ export function useIsCurrentUserAdmin() {
   const { actor, isFetching } = useActor();
 
   return useQuery<boolean>({
-    queryKey: ['isCurrentUserAdmin'],
+    queryKey: ["isCurrentUserAdmin"],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerAdmin();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useIsCallerAdmin() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ["isCurrentUserAdmin"],
     queryFn: async () => {
       if (!actor) return false;
       return actor.isCallerAdmin();
@@ -80,272 +99,194 @@ export function useIsCurrentUserAdmin() {
 // PUBLIC SONG INFO (NO AUTH REQUIRED)
 // ================================
 export function useGetSongInfo(songId: string) {
-  const { actor } = useActor();
+  const { actor, isFetching } = useActor();
 
   return useQuery<PublicSongInfo>({
-    queryKey: ['songInfo', songId],
+    queryKey: ["songInfo", songId],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.getSongInfo(songId);
     },
-    enabled: !!actor && !!songId,
+    enabled: !!actor && !isFetching && !!songId,
     retry: false,
   });
 }
 
 // ================================
-// STREAMING LINKS MANAGEMENT
+// ARTIST PROFILE HOOKS
 // ================================
-export function useUpdateSongLinks() {
+export function useGetMyArtistProfiles() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ArtistProfile[]>({
+    queryKey: ["myArtistProfiles"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMyArtistProfiles();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllArtistProfilesForAdmin() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ArtistProfile[]>({
+    queryKey: ["allArtistProfiles"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllArtistProfilesForAdmin();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// Alias used by several components
+export function useGetAllArtistProfiles() {
+  return useGetAllArtistProfilesForAdmin();
+}
+
+// Alias used by AdminUserManagement and AdminVerificationList
+export function useGetAllArtistsWithUserIds() {
+  return useGetAllArtistProfilesForAdmin();
+}
+
+export function useCreateArtistProfile() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: SaveArtistProfileInput) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.createArtistProfile(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myArtistProfiles"] });
+      queryClient.invalidateQueries({ queryKey: ["allArtistProfiles"] });
+    },
+  });
+}
+
+export function useUpdateArtistProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      songId,
-      spotifyLink,
-      appleMusicLink,
-    }: {
-      songId: string;
-      spotifyLink: string | null;
-      appleMusicLink: string | null;
-    }) => {
-      if (!actor) throw new Error('Actor not available');
-      
-      // Get the current submission
-      const submissions = await actor.getAllSubmissionsForAdmin();
-      const submission = submissions.find((s) => s.id === songId);
-      if (!submission) throw new Error('Song not found');
-
-      // Create edit input with updated links
-      const editInput: SongSubmissionEditInput = {
-        songSubmissionId: songId,
-        title: submission.title,
-        releaseType: submission.releaseType,
-        genre: submission.genre,
-        language: submission.language,
-        releaseDate: submission.releaseDate,
-        artworkBlob: submission.artwork,
-        artworkFilename: submission.artworkFilename,
-        artist: submission.artist,
-        featuredArtist: submission.featuredArtist,
-        composer: submission.composer,
-        producer: submission.producer,
-        lyricist: submission.lyricist,
-        audioFile: submission.audioFile,
-        audioFilename: submission.audioFilename,
-        additionalDetails: submission.additionalDetails,
-        discountCode: submission.discountCode,
-        musicVideoLink: submission.musicVideoLink,
-        albumTracks: submission.albumTracks,
-        spotifyLink: spotifyLink ? spotifyLink : undefined,
-        appleMusicLink: appleMusicLink ? appleMusicLink : undefined,
-      };
-
-      await actor.adminEditSubmission(editInput);
+      id,
+      input,
+    }: { id: string; input: SaveArtistProfileInput }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateArtistProfile(id, input);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ["myArtistProfiles"] });
+      queryClient.invalidateQueries({ queryKey: ["allArtistProfiles"] });
     },
   });
 }
 
-// ================================
-// SUBSCRIPTION PLANS
-// ================================
-export function useGetAllSubscriptionPlans() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<SubscriptionPlan[]>({
-    queryKey: ['subscriptionPlans'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllSubscriptionPlans();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useCreateSubscriptionPlan() {
+export function useDeleteArtistProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (plan: SubscriptionPlan) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.createSubscriptionPlan(plan);
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.deleteArtistProfile(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptionPlans'] });
+      queryClient.invalidateQueries({ queryKey: ["myArtistProfiles"] });
+      queryClient.invalidateQueries({ queryKey: ["allArtistProfiles"] });
     },
   });
 }
 
-export function useUpdateSubscriptionPlan() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (plan: SubscriptionPlan) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateSubscriptionPlan(plan);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptionPlans'] });
-    },
-  });
-}
-
-export function useDeleteSubscriptionPlan() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (planName: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.deleteSubscriptionPlan(planName);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptionPlans'] });
-    },
-  });
-}
-
-// ================================
-// VIDEO SUBMISSIONS
-// ================================
-export function useSubmitVideo() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: VideoSubmissionInput) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.submitVideo(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userVideoSubmissions'] });
-    },
-  });
-}
-
-export function useGetUserVideoSubmissions() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<VideoSubmission[]>({
-    queryKey: ['userVideoSubmissions'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getUserVideoSubmissions();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useGetAllVideoSubmissions() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<VideoSubmission[]>({
-    queryKey: ['allVideoSubmissions'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllVideoSubmissions();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useUpdateVideoStatus() {
+export function useAdminEditArtistProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      videoId,
-      status,
-      liveUrl,
-    }: {
-      videoId: string;
-      status: VideoSubmissionStatus;
-      liveUrl: string | null;
-    }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateVideoStatus(videoId, status, liveUrl);
+      id,
+      input,
+    }: { id: string; input: SaveArtistProfileInput }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminEditArtistProfile(id, input);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allVideoSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['userVideoSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ["allArtistProfiles"] });
     },
   });
 }
 
-export function useUpdateVideoSubmission() {
+export function useAdminDeleteArtistProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ input, videoId }: { input: VideoSubmissionInput; videoId: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateVideoSubmission(input, videoId);
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminDeleteArtistProfile(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allVideoSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['userVideoSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ["allArtistProfiles"] });
     },
   });
 }
 
-export function useDeleteVideoSubmission() {
+export function useIsArtistVerified() {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<boolean>({
+    queryKey: ["isArtistVerified", identity?.getPrincipal().toString()],
+    queryFn: async () => {
+      if (!actor || !identity) return false;
+      return actor.isArtistVerified(identity.getPrincipal());
+    },
+    enabled: !!actor && !isFetching && !!identity,
+  });
+}
+
+export function useGetArtistProfileEditingAccessStatus() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ["artistProfileEditingAccess"],
+    queryFn: async () => {
+      if (!actor) return true;
+      return actor.getArtistProfileEditingAccessStatus();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSetArtistProfileEditingAccess() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (videoId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.deleteVideoSubmission(videoId);
+    mutationFn: async (enabled: boolean) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.setArtistProfileEditingAccess(enabled);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allVideoSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['userVideoSubmissions'] });
-    },
-  });
-}
-
-export function useDownloadVideoFile() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (videoId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.downloadVideoFile(videoId);
+      queryClient.invalidateQueries({
+        queryKey: ["artistProfileEditingAccess"],
+      });
     },
   });
 }
 
 // ================================
-// SONG SUBMISSIONS
+// SONG SUBMISSION HOOKS
 // ================================
-export function useSubmitSong() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: SongSubmissionInput) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.submitSong(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
-    },
-  });
-}
-
 export function useGetMySubmissions() {
   const { actor, isFetching } = useActor();
 
   return useQuery<SongSubmission[]>({
-    queryKey: ['mySubmissions'],
+    queryKey: ["mySubmissions"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getMySubmissions();
@@ -358,12 +299,43 @@ export function useGetAllSubmissionsForAdmin() {
   const { actor, isFetching } = useActor();
 
   return useQuery<SongSubmission[]>({
-    queryKey: ['allSubmissions'],
+    queryKey: ["allSubmissions"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllSubmissionsForAdmin();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSubmitSong() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: SongSubmissionInput) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.submitSong(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mySubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["allSubmissions"] });
+    },
+  });
+}
+
+export function useEditSongSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: SongSubmissionEditInput) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.editSongSubmission(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mySubmissions"] });
+    },
   });
 }
 
@@ -379,16 +351,21 @@ export function useAdminUpdateSubmission() {
       adminComment,
     }: {
       id: string;
-      status: SongStatus;
+      status: any;
       adminRemarks: string;
       adminComment: string;
     }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.adminUpdateSubmission(id, status, adminRemarks, adminComment);
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminUpdateSubmission(
+        id,
+        status,
+        adminRemarks,
+        adminComment,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ["allSubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["mySubmissions"] });
     },
   });
 }
@@ -409,27 +386,17 @@ export function useAdminSetSubmissionLive() {
       adminRemarks: string;
       adminComment: string;
     }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.adminSetSubmissionLive(id, liveUrl, adminRemarks, adminComment);
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminSetSubmissionLive(
+        id,
+        liveUrl,
+        adminRemarks,
+        adminComment,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
-    },
-  });
-}
-
-export function useEditSongSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: SongSubmissionEditInput) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.editSongSubmission(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ["allSubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["mySubmissions"] });
     },
   });
 }
@@ -440,12 +407,12 @@ export function useAdminEditSubmission() {
 
   return useMutation({
     mutationFn: async (input: SongSubmissionEditInput) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.adminEditSubmission(input);
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminEditSubmission(input);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
-      queryClient.invalidateQueries({ queryKey: ['mySubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ["allSubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["mySubmissions"] });
     },
   });
 }
@@ -456,188 +423,121 @@ export function useAdminDeleteSubmission() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.adminDeleteSubmission(id);
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminDeleteSubmission(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allSubmissions'] });
+      queryClient.invalidateQueries({ queryKey: ["allSubmissions"] });
+    },
+  });
+}
+
+// Alias for streaming links update (used by AdminManageLinksDialog)
+export function useUpdateSongLinks() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      songId,
+      spotifyLink,
+      appleMusicLink,
+    }: {
+      songId: string;
+      spotifyLink: string | null;
+      appleMusicLink: string | null;
+    }) => {
+      if (!actor) throw new Error("Actor not available");
+      const submissions = await actor.getAllSubmissionsForAdmin();
+      const submission = submissions.find((s) => s.id === songId);
+      if (!submission) throw new Error("Song not found");
+
+      const editInput: SongSubmissionEditInput = {
+        songSubmissionId: songId,
+        title: submission.title,
+        releaseType: submission.releaseType,
+        genre: submission.genre,
+        language: submission.language,
+        releaseDate: submission.releaseDate,
+        artworkBlob: submission.artwork,
+        artworkFilename: submission.artworkFilename,
+        artist: submission.artist,
+        featuredArtist: submission.featuredArtist,
+        composer: submission.composer,
+        producer: submission.producer,
+        lyricist: submission.lyricist,
+        audioFile: submission.audioFile,
+        audioFilename: submission.audioFilename,
+        additionalDetails: submission.additionalDetails,
+        discountCode: submission.discountCode,
+        musicVideoLink: submission.musicVideoLink,
+        albumTracks: submission.albumTracks,
+        spotifyLink: spotifyLink ?? undefined,
+        appleMusicLink: appleMusicLink ?? undefined,
+      };
+
+      return actor.adminEditSubmission(editInput);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allSubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["mySubmissions"] });
     },
   });
 }
 
 // ================================
-// ARTIST PROFILES
+// BLOCKED USER CHECK HOOKS (caller-side)
 // ================================
-export function useCreateArtistProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (input: SaveArtistProfileInput) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.createArtistProfile(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
-    },
-  });
-}
-
-export function useGetMyArtistProfiles() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<ArtistProfile[]>({
-    queryKey: ['myArtistProfiles'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getMyArtistProfiles();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useUpdateArtistProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: SaveArtistProfileInput }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateArtistProfile(id, input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
-    },
-  });
-}
-
-export function useDeleteArtistProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.deleteArtistProfile(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
-    },
-  });
-}
-
-export function useGetAllArtistProfiles() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<ArtistProfile[]>({
-    queryKey: ['allArtistProfiles'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllArtistProfilesForAdmin();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useAdminEditArtistProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: SaveArtistProfileInput }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.adminEditArtistProfile(id, input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
-      queryClient.invalidateQueries({ queryKey: ['myArtistProfiles'] });
-    },
-  });
-}
-
-export function useAdminDeleteArtistProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.adminDeleteArtistProfile(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allArtistProfiles'] });
-    },
-  });
-}
-
-export function useGetAllArtistsWithUserIds() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<ArtistProfile[]>({
-    queryKey: ['allArtistsWithUserIds'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllArtistProfilesForAdmin();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useGetArtistProfileEditingAccessStatus() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<boolean>({
-    queryKey: ['artistProfileEditingAccess'],
-    queryFn: async () => {
-      if (!actor) return true;
-      return actor.getArtistProfileEditingAccessStatus();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useIsArtistVerified() {
+/**
+ * Checks if the current caller is blocked for song submissions.
+ * Uses isUserBlockedSongSubmission with the caller's own principal.
+ * Falls back to false if actor/identity not available.
+ */
+export function useIsCurrentUserBlockedSongSubmission() {
   const { actor, isFetching } = useActor();
   const { identity } = useInternetIdentity();
 
   return useQuery<boolean>({
-    queryKey: ['isArtistVerified', identity?.getPrincipal().toString()],
+    queryKey: ["isCurrentUserBlockedSong", identity?.getPrincipal().toString()],
     queryFn: async () => {
       if (!actor || !identity) return false;
-      return actor.isArtistVerified(identity.getPrincipal());
+      return actor.isUserBlockedSongSubmission(identity.getPrincipal());
     },
-    enabled: !!actor && !!identity && !isFetching,
+    enabled: !!actor && !isFetching && !!identity,
+  });
+}
+
+/**
+ * Checks if the current caller is blocked for podcast submissions.
+ * Uses isUserBlockedPodcastSubmission with the caller's own principal.
+ * Falls back to false if actor/identity not available.
+ */
+export function useIsCurrentUserBlockedPodcastSubmission() {
+  const { actor, isFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<boolean>({
+    queryKey: [
+      "isCurrentUserBlockedPodcast",
+      identity?.getPrincipal().toString(),
+    ],
+    queryFn: async () => {
+      if (!actor || !identity) return false;
+      return actor.isUserBlockedPodcastSubmission(identity.getPrincipal());
+    },
+    enabled: !!actor && !isFetching && !!identity,
   });
 }
 
 // ================================
-// VERIFICATION WORKFLOW
+// VERIFICATION HOOKS
 // ================================
-export function useApplyForVerification() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.applyForVerification();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['isArtistVerified'] });
-      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
-    },
-  });
-}
-
 export function useGetVerificationRequests() {
   const { actor, isFetching } = useActor();
 
-  return useQuery({
-    queryKey: ['verificationRequests'],
+  return useQuery<VerificationRequest[]>({
+    queryKey: ["verificationRequests"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getVerificationRequests();
@@ -646,10 +546,7 @@ export function useGetVerificationRequests() {
   });
 }
 
-// Alias for admin components
-export function useGetVerificationRequestsForAdmin() {
-  return useGetVerificationRequests();
-}
+export const useGetVerificationRequestsForAdmin = useGetVerificationRequests;
 
 export function useUpdateVerificationStatus() {
   const { actor } = useActor();
@@ -665,308 +562,150 @@ export function useUpdateVerificationStatus() {
       status: VerificationStatus;
       expiryExtensionDays: bigint;
     }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateVerificationStatus(verificationId, status, expiryExtensionDays);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['isArtistVerified'] });
-      queryClient.invalidateQueries({ queryKey: ['verifiedArtistStatus'] });
-    },
-  });
-}
-
-// Hook for checking verified artist status (used by VerificationBenefitsSection and VerificationRenewalSection)
-export function useGetVerifiedArtistStatus() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['verifiedArtistStatus', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) return false;
-      return actor.isArtistVerified(identity.getPrincipal());
-    },
-    enabled: !!actor && !!identity && !isFetching,
-  });
-}
-
-// ================================
-// MONTHLY LISTENER STATS
-// ================================
-export function useUpdateMonthlyListenerStats() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ songId, updates }: { songId: string; updates: ListenerStatsUpdate[] }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateMonthlyListenerStats(songId, updates);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['monthlyListenerStats'] });
-      queryClient.invalidateQueries({ queryKey: ['liveSongsForAnalysis'] });
-    },
-  });
-}
-
-export function useGetSongMonthlyListenerStats() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (songId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getSongMonthlyListenerStats(songId);
-    },
-  });
-}
-
-export function useGetLiveSongsForAnalysis() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<SongSubmission[]>({
-    queryKey: ['liveSongsForAnalysis'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getLiveSongsForAnalysis();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useGetMyLiveSongsWithStats() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<Array<{ song: SongSubmission; stats: MonthlyListenerStats[] }>>({
-    queryKey: ['myLiveSongsWithStats', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) return [];
-      const liveSongs = await actor.getLiveSongsForAnalysis();
-      const userSongs = liveSongs.filter((song) => song.submitter.toString() === identity.getPrincipal().toString());
-
-      const songsWithStats = await Promise.all(
-        userSongs.map(async (song) => {
-          const stats = await actor.getSongMonthlyListenerStats(song.id);
-          return { song, stats };
-        })
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateVerificationStatus(
+        verificationId,
+        status,
+        expiryExtensionDays,
       );
-
-      return songsWithStats;
     },
-    enabled: !!actor && !!identity && !isFetching,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["verificationRequests"] });
+    },
   });
 }
 
-// ================================
-// TEAM MEMBER MANAGEMENT
-// ================================
-export function useUpgradeUserToTeamMember() {
+export function useApplyForVerification() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.upgradeUserToTeamMember(user);
+    mutationFn: async () => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.applyForVerification();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
+      queryClient.invalidateQueries({ queryKey: ["verificationRequests"] });
     },
   });
 }
 
-export function useDowngradeTeamMember() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.downgradeTeamMember(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teamMembers'] });
-      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
-    },
-  });
-}
-
-export function useGetAllTeamMembers() {
+// ================================
+// BLOG HOOKS (actor as any — not in typed interface)
+// ================================
+export function useGetBlogPosts() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<Principal[]>({
-    queryKey: ['teamMembers'],
+  return useQuery<any[]>({
+    queryKey: ["blogPosts"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllTeamMembers();
+      return (actor as any).getBlogPosts();
     },
     enabled: !!actor && !isFetching,
   });
 }
 
+export function useCreateBlogPost() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: any) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).createBlogPost(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blogPosts"] });
+    },
+  });
+}
+
+export function useUpdateBlogPost() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, input }: { id: string; input: any }) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).updateBlogPost(id, input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blogPosts"] });
+    },
+  });
+}
+
+export function useDeleteBlogPost() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).deleteBlogPost(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blogPosts"] });
+    },
+  });
+}
+
+export function usePublishBlogPost() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).publishBlogPost(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blogPosts"] });
+    },
+  });
+}
+
 // ================================
-// USER BLOCKING MANAGEMENT
+// COMMUNITY HOOKS (actor as any)
 // ================================
-export function useBlockUserSongSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.blockUserSongSubmission(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserBlockedSong'] });
-    },
-  });
-}
-
-export function useUnblockUserSongSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.unblockUserSongSubmission(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserBlockedSong'] });
-    },
-  });
-}
-
-export function useBlockUserPodcastSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.blockUserPodcastSubmission(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserBlockedPodcast'] });
-    },
-  });
-}
-
-export function useUnblockUserPodcastSubmission() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.unblockUserPodcastSubmission(user);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blockedUsers'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserBlockedPodcast'] });
-    },
-  });
-}
-
-export function useIsUserBlockedSongSubmission() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.isUserBlockedSongSubmission(user);
-    },
-  });
-}
-
-export function useIsUserBlockedPodcastSubmission() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (user: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.isUserBlockedPodcastSubmission(user);
-    },
-  });
-}
-
-// Hooks for checking current user's block status
-export function useIsCurrentUserBlockedSongSubmission() {
+export function useGetCommunityMessages() {
   const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
 
-  return useQuery<boolean>({
-    queryKey: ['currentUserBlockedSong', identity?.getPrincipal().toString()],
+  return useQuery<any[]>({
+    queryKey: ["communityMessages"],
     queryFn: async () => {
-      if (!actor || !identity) return false;
-      return actor.isUserBlockedSongSubmission(identity.getPrincipal());
+      if (!actor) return [];
+      return (actor as any).getCommunityMessages();
     },
-    enabled: !!actor && !!identity && !isFetching,
+    enabled: !!actor && !isFetching,
+    refetchInterval: 5000,
   });
 }
 
-export function useIsCurrentUserBlockedPodcastSubmission() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['currentUserBlockedPodcast', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) return false;
-      return actor.isUserBlockedPodcastSubmission(identity.getPrincipal());
-    },
-    enabled: !!actor && !!identity && !isFetching,
-  });
-}
-
-// ================================
-// USER CATEGORY MANAGEMENT
-// ================================
-export function useUpdateUserCategory() {
+export function useSendCommunityMessage() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, category }: { userId: Principal; category: UserCategory }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.updateUserCategory(userId, category);
+    mutationFn: async (content: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).sendCommunityMessage({ content });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allArtistsWithUserIds'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["communityMessages"] });
     },
   });
 }
 
 // ================================
-// PODCAST SUBMISSIONS
+// PODCAST HOOKS
 // ================================
-export function useCreatePodcastShow() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (input: PodcastShowInput) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.createPodcastShow(input);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['myPodcastShows'] });
-      queryClient.invalidateQueries({ queryKey: ['allPodcasts'] });
-    },
-  });
-}
-
 export function useGetMyPodcastShows() {
   const { actor, isFetching } = useActor();
 
   return useQuery<PodcastShow[]>({
-    queryKey: ['myPodcastShows'],
+    queryKey: ["myPodcastShows"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getMyPodcastShows();
@@ -979,7 +718,7 @@ export function useGetAllPodcasts() {
   const { actor, isFetching } = useActor();
 
   return useQuery<PodcastShow[]>({
-    queryKey: ['allPodcasts'],
+    queryKey: ["allPodcasts"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllPodcasts();
@@ -988,50 +727,31 @@ export function useGetAllPodcasts() {
   });
 }
 
-export function useApprovePodcast() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
+export function useGetAllEpisodes() {
+  const { actor, isFetching } = useActor();
 
-  return useMutation({
-    mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.approvePodcast(id);
+  return useQuery<PodcastEpisode[]>({
+    queryKey: ["allEpisodes"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllEpisodes();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allPodcasts'] });
-      queryClient.invalidateQueries({ queryKey: ['myPodcastShows'] });
-    },
+    enabled: !!actor && !isFetching,
   });
 }
 
-export function useRejectPodcast() {
+export function useCreatePodcastShow() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.rejectPodcast(id);
+    mutationFn: async (input: PodcastShowInput) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.createPodcastShow(input);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allPodcasts'] });
-      queryClient.invalidateQueries({ queryKey: ['myPodcastShows'] });
-    },
-  });
-}
-
-export function useMarkPodcastLive() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, liveLink }: { id: string; liveLink: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.markPodcastLive(id, liveLink);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allPodcasts'] });
-      queryClient.invalidateQueries({ queryKey: ['myPodcastShows'] });
+      queryClient.invalidateQueries({ queryKey: ["myPodcastShows"] });
+      queryClient.invalidateQueries({ queryKey: ["allPodcasts"] });
     },
   });
 }
@@ -1042,36 +762,57 @@ export function useCreatePodcastEpisode() {
 
   return useMutation({
     mutationFn: async (input: PodcastEpisodeInput) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.createPodcastEpisode(input);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['podcastEpisodes'] });
+      queryClient.invalidateQueries({ queryKey: ["allEpisodes"] });
     },
   });
 }
 
-export function useGetEpisodesByShowId() {
+export function useApprovePodcast() {
   const { actor } = useActor();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (showId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getEpisodesByShowId(showId);
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.approvePodcast(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allPodcasts"] });
     },
   });
 }
 
-export function useGetAllEpisodes() {
-  const { actor, isFetching } = useActor();
+export function useRejectPodcast() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
 
-  return useQuery<PodcastEpisode[]>({
-    queryKey: ['allEpisodes'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllEpisodes();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.rejectPodcast(id);
     },
-    enabled: !!actor && !isFetching,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allPodcasts"] });
+    },
+  });
+}
+
+export function useMarkPodcastLive() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, liveLink }: { id: string; liveLink: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.markPodcastLive(id, liveLink);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allPodcasts"] });
+    },
   });
 }
 
@@ -1081,12 +822,11 @@ export function useApproveEpisode() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.approveEpisode(id);
+      if (!actor) throw new Error("Actor not available");
+      return actor.approveEpisode(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allEpisodes'] });
-      queryClient.invalidateQueries({ queryKey: ['podcastEpisodes'] });
+      queryClient.invalidateQueries({ queryKey: ["allEpisodes"] });
     },
   });
 }
@@ -1097,12 +837,11 @@ export function useRejectEpisode() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.rejectEpisode(id);
+      if (!actor) throw new Error("Actor not available");
+      return actor.rejectEpisode(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allEpisodes'] });
-      queryClient.invalidateQueries({ queryKey: ['podcastEpisodes'] });
+      queryClient.invalidateQueries({ queryKey: ["allEpisodes"] });
     },
   });
 }
@@ -1113,18 +852,399 @@ export function useMarkEpisodeLive() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.markEpisodeLive(id);
+      if (!actor) throw new Error("Actor not available");
+      return actor.markEpisodeLive(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allEpisodes'] });
-      queryClient.invalidateQueries({ queryKey: ['podcastEpisodes'] });
+      queryClient.invalidateQueries({ queryKey: ["allEpisodes"] });
     },
   });
 }
 
 // ================================
-// INVITE LINKS / RSVP
+// VIDEO SUBMISSION HOOKS
+// ================================
+export function useGetUserVideoSubmissions() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<VideoSubmission[]>({
+    queryKey: ["userVideoSubmissions"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getUserVideoSubmissions();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllVideoSubmissions() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<VideoSubmission[]>({
+    queryKey: ["allVideoSubmissions"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllVideoSubmissions();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSubmitVideo() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: VideoSubmissionInput) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.submitVideo(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userVideoSubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["allVideoSubmissions"] });
+    },
+  });
+}
+
+export function useUpdateVideoStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      videoId,
+      newStatus,
+      liveUrl,
+    }: {
+      videoId: string;
+      newStatus: VideoSubmissionStatus;
+      liveUrl: string | null;
+    }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateVideoStatus(videoId, newStatus, liveUrl);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allVideoSubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["userVideoSubmissions"] });
+    },
+  });
+}
+
+export function useUpdateVideoSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      input,
+      videoId,
+    }: { input: VideoSubmissionInput; videoId: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateVideoSubmission(input, videoId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allVideoSubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["userVideoSubmissions"] });
+    },
+  });
+}
+
+export function useDeleteVideoSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (videoId: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.deleteVideoSubmission(videoId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allVideoSubmissions"] });
+    },
+  });
+}
+
+export function useDownloadVideoFile() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (videoId: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.downloadVideoFile(videoId);
+    },
+  });
+}
+
+// ================================
+// FEATURED ARTISTS HOOKS
+// ================================
+export function useGetFeaturedArtists() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<FeaturedArtist[]>({
+    queryKey: ["featuredArtists"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getFeaturedArtists();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetActiveFeaturedArtists() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<FeaturedArtist[]>({
+    queryKey: ["activeFeaturedArtists"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getActiveFeaturedArtists();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSetFeaturedArtist() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      slot,
+      data,
+    }: { slot: bigint; data: FeaturedArtistInput }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.setFeaturedArtist(slot, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["featuredArtists"] });
+      queryClient.invalidateQueries({ queryKey: ["activeFeaturedArtists"] });
+    },
+  });
+}
+
+export function useToggleFeaturedArtistSlot() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ slot, active }: { slot: bigint; active: boolean }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.toggleFeaturedArtistSlot(slot, active);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["featuredArtists"] });
+      queryClient.invalidateQueries({ queryKey: ["activeFeaturedArtists"] });
+    },
+  });
+}
+
+// ================================
+// SUBSCRIPTION PLAN HOOKS
+// ================================
+export function useGetAllSubscriptionPlans() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<SubscriptionPlan[]>({
+    queryKey: ["subscriptionPlans"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllSubscriptionPlans();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useCreateSubscriptionPlan() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (plan: SubscriptionPlan) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.createSubscriptionPlan(plan);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscriptionPlans"] });
+    },
+  });
+}
+
+export function useUpdateSubscriptionPlan() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (plan: SubscriptionPlan) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateSubscriptionPlan(plan);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscriptionPlans"] });
+    },
+  });
+}
+
+export function useDeleteSubscriptionPlan() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (planName: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.deleteSubscriptionPlan(planName);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscriptionPlans"] });
+    },
+  });
+}
+
+// ================================
+// USER MANAGEMENT HOOKS
+// ================================
+export function useUpdateUserCategory() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      newCategory,
+    }: { userId: Principal; newCategory: UserCategory }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateUserCategory(userId, newCategory);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allArtistProfiles"] });
+    },
+  });
+}
+
+export function useBlockUserSongSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.blockUserSongSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+    },
+  });
+}
+
+export function useUnblockUserSongSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.unblockUserSongSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+    },
+  });
+}
+
+export function useBlockUserPodcastSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.blockUserPodcastSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+    },
+  });
+}
+
+export function useUnblockUserPodcastSubmission() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.unblockUserPodcastSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blockedUsers"] });
+    },
+  });
+}
+
+export function useGetAllBlockedUsers() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Principal[]>({
+    queryKey: ["blockedUsers"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllBlockedUsersAdmin();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// ================================
+// ADMIN ROLE MANAGEMENT HOOKS
+// ================================
+export function usePromoteToAdmin() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (target: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.promoteToAdmin(target);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
+    },
+  });
+}
+
+export function useDemoteFromAdmin() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (target: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.demoteFromAdmin(target);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
+    },
+  });
+}
+
+// Alias
+export const useDemoteAdmin = useDemoteFromAdmin;
+
+export function useListAdmins() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Principal[]>({
+    queryKey: ["admins"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.listAdmins();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// ================================
+// INVITE LINKS HOOKS
 // ================================
 export function useGenerateInviteCode() {
   const { actor } = useActor();
@@ -1132,27 +1252,25 @@ export function useGenerateInviteCode() {
 
   return useMutation({
     mutationFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.generateInviteCode();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inviteCodes'] });
+      queryClient.invalidateQueries({ queryKey: ["inviteCodes"] });
     },
   });
 }
 
-export function useSubmitRSVP() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
+export function useGetInviteCodes() {
+  const { actor, isFetching } = useActor();
 
-  return useMutation({
-    mutationFn: async ({ name, attending, inviteCode }: { name: string; attending: boolean; inviteCode: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.submitRSVP(name, attending, inviteCode);
+  return useQuery<InviteCode[]>({
+    queryKey: ["inviteCodes"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getInviteCodes();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rsvps'] });
-    },
+    enabled: !!actor && !isFetching,
   });
 }
 
@@ -1160,7 +1278,7 @@ export function useGetAllRSVPs() {
   const { actor, isFetching } = useActor();
 
   return useQuery<RSVP[]>({
-    queryKey: ['rsvps'],
+    queryKey: ["rsvps"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllRSVPs();
@@ -1169,15 +1287,484 @@ export function useGetAllRSVPs() {
   });
 }
 
-export function useGetInviteCodes() {
+// ================================
+// TOP VIBING SONGS HOOKS
+// ================================
+export function useGetAllTopVibingSongs() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<InviteCode[]>({
-    queryKey: ['inviteCodes'],
+  return useQuery<TopVibingSong[]>({
+    queryKey: ["allTopVibingSongs"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getInviteCodes();
+      return actor.getAllTopVibingSongs();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetRankedTopVibingSongs() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<TopVibingSong[]>({
+    queryKey: ["rankedTopVibingSongs"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getRankedTopVibingSongs();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAddTopVibingSong() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (song: TopVibingSong) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.addTopVibingSong(song);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allTopVibingSongs"] });
+      queryClient.invalidateQueries({ queryKey: ["rankedTopVibingSongs"] });
+    },
+  });
+}
+
+export function useUpdateTopVibingSong() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (song: TopVibingSong) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateTopVibingSong(song);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allTopVibingSongs"] });
+      queryClient.invalidateQueries({ queryKey: ["rankedTopVibingSongs"] });
+    },
+  });
+}
+
+export function useDeleteTopVibingSong() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.deleteTopVibingSong(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allTopVibingSongs"] });
+      queryClient.invalidateQueries({ queryKey: ["rankedTopVibingSongs"] });
+    },
+  });
+}
+
+export function useReorderTopVibingSongs() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ids: bigint[]) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.reorderTopVibingSongs(ids);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allTopVibingSongs"] });
+      queryClient.invalidateQueries({ queryKey: ["rankedTopVibingSongs"] });
+    },
+  });
+}
+
+// ================================
+// MONTHLY LISTENER STATS HOOKS
+// ================================
+export function useGetLiveSongsForAnalysis() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<SongSubmission[]>({
+    queryKey: ["liveSongsForAnalysis"],
+    queryFn: async () => {
+      if (!actor) return [];
+      const allSongs = await actor.getMySubmissions();
+      return allSongs.filter((s) => s.status === ("live" as any));
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetMyLiveSongsWithStats() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<{ song: SongSubmission; stats: any[] }[]>({
+    queryKey: ["myLiveSongsWithStats"],
+    queryFn: async () => {
+      if (!actor) return [];
+      const allSongs = await actor.getMySubmissions();
+      const liveSongs = allSongs.filter((s) => s.status === ("live" as any));
+      return liveSongs.map((song) => ({ song, stats: [] }));
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateMonthlyListenerStats() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      songId,
+      stats,
+    }: {
+      songId: string;
+      stats: { year: number; month: number; value: number }[];
+    }) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).updateMonthlyListenerStats(songId, stats);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myLiveSongsWithStats"] });
+    },
+  });
+}
+
+/**
+ * Fetches monthly listener stats for a specific song (admin use).
+ * Returns an array of { month, year, value } objects.
+ */
+export function useGetSongMonthlyListenerStats() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (
+      songId: string,
+    ): Promise<{ month: number; year: number; value: number }[]> => {
+      if (!actor) throw new Error("Actor not available");
+      const result = await (actor as any).getSongMonthlyListenerStats(songId);
+      if (!result) return [];
+      // Normalize bigint fields to number for display
+      return (result as any[]).map((s: any) => ({
+        month: Number(s.month),
+        year: Number(s.year),
+        value: Number(s.value),
+      }));
+    },
+  });
+}
+
+// ================================
+// ANNOUNCEMENT HOOKS (actor as any)
+// ================================
+export function useGetAnnouncement() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<string>({
+    queryKey: ["announcement"],
+    queryFn: async () => {
+      if (!actor) return "";
+      return (actor as any).getAnnouncement();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSetAnnouncement() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (text: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).setAnnouncement(text);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcement"] });
+    },
+  });
+}
+
+// ================================
+// FEE MANAGEMENT HOOKS (actor as any)
+// ================================
+export function useGetFees() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<{ distributionFee: number; annualMaintenanceFee: number }>({
+    queryKey: ["fees"],
+    queryFn: async () => {
+      if (!actor) return { distributionFee: 0, annualMaintenanceFee: 0 };
+      return (actor as any).getFees();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSetFees() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (fees: {
+      distributionFee: number;
+      annualMaintenanceFee: number;
+    }) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).setFees(fees);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fees"] });
+    },
+  });
+}
+
+// ================================
+// SUPPORT REQUEST HOOKS (actor as any)
+// ================================
+export function useGetMySupportRequests() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<any[]>({
+    queryKey: ["mySupportRequests"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return (actor as any).getMySupportRequests();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllSupportRequests() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<any[]>({
+    queryKey: ["allSupportRequests"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return (actor as any).getAllSupportRequests();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSubmitSupportRequest() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: any) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).submitSupportRequest(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mySupportRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["allSupportRequests"] });
+    },
+  });
+}
+
+export function useUpdateSupportRequest() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: any) => {
+      if (!actor) throw new Error("Actor not available");
+      return (actor as any).updateSupportRequest(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allSupportRequests"] });
+    },
+  });
+}
+
+// ================================
+// CHAT HOOKS (localStorage-based, no backend required)
+// ================================
+
+export interface ChatMessage {
+  id: string;
+  threadId: string;
+  senderName: string;
+  text: string;
+  isAdminReply: boolean;
+  timestamp: number;
+  isRead: boolean;
+}
+
+export interface ChatThread {
+  id: string;
+  userName: string;
+  lastMessage: string;
+  lastMessageTime: number;
+  unreadCount: number;
+  messages: ChatMessage[];
+}
+
+const CHAT_STORAGE_KEY = "itmp_chat_threads";
+
+function getChatThreads(): ChatThread[] {
+  try {
+    const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveChatThreads(threads: ChatThread[]): void {
+  localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(threads));
+}
+
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function useGetChatThreads() {
+  return useQuery<ChatThread[]>({
+    queryKey: ["chatThreads"],
+    queryFn: async () => getChatThreads(),
+    refetchInterval: 5000,
+  });
+}
+
+export function useGetThreadMessages(threadId: string) {
+  return useQuery<ChatMessage[]>({
+    queryKey: ["threadMessages", threadId],
+    queryFn: async () => {
+      if (!threadId) return [];
+      const threads = getChatThreads();
+      const thread = threads.find((t) => t.id === threadId);
+      return thread ? thread.messages : [];
+    },
+    enabled: !!threadId,
+    refetchInterval: 5000,
+  });
+}
+
+export function useSendUserMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      threadId,
+      userName,
+      text,
+    }: {
+      threadId: string;
+      userName: string;
+      text: string;
+    }) => {
+      const threads = getChatThreads();
+      const existingIndex = threads.findIndex((t) => t.id === threadId);
+
+      const newMessage: ChatMessage = {
+        id: generateId(),
+        threadId,
+        senderName: userName,
+        text,
+        isAdminReply: false,
+        timestamp: Date.now(),
+        isRead: false,
+      };
+
+      if (existingIndex >= 0) {
+        threads[existingIndex].messages.push(newMessage);
+        threads[existingIndex].lastMessage = text;
+        threads[existingIndex].lastMessageTime = Date.now();
+        threads[existingIndex].unreadCount += 1;
+      } else {
+        const newThread: ChatThread = {
+          id: threadId,
+          userName,
+          lastMessage: text,
+          lastMessageTime: Date.now(),
+          unreadCount: 1,
+          messages: [newMessage],
+        };
+        threads.push(newThread);
+      }
+
+      saveChatThreads(threads);
+      return newMessage;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["chatThreads"] });
+      queryClient.invalidateQueries({
+        queryKey: ["threadMessages", variables.threadId],
+      });
+    },
+  });
+}
+
+export function useSendAdminReply() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      threadId,
+      text,
+    }: {
+      threadId: string;
+      text: string;
+    }) => {
+      const threads = getChatThreads();
+      const threadIndex = threads.findIndex((t) => t.id === threadId);
+
+      if (threadIndex < 0) throw new Error("Thread not found");
+
+      const newMessage: ChatMessage = {
+        id: generateId(),
+        threadId,
+        senderName: "Admin",
+        text,
+        isAdminReply: true,
+        timestamp: Date.now(),
+        isRead: true,
+      };
+
+      threads[threadIndex].messages.push(newMessage);
+      threads[threadIndex].lastMessage = text;
+      threads[threadIndex].lastMessageTime = Date.now();
+
+      saveChatThreads(threads);
+      return newMessage;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["chatThreads"] });
+      queryClient.invalidateQueries({
+        queryKey: ["threadMessages", variables.threadId],
+      });
+    },
+  });
+}
+
+export function useMarkThreadRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (threadId: string) => {
+      const threads = getChatThreads();
+      const threadIndex = threads.findIndex((t) => t.id === threadId);
+
+      if (threadIndex >= 0) {
+        threads[threadIndex].unreadCount = 0;
+        threads[threadIndex].messages = threads[threadIndex].messages.map(
+          (m) => ({
+            ...m,
+            isRead: true,
+          }),
+        );
+        saveChatThreads(threads);
+      }
+    },
+    onSuccess: (_data, threadId) => {
+      queryClient.invalidateQueries({ queryKey: ["chatThreads"] });
+      queryClient.invalidateQueries({ queryKey: ["threadMessages", threadId] });
+    },
   });
 }

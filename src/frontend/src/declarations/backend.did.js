@@ -19,6 +19,16 @@ export const _CaffeineStorageRefillResult = IDL.Record({
   'success' : IDL.Opt(IDL.Bool),
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
+export const TopVibingSong = IDL.Record({
+  'id' : IDL.Nat,
+  'title' : IDL.Text,
+  'streamingLink' : IDL.Text,
+  'tagline' : IDL.Opt(IDL.Text),
+  'rank' : IDL.Nat,
+  'artworkUrl' : IDL.Text,
+  'genre' : IDL.Text,
+  'artistName' : IDL.Text,
+});
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const SaveArtistProfileInput = IDL.Record({
   'isApproved' : IDL.Bool,
@@ -152,6 +162,19 @@ export const SubscriptionPlan = IDL.Record({
   'pricePerYear' : IDL.Nat,
   'benefits' : IDL.Vec(IDL.Text),
   'planName' : IDL.Text,
+});
+export const FeaturedArtistSong = IDL.Record({
+  'title' : IDL.Text,
+  'link' : IDL.Text,
+});
+export const FeaturedArtist = IDL.Record({
+  'id' : IDL.Nat,
+  'aboutBlurb' : IDL.Text,
+  'photoUrl' : IDL.Text,
+  'isActive' : IDL.Bool,
+  'songs' : IDL.Vec(FeaturedArtistSong),
+  'slotIndex' : IDL.Nat,
+  'artistName' : IDL.Text,
 });
 export const ArtistProfile = IDL.Record({
   'id' : IDL.Text,
@@ -303,11 +326,6 @@ export const PublicSongInfo = IDL.Record({
   'releaseDate' : Time,
   'featuredArtist' : IDL.Text,
 });
-export const MonthlyListenerStats = IDL.Record({
-  'month' : IDL.Nat,
-  'value' : IDL.Nat,
-  'year' : IDL.Nat,
-});
 export const StripeSessionStatus = IDL.Variant({
   'completed' : IDL.Record({
     'userPrincipal' : IDL.Opt(IDL.Text),
@@ -337,6 +355,13 @@ export const ApprovalStatus = IDL.Variant({
 export const UserApprovalInfo = IDL.Record({
   'status' : ApprovalStatus,
   'principal' : IDL.Principal,
+});
+export const FeaturedArtistInput = IDL.Record({
+  'aboutBlurb' : IDL.Text,
+  'photoUrl' : IDL.Text,
+  'isActive' : IDL.Bool,
+  'songs' : IDL.Vec(FeaturedArtistSong),
+  'artistName' : IDL.Text,
 });
 export const StripeConfiguration = IDL.Record({
   'allowedCountries' : IDL.Vec(IDL.Text),
@@ -391,11 +416,6 @@ export const TransformationOutput = IDL.Record({
   'body' : IDL.Vec(IDL.Nat8),
   'headers' : IDL.Vec(http_header),
 });
-export const ListenerStatsUpdate = IDL.Record({
-  'month' : IDL.Nat,
-  'value' : IDL.Nat,
-  'year' : IDL.Nat,
-});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -425,6 +445,7 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addTopVibingSong' : IDL.Func([TopVibingSong], [IDL.Nat], []),
   'adminDeleteArtistProfile' : IDL.Func([IDL.Text], [], []),
   'adminDeleteSubmission' : IDL.Func([IDL.Text], [], []),
   'adminEditArtistProfile' : IDL.Func(
@@ -460,7 +481,9 @@ export const idlService = IDL.Service({
   'createSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
   'deleteArtistProfile' : IDL.Func([IDL.Text], [], []),
   'deleteSubscriptionPlan' : IDL.Func([IDL.Text], [], []),
+  'deleteTopVibingSong' : IDL.Func([IDL.Nat], [], []),
   'deleteVideoSubmission' : IDL.Func([IDL.Text], [], []),
+  'demoteFromAdmin' : IDL.Func([IDL.Principal], [], []),
   'doesUserHaveArtistProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Bool],
@@ -470,6 +493,11 @@ export const idlService = IDL.Service({
   'downloadVideoFile' : IDL.Func([IDL.Text], [ExternalBlob], []),
   'editSongSubmission' : IDL.Func([SongSubmissionEditInput], [], []),
   'generateInviteCode' : IDL.Func([], [IDL.Text], []),
+  'getActiveFeaturedArtists' : IDL.Func(
+      [],
+      [IDL.Vec(FeaturedArtist)],
+      ['query'],
+    ),
   'getAllArtistProfileOwnersForAdmin' : IDL.Func(
       [],
       [IDL.Vec(IDL.Principal)],
@@ -497,6 +525,7 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getAllTeamMembers' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+  'getAllTopVibingSongs' : IDL.Func([], [IDL.Vec(TopVibingSong)], ['query']),
   'getAllVideoSubmissions' : IDL.Func(
       [],
       [IDL.Vec(VideoSubmission)],
@@ -525,12 +554,8 @@ export const idlService = IDL.Service({
       [IDL.Vec(PodcastEpisode)],
       ['query'],
     ),
+  'getFeaturedArtists' : IDL.Func([], [IDL.Vec(FeaturedArtist)], ['query']),
   'getInviteCodes' : IDL.Func([], [IDL.Vec(InviteCode)], ['query']),
-  'getLiveSongsForAnalysis' : IDL.Func(
-      [],
-      [IDL.Vec(SongSubmission)],
-      ['query'],
-    ),
   'getMyArtistProfiles' : IDL.Func([], [IDL.Vec(ArtistProfile)], ['query']),
   'getMyEpisodes' : IDL.Func([IDL.Text], [IDL.Vec(PodcastEpisode)], ['query']),
   'getMyPodcastShows' : IDL.Func([], [IDL.Vec(PodcastShow)], ['query']),
@@ -540,13 +565,10 @@ export const idlService = IDL.Service({
       [IDL.Vec(PodcastShow)],
       ['query'],
     ),
+  'getRankedTopVibingSongs' : IDL.Func([], [IDL.Vec(TopVibingSong)], ['query']),
   'getSongInfo' : IDL.Func([IDL.Text], [PublicSongInfo], ['query']),
-  'getSongMonthlyListenerStats' : IDL.Func(
-      [IDL.Text],
-      [IDL.Vec(MonthlyListenerStats)],
-      ['query'],
-    ),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+  'getTopVibingSong' : IDL.Func([IDL.Nat], [TopVibingSong], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -594,21 +616,26 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'isUserTeamMember' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
+  'listAdmins' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
   'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
   'markEpisodeLive' : IDL.Func([IDL.Text], [], []),
   'markPodcastLive' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'promoteToAdmin' : IDL.Func([IDL.Principal], [], []),
   'rejectEpisode' : IDL.Func([IDL.Text], [], []),
   'rejectPodcast' : IDL.Func([IDL.Text], [], []),
   'removeWebsiteLogo' : IDL.Func([], [], []),
+  'reorderTopVibingSongs' : IDL.Func([IDL.Vec(IDL.Nat)], [], []),
   'requestApproval' : IDL.Func([], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
   'setArtistProfileEditingAccess' : IDL.Func([IDL.Bool], [], []),
+  'setFeaturedArtist' : IDL.Func([IDL.Nat, FeaturedArtistInput], [], []),
   'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
   'setWebsiteLogo' : IDL.Func([ExternalBlob], [], []),
   'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
   'submitSong' : IDL.Func([SongSubmissionInput], [IDL.Text], []),
   'submitVideo' : IDL.Func([VideoSubmissionInput], [IDL.Text], []),
+  'toggleFeaturedArtistSlot' : IDL.Func([IDL.Nat, IDL.Bool], [], []),
   'transform' : IDL.Func(
       [TransformationInput],
       [TransformationOutput],
@@ -617,12 +644,8 @@ export const idlService = IDL.Service({
   'unblockUserPodcastSubmission' : IDL.Func([IDL.Principal], [], []),
   'unblockUserSongSubmission' : IDL.Func([IDL.Principal], [], []),
   'updateArtistProfile' : IDL.Func([IDL.Text, SaveArtistProfileInput], [], []),
-  'updateMonthlyListenerStats' : IDL.Func(
-      [IDL.Text, IDL.Vec(ListenerStatsUpdate)],
-      [],
-      [],
-    ),
   'updateSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
+  'updateTopVibingSong' : IDL.Func([TopVibingSong], [], []),
   'updateUserCategory' : IDL.Func([IDL.Principal, UserCategory], [], []),
   'updateVerificationStatus' : IDL.Func(
       [IDL.Text, VerificationStatus, IDL.Nat],
@@ -651,6 +674,16 @@ export const idlFactory = ({ IDL }) => {
   const _CaffeineStorageRefillResult = IDL.Record({
     'success' : IDL.Opt(IDL.Bool),
     'topped_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const TopVibingSong = IDL.Record({
+    'id' : IDL.Nat,
+    'title' : IDL.Text,
+    'streamingLink' : IDL.Text,
+    'tagline' : IDL.Opt(IDL.Text),
+    'rank' : IDL.Nat,
+    'artworkUrl' : IDL.Text,
+    'genre' : IDL.Text,
+    'artistName' : IDL.Text,
   });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
   const SaveArtistProfileInput = IDL.Record({
@@ -782,6 +815,19 @@ export const idlFactory = ({ IDL }) => {
     'pricePerYear' : IDL.Nat,
     'benefits' : IDL.Vec(IDL.Text),
     'planName' : IDL.Text,
+  });
+  const FeaturedArtistSong = IDL.Record({
+    'title' : IDL.Text,
+    'link' : IDL.Text,
+  });
+  const FeaturedArtist = IDL.Record({
+    'id' : IDL.Nat,
+    'aboutBlurb' : IDL.Text,
+    'photoUrl' : IDL.Text,
+    'isActive' : IDL.Bool,
+    'songs' : IDL.Vec(FeaturedArtistSong),
+    'slotIndex' : IDL.Nat,
+    'artistName' : IDL.Text,
   });
   const ArtistProfile = IDL.Record({
     'id' : IDL.Text,
@@ -930,11 +976,6 @@ export const idlFactory = ({ IDL }) => {
     'releaseDate' : Time,
     'featuredArtist' : IDL.Text,
   });
-  const MonthlyListenerStats = IDL.Record({
-    'month' : IDL.Nat,
-    'value' : IDL.Nat,
-    'year' : IDL.Nat,
-  });
   const StripeSessionStatus = IDL.Variant({
     'completed' : IDL.Record({
       'userPrincipal' : IDL.Opt(IDL.Text),
@@ -964,6 +1005,13 @@ export const idlFactory = ({ IDL }) => {
   const UserApprovalInfo = IDL.Record({
     'status' : ApprovalStatus,
     'principal' : IDL.Principal,
+  });
+  const FeaturedArtistInput = IDL.Record({
+    'aboutBlurb' : IDL.Text,
+    'photoUrl' : IDL.Text,
+    'isActive' : IDL.Bool,
+    'songs' : IDL.Vec(FeaturedArtistSong),
+    'artistName' : IDL.Text,
   });
   const StripeConfiguration = IDL.Record({
     'allowedCountries' : IDL.Vec(IDL.Text),
@@ -1015,11 +1063,6 @@ export const idlFactory = ({ IDL }) => {
     'body' : IDL.Vec(IDL.Nat8),
     'headers' : IDL.Vec(http_header),
   });
-  const ListenerStatsUpdate = IDL.Record({
-    'month' : IDL.Nat,
-    'value' : IDL.Nat,
-    'year' : IDL.Nat,
-  });
   
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -1049,6 +1092,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addTopVibingSong' : IDL.Func([TopVibingSong], [IDL.Nat], []),
     'adminDeleteArtistProfile' : IDL.Func([IDL.Text], [], []),
     'adminDeleteSubmission' : IDL.Func([IDL.Text], [], []),
     'adminEditArtistProfile' : IDL.Func(
@@ -1084,7 +1128,9 @@ export const idlFactory = ({ IDL }) => {
     'createSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
     'deleteArtistProfile' : IDL.Func([IDL.Text], [], []),
     'deleteSubscriptionPlan' : IDL.Func([IDL.Text], [], []),
+    'deleteTopVibingSong' : IDL.Func([IDL.Nat], [], []),
     'deleteVideoSubmission' : IDL.Func([IDL.Text], [], []),
+    'demoteFromAdmin' : IDL.Func([IDL.Principal], [], []),
     'doesUserHaveArtistProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Bool],
@@ -1094,6 +1140,11 @@ export const idlFactory = ({ IDL }) => {
     'downloadVideoFile' : IDL.Func([IDL.Text], [ExternalBlob], []),
     'editSongSubmission' : IDL.Func([SongSubmissionEditInput], [], []),
     'generateInviteCode' : IDL.Func([], [IDL.Text], []),
+    'getActiveFeaturedArtists' : IDL.Func(
+        [],
+        [IDL.Vec(FeaturedArtist)],
+        ['query'],
+      ),
     'getAllArtistProfileOwnersForAdmin' : IDL.Func(
         [],
         [IDL.Vec(IDL.Principal)],
@@ -1129,6 +1180,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getAllTeamMembers' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+    'getAllTopVibingSongs' : IDL.Func([], [IDL.Vec(TopVibingSong)], ['query']),
     'getAllVideoSubmissions' : IDL.Func(
         [],
         [IDL.Vec(VideoSubmission)],
@@ -1157,12 +1209,8 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(PodcastEpisode)],
         ['query'],
       ),
+    'getFeaturedArtists' : IDL.Func([], [IDL.Vec(FeaturedArtist)], ['query']),
     'getInviteCodes' : IDL.Func([], [IDL.Vec(InviteCode)], ['query']),
-    'getLiveSongsForAnalysis' : IDL.Func(
-        [],
-        [IDL.Vec(SongSubmission)],
-        ['query'],
-      ),
     'getMyArtistProfiles' : IDL.Func([], [IDL.Vec(ArtistProfile)], ['query']),
     'getMyEpisodes' : IDL.Func(
         [IDL.Text],
@@ -1176,13 +1224,14 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(PodcastShow)],
         ['query'],
       ),
-    'getSongInfo' : IDL.Func([IDL.Text], [PublicSongInfo], ['query']),
-    'getSongMonthlyListenerStats' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(MonthlyListenerStats)],
+    'getRankedTopVibingSongs' : IDL.Func(
+        [],
+        [IDL.Vec(TopVibingSong)],
         ['query'],
       ),
+    'getSongInfo' : IDL.Func([IDL.Text], [PublicSongInfo], ['query']),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+    'getTopVibingSong' : IDL.Func([IDL.Nat], [TopVibingSong], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -1230,21 +1279,26 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'isUserTeamMember' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
+    'listAdmins' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
     'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
     'markEpisodeLive' : IDL.Func([IDL.Text], [], []),
     'markPodcastLive' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'promoteToAdmin' : IDL.Func([IDL.Principal], [], []),
     'rejectEpisode' : IDL.Func([IDL.Text], [], []),
     'rejectPodcast' : IDL.Func([IDL.Text], [], []),
     'removeWebsiteLogo' : IDL.Func([], [], []),
+    'reorderTopVibingSongs' : IDL.Func([IDL.Vec(IDL.Nat)], [], []),
     'requestApproval' : IDL.Func([], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
     'setArtistProfileEditingAccess' : IDL.Func([IDL.Bool], [], []),
+    'setFeaturedArtist' : IDL.Func([IDL.Nat, FeaturedArtistInput], [], []),
     'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
     'setWebsiteLogo' : IDL.Func([ExternalBlob], [], []),
     'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
     'submitSong' : IDL.Func([SongSubmissionInput], [IDL.Text], []),
     'submitVideo' : IDL.Func([VideoSubmissionInput], [IDL.Text], []),
+    'toggleFeaturedArtistSlot' : IDL.Func([IDL.Nat, IDL.Bool], [], []),
     'transform' : IDL.Func(
         [TransformationInput],
         [TransformationOutput],
@@ -1257,12 +1311,8 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
-    'updateMonthlyListenerStats' : IDL.Func(
-        [IDL.Text, IDL.Vec(ListenerStatsUpdate)],
-        [],
-        [],
-      ),
     'updateSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
+    'updateTopVibingSong' : IDL.Func([TopVibingSong], [], []),
     'updateUserCategory' : IDL.Func([IDL.Principal, UserCategory], [], []),
     'updateVerificationStatus' : IDL.Func(
         [IDL.Text, VerificationStatus, IDL.Nat],

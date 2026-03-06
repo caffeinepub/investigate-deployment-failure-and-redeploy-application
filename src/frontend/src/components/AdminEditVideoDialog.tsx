@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useUpdateVideoSubmission } from '../hooks/useQueries';
-import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { VideoSubmission, VideoSubmissionInput } from '../backend';
-import { Loader2, Save } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Save } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import type { VideoSubmission, VideoSubmissionInput } from "../backend";
+import { useUpdateVideoSubmission } from "../hooks/useQueries";
+import { fileToExternalBlob } from "../utils/fileToExternalBlob";
 
 interface AdminEditVideoDialogProps {
   video: VideoSubmission | null;
@@ -29,10 +29,10 @@ export default function AdminEditVideoDialog({
 }: AdminEditVideoDialogProps) {
   const updateVideo = useUpdateVideoSubmission();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [tags, setTags] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [artworkFile, setArtworkFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -47,7 +47,7 @@ export default function AdminEditVideoDialog({
       setTitle(video.title);
       setDescription(video.description);
       setCategory(video.category);
-      setTags(video.tags.join(', '));
+      setTags(video.tags.join(", "));
     }
   }, [video]);
 
@@ -56,15 +56,15 @@ export default function AdminEditVideoDialog({
 
     // Validation
     if (!title.trim()) {
-      toast.error('Title is required');
+      toast.error("Title is required");
       return;
     }
     if (!description.trim()) {
-      toast.error('Description is required');
+      toast.error("Description is required");
       return;
     }
     if (!category.trim()) {
-      toast.error('Category is required');
+      toast.error("Category is required");
       return;
     }
 
@@ -94,7 +94,7 @@ export default function AdminEditVideoDialog({
       }
 
       const tagArray = tags
-        .split(',')
+        .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
 
@@ -111,8 +111,8 @@ export default function AdminEditVideoDialog({
       await updateVideo.mutateAsync({ input, videoId: video.id });
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Update error:', error);
-      toast.error(error.message || 'Failed to update video');
+      console.error("Update error:", error);
+      toast.error(error.message || "Failed to update video");
     } finally {
       setIsUploading(false);
     }
@@ -233,7 +233,10 @@ export default function AdminEditVideoDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isUploading || updateVideo.isPending}>
+          <Button
+            onClick={handleSave}
+            disabled={isUploading || updateVideo.isPending}
+          >
             {isUploading || updateVideo.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

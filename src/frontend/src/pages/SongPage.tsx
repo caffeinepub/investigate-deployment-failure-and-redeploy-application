@@ -1,10 +1,10 @@
-import { useParams } from '@tanstack/react-router';
-import { useGetSongInfo } from '../hooks/useQueries';
-import StreamingPlatformButton from '../components/StreamingPlatformButton';
-import { Music } from 'lucide-react';
+import { useParams } from "@tanstack/react-router";
+import { Music } from "lucide-react";
+import StreamingPlatformButton from "../components/StreamingPlatformButton";
+import { useGetSongInfo } from "../hooks/useQueries";
 
 export default function SongPage() {
-  const { songId } = useParams({ from: '/song/$songId' });
+  const { songId } = useParams({ from: "/song/$songId" });
   const { data: songInfo, isLoading, error } = useGetSongInfo(songId);
 
   if (isLoading) {
@@ -23,7 +23,9 @@ export default function SongPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 p-4">
         <div className="text-center space-y-4 max-w-md">
           <Music className="w-16 h-16 mx-auto text-muted-foreground" />
-          <h1 className="text-2xl font-bold text-foreground">Song Not Available</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Song Not Available
+          </h1>
           <p className="text-muted-foreground">
             This song is not currently available for public viewing.
           </p>
@@ -45,7 +47,8 @@ export default function SongPage() {
               alt={songInfo.title}
               className="w-full h-full object-cover"
               onError={(e) => {
-                e.currentTarget.src = '/assets/generated/default-artwork.dim_300x300.png';
+                e.currentTarget.src =
+                  "/assets/generated/default-artwork.dim_300x300.png";
               }}
             />
           </div>
@@ -53,16 +56,22 @@ export default function SongPage() {
           {/* Song Info */}
           <div className="p-8 space-y-6">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-foreground">{songInfo.title}</h1>
+              <h1 className="text-3xl font-bold text-foreground">
+                {songInfo.title}
+              </h1>
               <p className="text-xl text-muted-foreground">{songInfo.artist}</p>
               {songInfo.featuredArtist && (
-                <p className="text-lg text-muted-foreground">ft. {songInfo.featuredArtist}</p>
+                <p className="text-lg text-muted-foreground">
+                  ft. {songInfo.featuredArtist}
+                </p>
               )}
             </div>
 
             {/* Streaming Platform Links */}
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">Listen Now</h2>
+              <h2 className="text-lg font-semibold text-foreground">
+                Listen Now
+              </h2>
               <div className="flex flex-col gap-3">
                 {songInfo.spotifyLink && (
                   <StreamingPlatformButton
@@ -94,7 +103,9 @@ export default function SongPage() {
               <div className="flex justify-between">
                 <span>Release Date:</span>
                 <span className="font-medium">
-                  {new Date(Number(songInfo.releaseDate / BigInt(1000000))).toLocaleDateString()}
+                  {new Date(
+                    Number(songInfo.releaseDate / BigInt(1000000)),
+                  ).toLocaleDateString()}
                 </span>
               </div>
             </div>

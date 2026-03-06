@@ -1,22 +1,24 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useGetMySubmissions } from '../hooks/useQueries';
-import { Loader2, Music, Calendar, ExternalLink, Edit } from 'lucide-react';
-import { SongStatus } from '../backend';
-import UserEditSubmissionDialog from './UserEditSubmissionDialog';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Edit, ExternalLink, Loader2, Music } from "lucide-react";
+import { useState } from "react";
+import { SongStatus } from "../backend";
+import { useGetMySubmissions } from "../hooks/useQueries";
+import UserEditSubmissionDialog from "./UserEditSubmissionDialog";
 
 export default function UserSubmissionsList() {
   const { data: submissions, isLoading } = useGetMySubmissions();
-  const [editingSubmission, setEditingSubmission] = useState<string | null>(null);
+  const [editingSubmission, setEditingSubmission] = useState<string | null>(
+    null,
+  );
 
   const getStatusBadge = (status: SongStatus, isManuallyRejected: boolean) => {
     // Show rejected submissions as Draft
     if (status === SongStatus.rejected || isManuallyRejected) {
       return <Badge variant="outline">Draft</Badge>;
     }
-    
+
     switch (status) {
       case SongStatus.pending:
         return <Badge variant="secondary">Pending</Badge>;
@@ -32,7 +34,11 @@ export default function UserSubmissionsList() {
   };
 
   const canEdit = (status: SongStatus) => {
-    return status === SongStatus.draft || status === SongStatus.pending || status === SongStatus.rejected;
+    return (
+      status === SongStatus.draft ||
+      status === SongStatus.pending ||
+      status === SongStatus.rejected
+    );
   };
 
   if (isLoading) {
@@ -65,7 +71,9 @@ export default function UserSubmissionsList() {
     );
   }
 
-  const editingSubmissionData = submissions.find((s) => s.id === editingSubmission);
+  const editingSubmissionData = submissions.find(
+    (s) => s.id === editingSubmission,
+  );
 
   return (
     <>
@@ -90,34 +98,51 @@ export default function UserSubmissionsList() {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h3 className="font-semibold text-lg">{submission.title}</h3>
+                          <h3 className="font-semibold text-lg">
+                            {submission.title}
+                          </h3>
                           <p className="text-sm text-muted-foreground">
                             {submission.artist}
-                            {submission.featuredArtist && ` ft. ${submission.featuredArtist}`}
+                            {submission.featuredArtist &&
+                              ` ft. ${submission.featuredArtist}`}
                           </p>
                         </div>
-                        {getStatusBadge(submission.status, submission.isManuallyRejected)}
+                        {getStatusBadge(
+                          submission.status,
+                          submission.isManuallyRejected,
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Genre:</span> {submission.genre}
+                          <span className="text-muted-foreground">Genre:</span>{" "}
+                          {submission.genre}
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Language:</span> {submission.language}
+                          <span className="text-muted-foreground">
+                            Language:
+                          </span>{" "}
+                          {submission.language}
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Release Type:</span> {submission.releaseType}
+                          <span className="text-muted-foreground">
+                            Release Type:
+                          </span>{" "}
+                          {submission.releaseType}
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           <span className="text-muted-foreground">
-                            {new Date(Number(submission.releaseDate / BigInt(1000000))).toLocaleDateString()}
+                            {new Date(
+                              Number(submission.releaseDate / BigInt(1000000)),
+                            ).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                       {submission.musicVideoLink && (
                         <div className="text-sm">
-                          <span className="text-muted-foreground">Music Video:</span>{' '}
+                          <span className="text-muted-foreground">
+                            Music Video:
+                          </span>{" "}
                           <a
                             href={submission.musicVideoLink}
                             target="_blank"
@@ -131,25 +156,32 @@ export default function UserSubmissionsList() {
                       {submission.adminComment && (
                         <div className="bg-muted p-3 rounded-lg">
                           <p className="text-sm font-medium">Admin Comment:</p>
-                          <p className="text-sm text-muted-foreground">{submission.adminComment}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {submission.adminComment}
+                          </p>
                         </div>
                       )}
                       {submission.adminRemarks && (
                         <div className="bg-muted p-3 rounded-lg">
                           <p className="text-sm font-medium">Admin Remarks:</p>
-                          <p className="text-sm text-muted-foreground">{submission.adminRemarks}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {submission.adminRemarks}
+                          </p>
                         </div>
                       )}
-                      {submission.status === SongStatus.live && submission.adminLiveLink && (
-                        <Button
-                          size="sm"
-                          onClick={() => window.open(submission.adminLiveLink!, '_blank')}
-                          className="mt-2"
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Visit Release
-                        </Button>
-                      )}
+                      {submission.status === SongStatus.live &&
+                        submission.adminLiveLink && (
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              window.open(submission.adminLiveLink!, "_blank")
+                            }
+                            className="mt-2"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Visit Release
+                          </Button>
+                        )}
                       {canEdit(submission.status) && (
                         <Button
                           size="sm"

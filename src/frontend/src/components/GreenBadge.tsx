@@ -1,15 +1,23 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface GreenBadgeProps {
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
   className?: string;
 }
 
-export default function GreenBadge({ size = 'medium', className = '' }: GreenBadgeProps) {
+export default function GreenBadge({
+  size = "medium",
+  className = "",
+}: GreenBadgeProps) {
   const sizeClasses = {
-    small: 'w-4 h-4',
-    medium: 'w-5 h-5',
-    large: 'w-6 h-6',
+    small: "w-4 h-4",
+    medium: "w-5 h-5",
+    large: "w-6 h-6",
   };
 
   return (

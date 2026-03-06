@@ -1,19 +1,45 @@
-import { useState } from 'react';
-import { useGetAllSubmissionsForAdmin, useAdminUpdateSubmission, useAdminSetSubmissionLive, useAdminDeleteSubmission } from '../hooks/useQueries';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
-import { Download, Trash2, Edit, ExternalLink, Link as LinkIcon } from 'lucide-react';
-import { downloadExternalBlob } from '../utils/downloadExternalBlob';
-import AdminEditSubmissionDialog from './AdminEditSubmissionDialog';
-import AdminManageLinksDialog from './AdminManageLinksDialog';
-import type { SongSubmission, SongStatus } from '../backend';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Download,
+  Edit,
+  ExternalLink,
+  Link as LinkIcon,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { SongStatus, SongSubmission } from "../backend";
+import {
+  useAdminDeleteSubmission,
+  useAdminSetSubmissionLive,
+  useAdminUpdateSubmission,
+  useGetAllSubmissionsForAdmin,
+} from "../hooks/useQueries";
+import { downloadExternalBlob } from "../utils/downloadExternalBlob";
+import AdminEditSubmissionDialog from "./AdminEditSubmissionDialog";
+import AdminManageLinksDialog from "./AdminManageLinksDialog";
 
 export default function AdminSubmissionsList() {
   const { data: submissions, isLoading } = useGetAllSubmissionsForAdmin();
@@ -21,13 +47,19 @@ export default function AdminSubmissionsList() {
   const setSubmissionLive = useAdminSetSubmissionLive();
   const deleteSubmission = useAdminDeleteSubmission();
 
-  const [editingSubmission, setEditingSubmission] = useState<SongSubmission | null>(null);
-  const [managingLinksSubmission, setManagingLinksSubmission] = useState<SongSubmission | null>(null);
+  const [editingSubmission, setEditingSubmission] =
+    useState<SongSubmission | null>(null);
+  const [managingLinksSubmission, setManagingLinksSubmission] =
+    useState<SongSubmission | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(null);
+  const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(
+    null,
+  );
   const [liveUrls, setLiveUrls] = useState<Record<string, string>>({});
   const [adminRemarks, setAdminRemarks] = useState<Record<string, string>>({});
-  const [adminComments, setAdminComments] = useState<Record<string, string>>({});
+  const [adminComments, setAdminComments] = useState<Record<string, string>>(
+    {},
+  );
 
   if (isLoading) {
     return (
@@ -41,7 +73,13 @@ export default function AdminSubmissionsList() {
   }
 
   const sortedSubmissions = [...(submissions || [])].sort((a, b) => {
-    const statusOrder = { pending: 0, approved: 1, live: 2, rejected: 3, draft: 4 };
+    const statusOrder = {
+      pending: 0,
+      approved: 1,
+      live: 2,
+      rejected: 3,
+      draft: 4,
+    };
     const statusDiff = statusOrder[a.status] - statusOrder[b.status];
     if (statusDiff !== 0) return statusDiff;
     return Number(b.timestamp - a.timestamp);
@@ -51,35 +89,35 @@ export default function AdminSubmissionsList() {
     const submission = submissions?.find((s) => s.id === id);
     if (!submission) return;
 
-    if (newStatus === 'live') {
-      const liveUrl = liveUrls[id] || '';
+    if (newStatus === "live") {
+      const liveUrl = liveUrls[id] || "";
       if (!liveUrl) {
-        toast.error('Please enter a live URL before marking as live');
+        toast.error("Please enter a live URL before marking as live");
         return;
       }
       try {
         await setSubmissionLive.mutateAsync({
           id,
           liveUrl,
-          adminRemarks: adminRemarks[id] || '',
-          adminComment: adminComments[id] || '',
+          adminRemarks: adminRemarks[id] || "",
+          adminComment: adminComments[id] || "",
         });
-        toast.success('Submission marked as live');
-        setLiveUrls((prev) => ({ ...prev, [id]: '' }));
+        toast.success("Submission marked as live");
+        setLiveUrls((prev) => ({ ...prev, [id]: "" }));
       } catch (error: any) {
-        toast.error(error.message || 'Failed to update submission');
+        toast.error(error.message || "Failed to update submission");
       }
     } else {
       try {
         await updateSubmission.mutateAsync({
           id,
           status: newStatus,
-          adminRemarks: adminRemarks[id] || '',
-          adminComment: adminComments[id] || '',
+          adminRemarks: adminRemarks[id] || "",
+          adminComment: adminComments[id] || "",
         });
-        toast.success('Submission status updated');
+        toast.success("Submission status updated");
       } catch (error: any) {
-        toast.error(error.message || 'Failed to update submission');
+        toast.error(error.message || "Failed to update submission");
       }
     }
   };
@@ -88,46 +126,52 @@ export default function AdminSubmissionsList() {
     if (!submissionToDelete) return;
     try {
       await deleteSubmission.mutateAsync(submissionToDelete);
-      toast.success('Submission deleted successfully');
+      toast.success("Submission deleted successfully");
       setDeleteDialogOpen(false);
       setSubmissionToDelete(null);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to delete submission');
+      toast.error(error.message || "Failed to delete submission");
     }
   };
 
   const handleDownloadArtwork = async (submission: SongSubmission) => {
     try {
-      await downloadExternalBlob(submission.artwork, submission.artworkFilename);
-      toast.success('Artwork downloaded');
-    } catch (error) {
-      toast.error('Failed to download artwork');
+      await downloadExternalBlob(
+        submission.artwork,
+        submission.artworkFilename,
+      );
+      toast.success("Artwork downloaded");
+    } catch (_error) {
+      toast.error("Failed to download artwork");
     }
   };
 
   const handleDownloadAudio = async (submission: SongSubmission) => {
     try {
-      await downloadExternalBlob(submission.audioFile, submission.audioFilename);
-      toast.success('Audio file downloaded');
-    } catch (error) {
-      toast.error('Failed to download audio file');
+      await downloadExternalBlob(
+        submission.audioFile,
+        submission.audioFilename,
+      );
+      toast.success("Audio file downloaded");
+    } catch (_error) {
+      toast.error("Failed to download audio file");
     }
   };
 
   const getStatusBadgeVariant = (status: SongStatus) => {
     switch (status) {
-      case 'pending':
-        return 'default';
-      case 'approved':
-        return 'secondary';
-      case 'live':
-        return 'default';
-      case 'rejected':
-        return 'destructive';
-      case 'draft':
-        return 'outline';
+      case "pending":
+        return "default";
+      case "approved":
+        return "secondary";
+      case "live":
+        return "default";
+      case "rejected":
+        return "destructive";
+      case "draft":
+        return "outline";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -147,7 +191,8 @@ export default function AdminSubmissionsList() {
                 <div className="space-y-1">
                   <CardTitle className="text-xl">{submission.title}</CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {submission.artist} • {submission.genre} • {submission.language}
+                    {submission.artist} • {submission.genre} •{" "}
+                    {submission.language}
                   </p>
                 </div>
                 <Badge variant={getStatusBadgeVariant(submission.status)}>
@@ -158,35 +203,42 @@ export default function AdminSubmissionsList() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium">Release Type:</span> {submission.releaseType}
+                  <span className="font-medium">Release Type:</span>{" "}
+                  {submission.releaseType}
                 </div>
                 <div>
-                  <span className="font-medium">Release Date:</span>{' '}
-                  {new Date(Number(submission.releaseDate / BigInt(1000000))).toLocaleDateString()}
+                  <span className="font-medium">Release Date:</span>{" "}
+                  {new Date(
+                    Number(submission.releaseDate / BigInt(1000000)),
+                  ).toLocaleDateString()}
                 </div>
                 {submission.featuredArtist && (
                   <div>
-                    <span className="font-medium">Featured Artist:</span> {submission.featuredArtist}
+                    <span className="font-medium">Featured Artist:</span>{" "}
+                    {submission.featuredArtist}
                   </div>
                 )}
                 {submission.composer && (
                   <div>
-                    <span className="font-medium">Composer:</span> {submission.composer}
+                    <span className="font-medium">Composer:</span>{" "}
+                    {submission.composer}
                   </div>
                 )}
                 {submission.producer && (
                   <div>
-                    <span className="font-medium">Producer:</span> {submission.producer}
+                    <span className="font-medium">Producer:</span>{" "}
+                    {submission.producer}
                   </div>
                 )}
                 {submission.lyricist && (
                   <div>
-                    <span className="font-medium">Lyricist:</span> {submission.lyricist}
+                    <span className="font-medium">Lyricist:</span>{" "}
+                    {submission.lyricist}
                   </div>
                 )}
                 {submission.musicVideoLink && (
                   <div className="col-span-2">
-                    <span className="font-medium">Music Video:</span>{' '}
+                    <span className="font-medium">Music Video:</span>{" "}
                     <a
                       href={submission.musicVideoLink}
                       target="_blank"
@@ -202,34 +254,41 @@ export default function AdminSubmissionsList() {
               {submission.additionalDetails && (
                 <div className="text-sm">
                   <span className="font-medium">Additional Details:</span>
-                  <p className="text-muted-foreground mt-1">{submission.additionalDetails}</p>
+                  <p className="text-muted-foreground mt-1">
+                    {submission.additionalDetails}
+                  </p>
                 </div>
               )}
 
               {submission.adminRemarks && (
                 <div className="text-sm">
                   <span className="font-medium">Admin Remarks:</span>
-                  <p className="text-muted-foreground mt-1">{submission.adminRemarks}</p>
+                  <p className="text-muted-foreground mt-1">
+                    {submission.adminRemarks}
+                  </p>
                 </div>
               )}
 
               {submission.adminComment && (
                 <div className="text-sm">
                   <span className="font-medium">Admin Comment:</span>
-                  <p className="text-muted-foreground mt-1">{submission.adminComment}</p>
+                  <p className="text-muted-foreground mt-1">
+                    {submission.adminComment}
+                  </p>
                 </div>
               )}
 
-              {submission.status === 'live' && submission.adminLiveLink && (
+              {submission.status === "live" && submission.adminLiveLink && (
                 <div className="text-sm">
-                  <span className="font-medium">Live URL:</span>{' '}
+                  <span className="font-medium">Live URL:</span>{" "}
                   <a
                     href={submission.adminLiveLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline inline-flex items-center gap-1"
                   >
-                    {submission.adminLiveLink} <ExternalLink className="w-3 h-3" />
+                    {submission.adminLiveLink}{" "}
+                    <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
               )}
@@ -240,7 +299,9 @@ export default function AdminSubmissionsList() {
                     <Label htmlFor={`status-${submission.id}`}>Status</Label>
                     <Select
                       value={submission.status}
-                      onValueChange={(value) => handleStatusChange(submission.id, value as SongStatus)}
+                      onValueChange={(value) =>
+                        handleStatusChange(submission.id, value as SongStatus)
+                      }
                     >
                       <SelectTrigger id={`status-${submission.id}`}>
                         <SelectValue />
@@ -255,15 +316,20 @@ export default function AdminSubmissionsList() {
                     </Select>
                   </div>
 
-                  {submission.status !== 'live' && (
+                  {submission.status !== "live" && (
                     <div className="space-y-2">
-                      <Label htmlFor={`liveUrl-${submission.id}`}>Live URL (for Live status)</Label>
+                      <Label htmlFor={`liveUrl-${submission.id}`}>
+                        Live URL (for Live status)
+                      </Label>
                       <Input
                         id={`liveUrl-${submission.id}`}
                         placeholder="https://..."
-                        value={liveUrls[submission.id] || ''}
+                        value={liveUrls[submission.id] || ""}
                         onChange={(e) =>
-                          setLiveUrls((prev) => ({ ...prev, [submission.id]: e.target.value }))
+                          setLiveUrls((prev) => ({
+                            ...prev,
+                            [submission.id]: e.target.value,
+                          }))
                         }
                       />
                     </div>
@@ -271,26 +337,40 @@ export default function AdminSubmissionsList() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`remarks-${submission.id}`}>Admin Remarks</Label>
+                  <Label htmlFor={`remarks-${submission.id}`}>
+                    Admin Remarks
+                  </Label>
                   <Textarea
                     id={`remarks-${submission.id}`}
                     placeholder="Internal notes..."
-                    value={adminRemarks[submission.id] || submission.adminRemarks}
+                    value={
+                      adminRemarks[submission.id] || submission.adminRemarks
+                    }
                     onChange={(e) =>
-                      setAdminRemarks((prev) => ({ ...prev, [submission.id]: e.target.value }))
+                      setAdminRemarks((prev) => ({
+                        ...prev,
+                        [submission.id]: e.target.value,
+                      }))
                     }
                     rows={2}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor={`comment-${submission.id}`}>Admin Comment (visible to user)</Label>
+                  <Label htmlFor={`comment-${submission.id}`}>
+                    Admin Comment (visible to user)
+                  </Label>
                   <Textarea
                     id={`comment-${submission.id}`}
                     placeholder="Feedback for the user..."
-                    value={adminComments[submission.id] || submission.adminComment}
+                    value={
+                      adminComments[submission.id] || submission.adminComment
+                    }
                     onChange={(e) =>
-                      setAdminComments((prev) => ({ ...prev, [submission.id]: e.target.value }))
+                      setAdminComments((prev) => ({
+                        ...prev,
+                        [submission.id]: e.target.value,
+                      }))
                     }
                     rows={2}
                   />
@@ -306,15 +386,27 @@ export default function AdminSubmissionsList() {
                   <LinkIcon className="w-4 h-4 mr-2" />
                   Manage Links
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setEditingSubmission(submission)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingSubmission(submission)}
+                >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Details
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleDownloadArtwork(submission)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadArtwork(submission)}
+                >
                   <Download className="w-4 h-4 mr-2" />
                   Artwork
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => handleDownloadAudio(submission)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadAudio(submission)}
+                >
                   <Download className="w-4 h-4 mr-2" />
                   Audio
                 </Button>
@@ -352,7 +444,8 @@ export default function AdminSubmissionsList() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Submission</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this submission? This action cannot be undone.
+              Are you sure you want to delete this submission? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

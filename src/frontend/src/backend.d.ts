@@ -32,10 +32,14 @@ export interface PodcastShow {
     category: PodcastCategory;
     liveLink?: string;
 }
-export interface MonthlyListenerStats {
-    month: bigint;
-    value: bigint;
-    year: bigint;
+export interface FeaturedArtist {
+    id: bigint;
+    aboutBlurb: string;
+    photoUrl: string;
+    isActive: boolean;
+    songs: Array<FeaturedArtistSong>;
+    slotIndex: bigint;
+    artistName: string;
 }
 export interface TransformationOutput {
     status: bigint;
@@ -72,22 +76,22 @@ export interface VideoSubmission {
     category: string;
     liveUrl?: string;
 }
-export interface ArtistProfile {
-    id: string;
-    isApproved: boolean;
-    instagramLink: string;
-    owner: Principal;
-    profilePhoto: ExternalBlob;
-    fullName: string;
-    mobileNumber: string;
-    email: string;
-    isVerified: boolean;
-    spotifyProfile: string;
-    youtubeChannelLink: string;
-    facebookLink: string;
-    appleProfile: string;
-    profilePhotoFilename: string;
-    stageName: string;
+export interface FeaturedArtistInput {
+    aboutBlurb: string;
+    photoUrl: string;
+    isActive: boolean;
+    songs: Array<FeaturedArtistSong>;
+    artistName: string;
+}
+export interface TopVibingSong {
+    id: bigint;
+    title: string;
+    streamingLink: string;
+    tagline?: string;
+    rank: bigint;
+    artworkUrl: string;
+    genre: string;
+    artistName: string;
 }
 export interface SongSubmissionEditInput {
     artworkBlob: ExternalBlob;
@@ -131,6 +135,23 @@ export interface InviteCode {
     code: string;
     used: boolean;
 }
+export interface ArtistProfile {
+    id: string;
+    isApproved: boolean;
+    instagramLink: string;
+    owner: Principal;
+    profilePhoto: ExternalBlob;
+    fullName: string;
+    mobileNumber: string;
+    email: string;
+    isVerified: boolean;
+    spotifyProfile: string;
+    youtubeChannelLink: string;
+    facebookLink: string;
+    appleProfile: string;
+    profilePhotoFilename: string;
+    stageName: string;
+}
 export interface TransformationInput {
     context: Uint8Array;
     response: http_request_result;
@@ -166,11 +187,6 @@ export type StripeSessionStatus = {
 export interface StripeConfiguration {
     allowedCountries: Array<string>;
     secretKey: string;
-}
-export interface ListenerStatsUpdate {
-    month: bigint;
-    value: bigint;
-    year: bigint;
 }
 export interface PodcastShowInput {
     podcastType: PodcastType;
@@ -267,6 +283,10 @@ export interface PodcastEpisode {
     mediaFile: ExternalBlob;
     timestamp: Time;
     isExplicit: boolean;
+}
+export interface FeaturedArtistSong {
+    title: string;
+    link: string;
 }
 export interface ACRResult {
     music: string;
@@ -396,6 +416,7 @@ export enum VideoSubmissionStatus {
     waiting = "waiting"
 }
 export interface backendInterface {
+    addTopVibingSong(song: TopVibingSong): Promise<bigint>;
     adminDeleteArtistProfile(id: string): Promise<void>;
     adminDeleteSubmission(id: string): Promise<void>;
     adminEditArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
@@ -415,12 +436,15 @@ export interface backendInterface {
     createSubscriptionPlan(plan: SubscriptionPlan): Promise<void>;
     deleteArtistProfile(id: string): Promise<void>;
     deleteSubscriptionPlan(planName: string): Promise<void>;
+    deleteTopVibingSong(id: bigint): Promise<void>;
     deleteVideoSubmission(videoId: string): Promise<void>;
+    demoteFromAdmin(target: Principal): Promise<void>;
     doesUserHaveArtistProfile(owner: Principal): Promise<boolean>;
     downgradeTeamMember(user: Principal): Promise<void>;
     downloadVideoFile(videoId: string): Promise<ExternalBlob>;
     editSongSubmission(input: SongSubmissionEditInput): Promise<void>;
     generateInviteCode(): Promise<string>;
+    getActiveFeaturedArtists(): Promise<Array<FeaturedArtist>>;
     getAllArtistProfileOwnersForAdmin(): Promise<Array<Principal>>;
     getAllArtistProfilesForAdmin(): Promise<Array<ArtistProfile>>;
     getAllBlockedUsersAdmin(): Promise<Array<Principal>>;
@@ -432,6 +456,7 @@ export interface backendInterface {
     getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
     getAllSubscriptionPlans(): Promise<Array<SubscriptionPlan>>;
     getAllTeamMembers(): Promise<Array<Principal>>;
+    getAllTopVibingSongs(): Promise<Array<TopVibingSong>>;
     getAllVideoSubmissions(): Promise<Array<VideoSubmission>>;
     getArtistProfileByOwner(owner: Principal): Promise<ArtistProfile | null>;
     getArtistProfileEditingAccessStatus(): Promise<boolean>;
@@ -440,16 +465,17 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getEpisodesByShowId(showId: string): Promise<Array<PodcastEpisode>>;
+    getFeaturedArtists(): Promise<Array<FeaturedArtist>>;
     getInviteCodes(): Promise<Array<InviteCode>>;
-    getLiveSongsForAnalysis(): Promise<Array<SongSubmission>>;
     getMyArtistProfiles(): Promise<Array<ArtistProfile>>;
     getMyEpisodes(showId: string): Promise<Array<PodcastEpisode>>;
     getMyPodcastShows(): Promise<Array<PodcastShow>>;
     getMySubmissions(): Promise<Array<SongSubmission>>;
     getPodcastsByCategory(category: PodcastCategory): Promise<Array<PodcastShow>>;
+    getRankedTopVibingSongs(): Promise<Array<TopVibingSong>>;
     getSongInfo(songId: string): Promise<PublicSongInfo>;
-    getSongMonthlyListenerStats(songId: string): Promise<Array<MonthlyListenerStats>>;
     getStripeSessionStatus(sessionId: string): Promise<StripeSessionStatus>;
+    getTopVibingSong(id: bigint): Promise<TopVibingSong>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getUserVideoSubmissions(): Promise<Array<VideoSubmission>>;
     getUsersByCategory(category: UserCategory): Promise<Array<UserProfile>>;
@@ -465,27 +491,32 @@ export interface backendInterface {
     isUserBlockedPodcastSubmission(user: Principal): Promise<boolean>;
     isUserBlockedSongSubmission(user: Principal): Promise<boolean>;
     isUserTeamMember(user: Principal): Promise<boolean>;
+    listAdmins(): Promise<Array<Principal>>;
     listApprovals(): Promise<Array<UserApprovalInfo>>;
     markEpisodeLive(id: string): Promise<void>;
     markPodcastLive(id: string, liveLink: string): Promise<void>;
+    promoteToAdmin(target: Principal): Promise<void>;
     rejectEpisode(id: string): Promise<void>;
     rejectPodcast(id: string): Promise<void>;
     removeWebsiteLogo(): Promise<void>;
+    reorderTopVibingSongs(ids: Array<bigint>): Promise<void>;
     requestApproval(): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setApproval(user: Principal, status: ApprovalStatus): Promise<void>;
     setArtistProfileEditingAccess(enabled: boolean): Promise<void>;
+    setFeaturedArtist(slot: bigint, data: FeaturedArtistInput): Promise<void>;
     setStripeConfiguration(config: StripeConfiguration): Promise<void>;
     setWebsiteLogo(logo: ExternalBlob): Promise<void>;
     submitRSVP(name: string, attending: boolean, inviteCode: string): Promise<void>;
     submitSong(input: SongSubmissionInput): Promise<string>;
     submitVideo(input: VideoSubmissionInput): Promise<string>;
+    toggleFeaturedArtistSlot(slot: bigint, active: boolean): Promise<void>;
     transform(input: TransformationInput): Promise<TransformationOutput>;
     unblockUserPodcastSubmission(user: Principal): Promise<void>;
     unblockUserSongSubmission(user: Principal): Promise<void>;
     updateArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
-    updateMonthlyListenerStats(songId: string, updates: Array<ListenerStatsUpdate>): Promise<void>;
     updateSubscriptionPlan(plan: SubscriptionPlan): Promise<void>;
+    updateTopVibingSong(song: TopVibingSong): Promise<void>;
     updateUserCategory(userId: Principal, newCategory: UserCategory): Promise<void>;
     updateVerificationStatus(verificationId: string, status: VerificationStatus, expiryExtensionDays: bigint): Promise<void>;
     updateVideoStatus(videoId: string, newStatus: VideoSubmissionStatus, liveUrl: string | null): Promise<void>;

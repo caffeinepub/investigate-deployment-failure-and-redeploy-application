@@ -1,11 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useUpdateSongLinks } from '../hooks/useQueries';
-import { toast } from 'sonner';
-import type { SongSubmission } from '../backend';
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import type { SongSubmission } from "../backend";
+import { useUpdateSongLinks } from "../hooks/useQueries";
 
 interface AdminManageLinksDialogProps {
   song: SongSubmission | null;
@@ -18,20 +24,20 @@ export default function AdminManageLinksDialog({
   open,
   onOpenChange,
 }: AdminManageLinksDialogProps) {
-  const [spotifyLink, setSpotifyLink] = useState('');
-  const [appleMusicLink, setAppleMusicLink] = useState('');
+  const [spotifyLink, setSpotifyLink] = useState("");
+  const [appleMusicLink, setAppleMusicLink] = useState("");
   const updateLinks = useUpdateSongLinks();
 
   useEffect(() => {
     if (song) {
-      setSpotifyLink(song.spotifyLink || '');
-      setAppleMusicLink(song.appleMusicLink || '');
+      setSpotifyLink(song.spotifyLink || "");
+      setAppleMusicLink(song.appleMusicLink || "");
     }
   }, [song]);
 
   const isValidUrl = (url: string): boolean => {
     if (!url) return true; // Empty is valid (optional field)
-    return url.startsWith('http://') || url.startsWith('https://');
+    return url.startsWith("http://") || url.startsWith("https://");
   };
 
   const handleSave = async () => {
@@ -39,11 +45,11 @@ export default function AdminManageLinksDialog({
 
     // Validate URLs
     if (spotifyLink && !isValidUrl(spotifyLink)) {
-      toast.error('Spotify link must start with http:// or https://');
+      toast.error("Spotify link must start with http:// or https://");
       return;
     }
     if (appleMusicLink && !isValidUrl(appleMusicLink)) {
-      toast.error('Apple Music link must start with http:// or https://');
+      toast.error("Apple Music link must start with http:// or https://");
       return;
     }
 
@@ -53,10 +59,10 @@ export default function AdminManageLinksDialog({
         spotifyLink: spotifyLink || null,
         appleMusicLink: appleMusicLink || null,
       });
-      toast.success('Streaming links updated successfully');
+      toast.success("Streaming links updated successfully");
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update streaming links');
+      toast.error(error.message || "Failed to update streaming links");
     }
   };
 
@@ -101,10 +107,11 @@ export default function AdminManageLinksDialog({
             </p>
           </div>
 
-          {song.status === 'live' && (
+          {song.status === "live" && (
             <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-900 dark:text-blue-100">
-                <strong>Public Link:</strong> This song is live and accessible at:
+                <strong>Public Link:</strong> This song is live and accessible
+                at:
               </p>
               <code className="text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded mt-2 block break-all">
                 {window.location.origin}/song/{song.id}
@@ -118,7 +125,7 @@ export default function AdminManageLinksDialog({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={updateLinks.isPending}>
-            {updateLinks.isPending ? 'Saving...' : 'Save Links'}
+            {updateLinks.isPending ? "Saving..." : "Save Links"}
           </Button>
         </DialogFooter>
       </DialogContent>

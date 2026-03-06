@@ -1,33 +1,37 @@
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Loader2, Plus, Radio } from 'lucide-react';
-import { useGetMyPodcastShows } from '../hooks/useQueries';
-import PodcastShowForm from './PodcastShowForm';
-import PodcastEpisodeForm from './PodcastEpisodeForm';
-import { PodcastShow, PodcastEpisode } from '../backend';
-import { useActor } from '../hooks/useActor';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Plus, Radio } from "lucide-react";
+import { useState } from "react";
+import { type PodcastEpisode, PodcastShow } from "../backend";
+import { useActor } from "../hooks/useActor";
+import { useGetMyPodcastShows } from "../hooks/useQueries";
+import PodcastEpisodeForm from "./PodcastEpisodeForm";
+import PodcastShowForm from "./PodcastShowForm";
 
 export default function UserPodcastSubmissionSection() {
-  const [activeTab, setActiveTab] = useState('shows');
+  const [activeTab, setActiveTab] = useState("shows");
   const [selectedShow, setSelectedShow] = useState<string | null>(null);
-  const [showEpisodes, setShowEpisodes] = useState<{ [key: string]: PodcastEpisode[] }>({});
-  const [loadingEpisodes, setLoadingEpisodes] = useState<{ [key: string]: boolean }>({});
+  const [showEpisodes, setShowEpisodes] = useState<{
+    [key: string]: PodcastEpisode[];
+  }>({});
+  const [loadingEpisodes, setLoadingEpisodes] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const { data: shows, isLoading } = useGetMyPodcastShows();
   const { actor } = useActor();
 
   const getModerationBadge = (status: string) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return <Badge variant="secondary">Pending</Badge>;
-      case 'approved':
+      case "approved":
         return <Badge className="bg-green-600">Approved</Badge>;
-      case 'live':
+      case "live":
         return <Badge className="bg-blue-600">Live</Badge>;
-      case 'rejected':
+      case "rejected":
         return <Badge variant="destructive">Rejected</Badge>;
       default:
         return <Badge>{status}</Badge>;
@@ -42,7 +46,7 @@ export default function UserPodcastSubmissionSection() {
       const episodes = await actor.getMyEpisodes(showId);
       setShowEpisodes((prev) => ({ ...prev, [showId]: episodes }));
     } catch (error) {
-      console.error('Failed to load episodes:', error);
+      console.error("Failed to load episodes:", error);
     } finally {
       setLoadingEpisodes((prev) => ({ ...prev, [showId]: false }));
     }
@@ -89,8 +93,10 @@ export default function UserPodcastSubmissionSection() {
             <CardContent>
               {!shows || shows.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">You haven't created any podcast shows yet.</p>
-                  <Button onClick={() => setActiveTab('create-show')}>
+                  <p className="text-muted-foreground mb-4">
+                    You haven't created any podcast shows yet.
+                  </p>
+                  <Button onClick={() => setActiveTab("create-show")}>
                     <Plus className="w-4 h-4 mr-2" />
                     Create Your First Show
                   </Button>
@@ -98,7 +104,10 @@ export default function UserPodcastSubmissionSection() {
               ) : (
                 <div className="space-y-4">
                   {shows.map((show) => (
-                    <Card key={show.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <Card
+                      key={show.id}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                    >
                       <CardContent className="pt-6">
                         <div className="flex gap-4">
                           <img
@@ -109,7 +118,9 @@ export default function UserPodcastSubmissionSection() {
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">
                               <div>
-                                <h3 className="font-semibold text-lg">{show.title}</h3>
+                                <h3 className="font-semibold text-lg">
+                                  {show.title}
+                                </h3>
                                 <p className="text-sm text-muted-foreground line-clamp-2">
                                   {show.description}
                                 </p>
@@ -139,7 +150,9 @@ export default function UserPodcastSubmissionSection() {
                               className="mt-3"
                               onClick={() => handleShowClick(show.id)}
                             >
-                              {selectedShow === show.id ? 'Hide Episodes' : 'View Episodes'}
+                              {selectedShow === show.id
+                                ? "Hide Episodes"
+                                : "View Episodes"}
                             </Button>
                           </div>
                         </div>
@@ -151,7 +164,8 @@ export default function UserPodcastSubmissionSection() {
                               <div className="flex items-center justify-center py-4">
                                 <Loader2 className="w-5 h-5 animate-spin text-primary" />
                               </div>
-                            ) : showEpisodes[show.id] && showEpisodes[show.id].length > 0 ? (
+                            ) : showEpisodes[show.id] &&
+                              showEpisodes[show.id].length > 0 ? (
                               <div className="space-y-2">
                                 {showEpisodes[show.id].map((episode) => (
                                   <div
@@ -159,12 +173,18 @@ export default function UserPodcastSubmissionSection() {
                                     className="flex items-center justify-between p-3 bg-muted rounded-lg"
                                   >
                                     <div>
-                                      <p className="font-medium">{episode.title}</p>
+                                      <p className="font-medium">
+                                        {episode.title}
+                                      </p>
                                       <p className="text-sm text-muted-foreground">
-                                        S{episode.seasonNumber} E{episode.episodeNumber} • {episode.episodeType}
+                                        S{episode.seasonNumber} E
+                                        {episode.episodeNumber} •{" "}
+                                        {episode.episodeType}
                                       </p>
                                     </div>
-                                    {getModerationBadge(episode.moderationStatus)}
+                                    {getModerationBadge(
+                                      episode.moderationStatus,
+                                    )}
                                   </div>
                                 ))}
                               </div>

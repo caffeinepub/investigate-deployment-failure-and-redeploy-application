@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useCreateArtistProfile, useUpdateArtistProfile, useGetArtistProfileEditingAccessStatus } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ExternalBlob } from '../backend';
-import { Upload, User, Lock } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Lock, Upload, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ExternalBlob } from "../backend";
+import {
+  useCreateArtistProfile,
+  useGetArtistProfileEditingAccessStatus,
+  useUpdateArtistProfile,
+} from "../hooks/useQueries";
 
 interface ArtistSetupFormProps {
   onSuccess?: () => void;
@@ -17,34 +21,45 @@ interface ArtistSetupFormProps {
   isEditing?: boolean;
 }
 
-export default function ArtistSetupForm({ onSuccess, initialData, profileId, isEditing = false }: ArtistSetupFormProps) {
+export default function ArtistSetupForm({
+  onSuccess,
+  initialData,
+  profileId,
+  isEditing = false,
+}: ArtistSetupFormProps) {
   const [formData, setFormData] = useState({
-    fullName: initialData?.fullName || '',
-    stageName: initialData?.stageName || '',
-    email: initialData?.email || '',
-    mobileNumber: initialData?.mobileNumber || '',
-    instagramLink: initialData?.instagramLink || '',
-    facebookLink: initialData?.facebookLink || '',
-    spotifyProfile: initialData?.spotifyProfile || '',
-    appleProfile: initialData?.appleProfile || '',
-    youtubeChannelLink: initialData?.youtubeChannelLink || '',
+    fullName: initialData?.fullName || "",
+    stageName: initialData?.stageName || "",
+    email: initialData?.email || "",
+    mobileNumber: initialData?.mobileNumber || "",
+    instagramLink: initialData?.instagramLink || "",
+    facebookLink: initialData?.facebookLink || "",
+    spotifyProfile: initialData?.spotifyProfile || "",
+    appleProfile: initialData?.appleProfile || "",
+    youtubeChannelLink: initialData?.youtubeChannelLink || "",
   });
 
-  const [hasSpotifyProfile, setHasSpotifyProfile] = useState(!!initialData?.spotifyProfile);
-  const [hasAppleProfile, setHasAppleProfile] = useState(!!initialData?.appleProfile);
+  const [hasSpotifyProfile, setHasSpotifyProfile] = useState(
+    !!initialData?.spotifyProfile,
+  );
+  const [hasAppleProfile, setHasAppleProfile] = useState(
+    !!initialData?.appleProfile,
+  );
 
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>(
-    initialData?.profilePhoto ? initialData.profilePhoto.getDirectURL() : ''
+    initialData?.profilePhoto ? initialData.profilePhoto.getDirectURL() : "",
   );
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const createProfile = useCreateArtistProfile();
   const updateProfile = useUpdateArtistProfile();
-  const { data: editingEnabled, isLoading: editingStatusLoading } = useGetArtistProfileEditingAccessStatus();
+  const { data: editingEnabled, isLoading: editingStatusLoading } =
+    useGetArtistProfileEditingAccessStatus();
 
   const isApproved = initialData?.isApproved || false;
-  const isEditingDisabled = isEditing && (isApproved || editingEnabled === false);
+  const isEditingDisabled =
+    isEditing && (isApproved || editingEnabled === false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -65,14 +80,14 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
   const handleSpotifyCheckboxChange = (checked: boolean) => {
     setHasSpotifyProfile(checked);
     if (!checked) {
-      setFormData((prev) => ({ ...prev, spotifyProfile: '' }));
+      setFormData((prev) => ({ ...prev, spotifyProfile: "" }));
     }
   };
 
   const handleAppleCheckboxChange = (checked: boolean) => {
     setHasAppleProfile(checked);
     if (!checked) {
-      setFormData((prev) => ({ ...prev, appleProfile: '' }));
+      setFormData((prev) => ({ ...prev, appleProfile: "" }));
     }
   };
 
@@ -85,17 +100,19 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
 
     try {
       let profilePhotoBlob: any;
-      let profilePhotoFilename = '';
+      let profilePhotoFilename = "";
 
       if (profilePhotoFile) {
         const photoBytes = new Uint8Array(await profilePhotoFile.arrayBuffer());
-        profilePhotoBlob = ExternalBlob.fromBytes(photoBytes).withUploadProgress((percentage) => {
+        profilePhotoBlob = ExternalBlob.fromBytes(
+          photoBytes,
+        ).withUploadProgress((percentage) => {
           setUploadProgress(percentage);
         });
         profilePhotoFilename = profilePhotoFile.name;
       } else {
         profilePhotoBlob = initialData.profilePhoto;
-        profilePhotoFilename = initialData.profilePhotoFilename || '';
+        profilePhotoFilename = initialData.profilePhotoFilename || "";
       }
 
       const profileInput = {
@@ -114,7 +131,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
       setUploadProgress(0);
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Profile save error:', error);
+      console.error("Profile save error:", error);
       setUploadProgress(0);
     }
   };
@@ -134,8 +151,8 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
 
   if (isEditingDisabled) {
     const message = isApproved
-      ? 'This profile has been approved and cannot be edited.'
-      : 'Profile editing is currently disabled by the administrator.';
+      ? "This profile has been approved and cannot be edited."
+      : "Profile editing is currently disabled by the administrator.";
 
     return (
       <Card>
@@ -164,7 +181,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => document.getElementById('profilePhoto')?.click()}
+                onClick={() => document.getElementById("profilePhoto")?.click()}
               >
                 Change Photo
               </Button>
@@ -176,7 +193,9 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => document.getElementById('profilePhoto')?.click()}
+                  onClick={() =>
+                    document.getElementById("profilePhoto")?.click()
+                  }
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Upload Photo
@@ -196,7 +215,9 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
         {uploadProgress > 0 && uploadProgress < 100 && (
           <div className="space-y-1">
             <Progress value={uploadProgress} />
-            <p className="text-xs text-muted-foreground text-center">Uploading: {uploadProgress}%</p>
+            <p className="text-xs text-muted-foreground text-center">
+              Uploading: {uploadProgress}%
+            </p>
           </div>
         )}
       </div>
@@ -207,7 +228,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
           <Input
             id="fullName"
             value={formData.fullName}
-            onChange={(e) => handleInputChange('fullName', e.target.value)}
+            onChange={(e) => handleInputChange("fullName", e.target.value)}
             required
           />
         </div>
@@ -217,7 +238,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
           <Input
             id="stageName"
             value={formData.stageName}
-            onChange={(e) => handleInputChange('stageName', e.target.value)}
+            onChange={(e) => handleInputChange("stageName", e.target.value)}
             required
           />
         </div>
@@ -228,7 +249,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
             id="email"
             type="email"
             value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
+            onChange={(e) => handleInputChange("email", e.target.value)}
             required
           />
         </div>
@@ -238,7 +259,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
           <Input
             id="mobileNumber"
             value={formData.mobileNumber}
-            onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+            onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
             required
           />
         </div>
@@ -248,7 +269,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
           <Input
             id="instagramLink"
             value={formData.instagramLink}
-            onChange={(e) => handleInputChange('instagramLink', e.target.value)}
+            onChange={(e) => handleInputChange("instagramLink", e.target.value)}
             required
           />
         </div>
@@ -258,7 +279,7 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
           <Input
             id="facebookLink"
             value={formData.facebookLink}
-            onChange={(e) => handleInputChange('facebookLink', e.target.value)}
+            onChange={(e) => handleInputChange("facebookLink", e.target.value)}
             required
           />
         </div>
@@ -268,7 +289,9 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
           <Input
             id="youtubeChannelLink"
             value={formData.youtubeChannelLink}
-            onChange={(e) => handleInputChange('youtubeChannelLink', e.target.value)}
+            onChange={(e) =>
+              handleInputChange("youtubeChannelLink", e.target.value)
+            }
             placeholder="https://youtube.com/..."
           />
         </div>
@@ -293,7 +316,9 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
               <Input
                 id="spotifyProfile"
                 value={formData.spotifyProfile}
-                onChange={(e) => handleInputChange('spotifyProfile', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("spotifyProfile", e.target.value)
+                }
                 required={hasSpotifyProfile}
               />
             </div>
@@ -318,7 +343,9 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
               <Input
                 id="appleProfile"
                 value={formData.appleProfile}
-                onChange={(e) => handleInputChange('appleProfile', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("appleProfile", e.target.value)
+                }
                 required={hasAppleProfile}
               />
             </div>
@@ -328,16 +355,18 @@ export default function ArtistSetupForm({ onSuccess, initialData, profileId, isE
 
       <Button
         type="submit"
-        disabled={isUploading || createProfile.isPending || updateProfile.isPending}
+        disabled={
+          isUploading || createProfile.isPending || updateProfile.isPending
+        }
         className="w-full"
       >
         {isUploading
           ? `Uploading... ${uploadProgress}%`
           : createProfile.isPending || updateProfile.isPending
-          ? 'Saving...'
-          : isEditing
-          ? 'Update Profile'
-          : 'Create Profile'}
+            ? "Saving..."
+            : isEditing
+              ? "Update Profile"
+              : "Create Profile"}
       </Button>
     </form>
   );

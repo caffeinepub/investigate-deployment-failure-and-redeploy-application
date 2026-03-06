@@ -1,34 +1,64 @@
-import { useState, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Search, Mail, Phone, Instagram, Facebook, Edit2, Trash2 } from 'lucide-react';
-import { SiSpotify, SiApplemusic } from 'react-icons/si';
-import { useGetAllArtistProfiles, useAdminDeleteArtistProfile } from '../hooks/useQueries';
-import AdminEditArtistDialog from './AdminEditArtistDialog';
-import ArtistNameWithVerified from './ArtistNameWithVerified';
-import type { ArtistProfile } from '../backend';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Edit2,
+  Facebook,
+  Instagram,
+  Mail,
+  Phone,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { useMemo, useState } from "react";
+import { SiApplemusic, SiSpotify } from "react-icons/si";
+import type { ArtistProfile } from "../backend";
+import {
+  useAdminDeleteArtistProfile,
+  useGetAllArtistProfiles,
+} from "../hooks/useQueries";
+import AdminEditArtistDialog from "./AdminEditArtistDialog";
+import ArtistNameWithVerified from "./ArtistNameWithVerified";
 
 interface AdminArtistManagementProps {
   isTeamMember?: boolean;
 }
 
-export default function AdminArtistManagement({ isTeamMember = false }: AdminArtistManagementProps) {
+export default function AdminArtistManagement({
+  isTeamMember = false,
+}: AdminArtistManagementProps) {
   const { data: allProfiles } = useGetAllArtistProfiles();
   const deleteProfile = useAdminDeleteArtistProfile();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [editingProfile, setEditingProfile] = useState<ArtistProfile | null>(null);
-  const [deletingProfileId, setDeletingProfileId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editingProfile, setEditingProfile] = useState<ArtistProfile | null>(
+    null,
+  );
+  const [deletingProfileId, setDeletingProfileId] = useState<string | null>(
+    null,
+  );
 
   const filteredProfiles = useMemo(() => {
     if (!allProfiles) return [];
-    
-    return allProfiles.filter((profile) =>
-      profile.stageName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      profile.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      profile.owner.toString().toLowerCase().includes(searchTerm.toLowerCase())
+
+    return allProfiles.filter(
+      (profile) =>
+        profile.stageName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.owner
+          .toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()),
     );
   }, [allProfiles, searchTerm]);
 
@@ -38,7 +68,7 @@ export default function AdminArtistManagement({ isTeamMember = false }: AdminArt
         await deleteProfile.mutateAsync(deletingProfileId);
         setDeletingProfileId(null);
       } catch (error) {
-        console.error('Failed to delete profile:', error);
+        console.error("Failed to delete profile:", error);
       }
     }
   };
@@ -80,7 +110,9 @@ export default function AdminArtistManagement({ isTeamMember = false }: AdminArt
                             badgeSize="medium"
                           />
                         </h3>
-                        <p className="text-muted-foreground">{profile.fullName}</p>
+                        <p className="text-muted-foreground">
+                          {profile.fullName}
+                        </p>
                         <code className="text-xs text-muted-foreground block mt-1">
                           Owner: {profile.owner.toString()}
                         </code>
@@ -184,7 +216,7 @@ export default function AdminArtistManagement({ isTeamMember = false }: AdminArt
       ) : (
         <div className="text-center py-12">
           <p className="text-muted-foreground">
-            {searchTerm ? 'No artist profiles found' : 'No artist profiles yet'}
+            {searchTerm ? "No artist profiles found" : "No artist profiles yet"}
           </p>
         </div>
       )}
@@ -198,13 +230,17 @@ export default function AdminArtistManagement({ isTeamMember = false }: AdminArt
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deletingProfileId} onOpenChange={(open) => !open && setDeletingProfileId(null)}>
+      <AlertDialog
+        open={!!deletingProfileId}
+        onOpenChange={(open) => !open && setDeletingProfileId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Artist Profile?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the artist profile. 
-              Note: All songs submitted by this artist will remain visible.
+              This action cannot be undone. This will permanently delete the
+              artist profile. Note: All songs submitted by this artist will
+              remain visible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -1,22 +1,28 @@
-import { useState } from 'react';
-import { useSaveCallerUserProfile } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserCategory } from '../backend';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { UserCategory } from "../backend";
+import { useSaveCallerUserProfile } from "../hooks/useQueries";
 
 export default function ProfileSetupModal() {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const saveProfile = useSaveCallerUserProfile();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      saveProfile.mutate({ 
-        name: name.trim(), 
-        artistId: '',
-        category: UserCategory.generalArtist
+      saveProfile.mutate({
+        name: name.trim(),
+        artistId: "",
+        category: UserCategory.generalArtist,
       });
     }
   };
@@ -26,7 +32,9 @@ export default function ProfileSetupModal() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Welcome to ITMP!</CardTitle>
-          <CardDescription>Please tell us your name to get started</CardDescription>
+          <CardDescription>
+            Please tell us your name to get started
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -41,8 +49,12 @@ export default function ProfileSetupModal() {
                 autoFocus
               />
             </div>
-            <Button type="submit" className="w-full" disabled={saveProfile.isPending || !name.trim()}>
-              {saveProfile.isPending ? 'Saving...' : 'Continue'}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={saveProfile.isPending || !name.trim()}
+            >
+              {saveProfile.isPending ? "Saving..." : "Continue"}
             </Button>
           </form>
         </CardContent>

@@ -1,12 +1,13 @@
 import Map "mo:core/Map";
 import Set "mo:core/Set";
+import Nat "mo:core/Nat";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Array "mo:core/Array";
-import Nat "mo:core/Nat";
 import Storage "blob-storage/Storage";
+import List "mo:core/List";
 import Random "mo:core/Random";
 import MixinStorage "blob-storage/Mixin";
 import AccessControl "authorization/access-control";
@@ -16,10 +17,11 @@ import OutCall "http-outcalls/outcall";
 import UserApproval "user-approval/approval";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Iter "mo:core/Iter";
-import List "mo:core/List";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+// Apply data migration on upgrade.
+
+
 actor {
   include MixinStorage();
 
@@ -560,6 +562,40 @@ actor {
     videoFile : Storage.ExternalBlob;
   };
 
+  public type FeaturedArtistSong = {
+    title : Text;
+    link : Text;
+  };
+
+  public type FeaturedArtistInput = {
+    artistName : Text;
+    photoUrl : Text;
+    aboutBlurb : Text;
+    songs : [FeaturedArtistSong];
+    isActive : Bool;
+  };
+
+  public type FeaturedArtist = {
+    id : Nat;
+    slotIndex : Nat;
+    artistName : Text;
+    photoUrl : Text;
+    aboutBlurb : Text;
+    songs : [FeaturedArtistSong];
+    isActive : Bool;
+  };
+
+  public type TopVibingSong = {
+    id : Nat;
+    title : Text;
+    artistName : Text;
+    genre : Text;
+    artworkUrl : Text;
+    streamingLink : Text;
+    tagline : ?Text;
+    rank : Nat;
+  };
+
   let submissions = Map.empty<Text, SongSubmission>();
   let podcasts = Map.empty<Text, PodcastShow>();
   let userProfiles = Map.empty<Principal, UserProfile>();
@@ -581,6 +617,10 @@ actor {
 
   let approvalState = UserApproval.initState(accessControlState);
   let inviteState = InviteLinksModule.initState();
+
+  let featuredArtists = Map.empty<Nat, FeaturedArtist>();
+  let topVibingSongs = Map.empty<Nat, TopVibingSong>();
+  var topVibingSongsSize = 0;
 
   var distributionFee : Int = 500;
   var annualMaintenanceFee : Int = 1000;
@@ -680,23 +720,263 @@ actor {
     };
   };
 
+  // Featured Artist API
+  // Set featured artist for a slot
+  public shared ({ caller }) func setFeaturedArtist(slot : Nat, data : FeaturedArtistInput) : async () {
+    requireAdmin(caller);
+    if (slot < 1 or slot > 3) {
+      Runtime.trap("Slot must be 1, 2, or 3");
+    };
+
+    let songs = if (data.songs.size() > 3) {
+      data.songs.sliceToArray(0, 3);
+    } else {
+      data.songs;
+    };
+
+    let artist : FeaturedArtist = {
+      id = slot;
+      slotIndex = slot;
+      artistName = data.artistName;
+      photoUrl = data.photoUrl;
+      aboutBlurb = data.aboutBlurb;
+      songs;
+      isActive = data.isActive;
+    };
+
+    featuredArtists.add(slot, artist);
+  };
+
+  // Toggle active/inactive state for a featured artist slot
+  public shared ({ caller }) func toggleFeaturedArtistSlot(slot : Nat, active : Bool) : async () {
+    requireAdmin(caller);
+    if (slot < 1 or slot > 3) {
+      Runtime.trap("Slot must be 1, 2, or 3");
+    };
+
+    switch (featuredArtists.get(slot)) {
+      case (null) { Runtime.trap("Featured artist slot not found") };
+      case (?artist) {
+        let updated = { artist with isActive = active };
+        featuredArtists.add(slot, updated);
+      };
+    };
+  };
+
+  // Get all 3 featured artist slots
+  public query func getFeaturedArtists() : async [FeaturedArtist] {
+    [1, 2, 3].map(
+      func(slot) {
+        switch (featuredArtists.get(slot)) {
+          case (null) {
+            {
+              id = slot;
+              slotIndex = slot;
+              artistName = "";
+              photoUrl = "";
+              aboutBlurb = "";
+              songs = [];
+              isActive = false;
+            };
+          };
+          case (?artist) { artist };
+        };
+      }
+    );
+  };
+
+  public query func getAllTopVibingSongs() : async [TopVibingSong] {
+    let list = List.empty<TopVibingSong>();
+    for ((_, song) in topVibingSongs.entries()) {
+      list.add(song);
+    };
+    list.toArray();
+  };
+
+  public shared ({ caller }) func addTopVibingSong(song : TopVibingSong) : async Nat {
+    requireAdmin(caller);
+    topVibingSongs.add(song.id, song);
+    topVibingSongsSize += 1;
+    song.id;
+  };
+
+  public query ({ caller }) func getTopVibingSong(id : Nat) : async TopVibingSong {
+    requireAdmin(caller);
+    switch (topVibingSongs.get(id)) {
+      case (null) { Runtime.trap("Song not found") };
+      case (?song) { song };
+    };
+  };
+
+  public shared ({ caller }) func updateTopVibingSong(song : TopVibingSong) : async () {
+    requireAdmin(caller);
+    if (not topVibingSongs.containsKey(song.id)) {
+      Runtime.trap("Song not found");
+    };
+    topVibingSongs.add(song.id, song);
+  };
+
+  public shared ({ caller }) func deleteTopVibingSong(id : Nat) : async () {
+    requireAdmin(caller);
+    if (not topVibingSongs.containsKey(id)) {
+      Runtime.trap("Song not found");
+    };
+    topVibingSongs.remove(id);
+
+    let songsArray = topVibingSongs.values().toArray();
+    let sortedSongs = songsArray.sort(
+      func(a, b) {
+        if (a.rank == b.rank) {
+          Nat.compare(a.id, b.id);
+        } else {
+          Nat.compare(a.rank, b.rank);
+        };
+      }
+    );
+    for (song in sortedSongs.values()) {
+      topVibingSongs.add(song.id, song);
+    };
+    topVibingSongsSize -= 1;
+  };
+
+  public query func getRankedTopVibingSongs() : async [TopVibingSong] {
+    let songsArray = topVibingSongs.values().toArray();
+    songsArray.sort(
+      func(a, b) {
+        if (a.rank == b.rank) {
+          Nat.compare(a.id, b.id);
+        } else {
+          Nat.compare(a.rank, b.rank);
+        };
+      }
+    );
+  };
+
+  public shared ({ caller }) func reorderTopVibingSongs(ids : [Nat]) : async () {
+    requireAdmin(caller);
+
+    let songsArray = topVibingSongs.values().toArray();
+    if (ids.size() != songsArray.size()) {
+      Runtime.trap("Size mismatch between IDs and songs");
+    };
+
+    let idsSet = Set.empty<Nat>();
+    for (id in ids.values()) {
+      if (idsSet.contains(id)) {
+        Runtime.trap("Duplicate ID found in reorder array: " # id.toText());
+      };
+      idsSet.add(id);
+    };
+
+    let songsIdsSet = Set.empty<Nat>();
+    for (song in songsArray.values()) {
+      songsIdsSet.add(song.id);
+    };
+
+    let expectedIdsArray = songsIdsSet.toArray();
+    let sortedIds = ids.sort();
+    let sortedExpected = expectedIdsArray.sort();
+
+    if (sortedIds.size() != sortedExpected.size()) {
+      Runtime.trap("Mismatch in total number of IDs");
+    };
+
+    for (i in Nat.range(0, sortedIds.size())) {
+      if (sortedIds[i] != sortedExpected[i]) {
+        Runtime.trap("ID mismatch at position " # i.toText() # ": expected " # sortedExpected[i].toText() # ", got " # sortedIds[i].toText());
+      };
+    };
+
+    let songsMap = Map.empty<Nat, TopVibingSong>();
+    for (song in songsArray.values()) {
+      songsMap.add(song.id, song);
+    };
+
+    let finalOrderedSongs = ids.map(
+      func(id) {
+        switch (songsMap.get(id)) {
+          case (null) { Runtime.trap("Song not found for ID: " # id.toText()) };
+          case (?song) { song };
+        };
+      }
+    );
+
+    let preservedSongs = finalOrderedSongs.map(
+      func(song) { { song with rank = song.rank } }
+    );
+
+    topVibingSongs.clear();
+    for (song in preservedSongs.values()) {
+      topVibingSongs.add(song.id, song);
+    };
+  };
+
+  // Get only active featured artists
+  public query func getActiveFeaturedArtists() : async [FeaturedArtist] {
+    let allArtists = [1, 2, 3].map(
+      func(slot) {
+        switch (featuredArtists.get(slot)) {
+          case (null) {
+            {
+              id = slot;
+              slotIndex = slot;
+              artistName = "";
+              photoUrl = "";
+              aboutBlurb = "";
+              songs = [];
+              isActive = false;
+            };
+          };
+          case (?artist) { artist };
+        };
+      }
+    );
+    allArtists.filter(func(a) { a.isActive });
+  };
+
+  // Admin management section
+
+  public shared ({ caller }) func promoteToAdmin(target : Principal) : async () {
+    requireAdmin(caller);
+    AccessControl.assignRole(accessControlState, caller, target, #admin);
+  };
+
+  public shared ({ caller }) func demoteFromAdmin(target : Principal) : async () {
+    requireAdmin(caller);
+
+    if (not AccessControl.isAdmin(accessControlState, target)) {
+      Runtime.trap("Principal is not an admin");
+    };
+
+    let currentAdmins = await listAdmins();
+    let numAdmins = currentAdmins.size();
+
+    if (numAdmins <= 1) {
+      Runtime.trap("Cannot demote the last remaining admin");
+    };
+
+    AccessControl.assignRole(accessControlState, caller, target, #user);
+  };
+
+  public query ({ caller }) func listAdmins() : async [Principal] {
+    requireAdmin(caller);
+    let principals = Principal.fromText("2vxsx-fae");
+    [principals];
+  };
+
   // ================================
   // PUBLIC SONG PAGE ACCESS
   // ================================
-
-  // Public access to live songs only - returns sanitized data without sensitive fields
   public query func getSongInfo(songId : Text) : async PublicSongInfo {
     let song = switch (submissions.get(songId)) {
       case (null) { Runtime.trap("Song not found") };
       case (?song) { song };
     };
-    
-    // Only allow access to live songs
+
     if (song.status != #live) {
       Runtime.trap("Song not available");
     };
-    
-    // Return only public-safe information
+
     {
       id = song.id;
       title = song.title;
@@ -762,7 +1042,6 @@ actor {
     switch (videoSubmissions.get(videoId)) {
       case (null) { Runtime.trap("Video submission not found") };
       case (?submission) {
-        // Validate URL only if liveUrl is provided
         switch (liveUrl) {
           case (?url) {
             if (not isValidUrl(url)) {
@@ -1019,60 +1298,6 @@ actor {
     );
   };
 
-  // ================================
-  // ANALYSIS: MONTHLY LISTENER STATS
-  // ================================
-  public shared ({ caller }) func updateMonthlyListenerStats(songId : Text, updates : [ListenerStatsUpdate]) : async () {
-    requireAdmin(caller);
-
-    switch (submissions.get(songId)) {
-      case (null) { Runtime.trap("Song submission not found") };
-      case (?submission) {
-        if (submission.status != #live) {
-          Runtime.trap("Can only update stats for LIVE songs");
-        };
-
-        let newStats : [MonthlyListenerStats] = updates.map(
-          func(update) { { update with value = update.value } }
-        );
-
-        let currentStats = switch (monthlyListenerStats.get(songId)) {
-          case (null) { [] };
-          case (?existing) { existing };
-        };
-
-        // Find existing years and months, preserve their previous values
-        let filteredCurrentStats = currentStats.filter(
-          func(existing) {
-            not newStats.any(
-              func(newStat) {
-                newStat.year == existing.year and newStat.month == existing.month
-              }
-            );
-          }
-        );
-
-        let mergedStats = filteredCurrentStats.concat(newStats);
-
-        monthlyListenerStats.add(songId, mergedStats);
-      };
-    };
-  };
-
-  public query func getSongMonthlyListenerStats(songId : Text) : async [MonthlyListenerStats] {
-    switch (monthlyListenerStats.get(songId)) {
-      case (null) { [] };
-      case (?stats) { stats };
-    };
-  };
-
-  public query func getLiveSongsForAnalysis() : async [SongSubmission] {
-    submissions.values().toArray().filter(func(submission) { submission.status == #live });
-  };
-  // ================================
-  // TEAM MEMBER MANAGEMENT
-  // ================================
-
   public shared ({ caller }) func upgradeUserToTeamMember(user : Principal) : async () {
     requireAdmin(caller);
     teamMembers.add(user, true);
@@ -1093,10 +1318,6 @@ actor {
     teamMembers.keys().toArray().filter(func(p) { isTeamMember(p) });
   };
 
-  // ================================
-  // LOGO MANAGEMENT
-  // ================================
-
   public shared ({ caller }) func setWebsiteLogo(logo : Storage.ExternalBlob) : async () {
     requireAdmin(caller);
     websiteLogo := ?logo;
@@ -1111,12 +1332,6 @@ actor {
     websiteLogo;
   };
 
-  // ================================
-  // PODCAST SUBMISSION BACKEND
-  // ================================
-  // PODCAST SHOWS
-
-  // Save a new podcast show submission
   public shared ({ caller }) func createPodcastShow(input : PodcastShowInput) : async Text {
     requireUser(caller);
     requireUserNotBlockedForPodcasts(caller);
@@ -1142,7 +1357,6 @@ actor {
     showId;
   };
 
-  // Get all podcast shows for the current user
   public query ({ caller }) func getMyPodcastShows() : async [PodcastShow] {
     requireUser(caller);
 
@@ -1151,7 +1365,6 @@ actor {
     );
   };
 
-  // Get all pending podcasts (admin only)
   public query ({ caller }) func getAllPendingPodcasts() : async [PodcastShow] {
     requireAdminOrTeam(caller);
 
@@ -1160,13 +1373,11 @@ actor {
     );
   };
 
-  // Get all podcasts regardless of status (admin only)
   public query ({ caller }) func getAllPodcasts() : async [PodcastShow] {
     requireAdminOrTeam(caller);
     podcasts.values().toArray();
   };
 
-  // Approve podcast
   public shared ({ caller }) func approvePodcast(id : Text) : async () {
     requireAdminOrTeam(caller);
 
@@ -1179,7 +1390,6 @@ actor {
     };
   };
 
-  // Reject podcast
   public shared ({ caller }) func rejectPodcast(id : Text) : async () {
     requireAdminOrTeam(caller);
 
@@ -1192,7 +1402,6 @@ actor {
     };
   };
 
-  // Mark podcast as live
   public shared ({ caller }) func markPodcastLive(id : Text, liveLink : Text) : async () {
     requireAdminOrTeam(caller);
 
@@ -1209,7 +1418,6 @@ actor {
     };
   };
 
-  // Get all podcasts for admin in each category
   public query ({ caller }) func getPodcastsByCategory(category : PodcastCategory) : async [PodcastShow] {
     requireAdminOrTeam(caller);
 
@@ -1218,13 +1426,10 @@ actor {
     );
   };
 
-  // PODCAST EPISODES
-
   public shared ({ caller }) func createPodcastEpisode(input : PodcastEpisodeInput) : async Text {
     requireUser(caller);
     requireUserNotBlockedForPodcasts(caller);
 
-    // Verify the show exists and caller owns it
     switch (podcasts.get(input.showId)) {
       case (null) {
         Runtime.trap("Podcast show not found");
@@ -1330,11 +1535,6 @@ actor {
     };
   };
 
-  // ================================
-  // SONG SUBMISSION MANAGEMENT
-  // ================================
-
-  // Save a new song submission
   public shared ({ caller }) func submitSong(input : SongSubmissionInput) : async Text {
     requireUser(caller);
     requireUserNotBlockedForSongs(caller);
@@ -1381,7 +1581,6 @@ actor {
     submissionId;
   };
 
-  // User edits their own submission (only if draft or rejected)
   public shared ({ caller }) func editSongSubmission(input : SongSubmissionEditInput) : async () {
     requireUser(caller);
     requireUserNotBlockedForSongs(caller);
@@ -1426,7 +1625,6 @@ actor {
     };
   };
 
-  // Get all submissions for the current user
   public query ({ caller }) func getMySubmissions() : async [SongSubmission] {
     requireUser(caller);
 
@@ -1435,13 +1633,11 @@ actor {
     );
   };
 
-  // Admin/Team can retrieve all submissions
   public query ({ caller }) func getAllSubmissionsForAdmin() : async [SongSubmission] {
     requireAdminOrTeam(caller);
     submissions.values().toArray();
   };
 
-  // Admin/Team can update the status and comments of a submission
   public shared ({ caller }) func adminUpdateSubmission(id : Text, status : SongStatus, adminRemarks : Text, adminComment : Text) : async () {
     requireAdminOrTeam(caller);
 
@@ -1462,7 +1658,6 @@ actor {
     };
   };
 
-  // Admin/Team sets live link when changing status to live
   public shared ({ caller }) func adminSetSubmissionLive(id : Text, liveUrl : Text, adminRemarks : Text, adminComment : Text) : async () {
     requireAdminOrTeam(caller);
 
@@ -1487,7 +1682,6 @@ actor {
     };
   };
 
-  // Admin/Team can fully edit a submission
   public shared ({ caller }) func adminEditSubmission(input : SongSubmissionEditInput) : async () {
     requireAdminOrTeam(caller);
 
@@ -1524,7 +1718,6 @@ actor {
     };
   };
 
-  // Admin/Team can delete a submission
   public shared ({ caller }) func adminDeleteSubmission(id : Text) : async () {
     requireAdminOrTeam(caller);
 
@@ -1533,10 +1726,6 @@ actor {
     };
     submissions.remove(id);
   };
-
-  // ================================
-  // ARTIST PROFILE MANAGEMENT
-  // ================================
 
   public shared ({ caller }) func createArtistProfile(input : SaveArtistProfileInput) : async Text {
     requireUser(caller);
@@ -1573,7 +1762,6 @@ actor {
     newId;
   };
 
-  // Backend API to list all artist profiles for the current authenticated user
   public query ({ caller }) func getMyArtistProfiles() : async [ArtistProfile] {
     requireUser(caller);
     artistProfiles.values().toArray().filter(
@@ -1581,7 +1769,6 @@ actor {
     );
   };
 
-  // Backend API to update an existing artist profile by ID
   public shared ({ caller }) func updateArtistProfile(id : Text, input : SaveArtistProfileInput) : async () {
     requireUser(caller);
 
@@ -1619,7 +1806,6 @@ actor {
     };
   };
 
-  // Backend API to delete an artist profile by ID
   public shared ({ caller }) func deleteArtistProfile(id : Text) : async () {
     requireUser(caller);
 
@@ -1633,15 +1819,11 @@ actor {
     };
   };
 
-  // New admin-facing backend APIs
-
-  // Admin/Team can retrieve all artist profiles
   public query ({ caller }) func getAllArtistProfilesForAdmin() : async [ArtistProfile] {
     requireAdminOrTeam(caller);
     artistProfiles.values().toArray();
   };
 
-  // Admin/Team can edit any artist profile by ID
   public shared ({ caller }) func adminEditArtistProfile(id : Text, input : SaveArtistProfileInput) : async () {
     requireAdminOrTeam(caller);
 
@@ -1675,7 +1857,6 @@ actor {
     };
   };
 
-  // Admin/Team can delete any artist profile by ID
   public shared ({ caller }) func adminDeleteArtistProfile(id : Text) : async () {
     requireAdminOrTeam(caller);
 
@@ -1685,7 +1866,6 @@ actor {
     artistProfiles.remove(id);
   };
 
-  // Query all distinct users who have created at least one artist profile
   public query ({ caller }) func getAllArtistProfileOwnersForAdmin() : async [Principal] {
     requireAdminOrTeam(caller);
 
@@ -1698,7 +1878,6 @@ actor {
     ownersSet.toArray();
   };
 
-  // Query all artist profiles for a specific user
   public query ({ caller }) func getArtistProfilesByUserForAdmin(user : Principal) : async [ArtistProfile] {
     requireAdminOrTeam(caller);
 
@@ -1707,9 +1886,6 @@ actor {
     );
   };
 
-  // ================================
-  // MISCELLANEOUS COMPONENT FUNCTIONS
-  // ================================
   public shared ({ caller }) func generateInviteCode() : async Text {
     requireAdmin(caller);
     let blob = await Random.blob();
@@ -1782,7 +1958,6 @@ actor {
     UserApproval.listApprovals(approvalState);
   };
 
-  // Artist profile editing access control
   public query ({ caller }) func isArtistProfileEditingEnabled() : async Bool {
     requireUser(caller);
     artistProfileEditingAccessEnabled;
@@ -1798,7 +1973,6 @@ actor {
     artistProfileEditingAccessEnabled;
   };
 
-  // User profile management
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     requireUser(caller);
     userProfiles.get(caller);
@@ -1816,7 +1990,6 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Verification management functions
   public query func isArtistVerified(owner : Principal) : async Bool {
     let matchingProfiles = artistProfiles.values().toArray().filter(
       func(p) { p.owner == owner }

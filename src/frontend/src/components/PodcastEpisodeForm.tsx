@@ -1,58 +1,85 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useCreatePodcastEpisode, useGetMyPodcastShows, useIsCurrentUserBlockedPodcastSubmission } from '../hooks/useQueries';
-import { EpisodeType } from '../backend';
-import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { EpisodeType } from "../backend";
+import {
+  useCreatePodcastEpisode,
+  useGetMyPodcastShows,
+  useIsCurrentUserBlockedPodcastSubmission,
+} from "../hooks/useQueries";
+import { fileToExternalBlob } from "../utils/fileToExternalBlob";
 
 interface PodcastEpisodeFormProps {
   showId?: string;
 }
 
-export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) {
-  const [selectedShowId, setSelectedShowId] = useState(showId || '');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [seasonNumber, setSeasonNumber] = useState('1');
-  const [episodeNumber, setEpisodeNumber] = useState('1');
-  const [episodeType, setEpisodeType] = useState<string>('full');
+export default function PodcastEpisodeForm({
+  showId,
+}: PodcastEpisodeFormProps) {
+  const [selectedShowId, setSelectedShowId] = useState(showId || "");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [seasonNumber, setSeasonNumber] = useState("1");
+  const [episodeNumber, setEpisodeNumber] = useState("1");
+  const [episodeType, setEpisodeType] = useState<string>("full");
   const [isEighteenPlus, setIsEighteenPlus] = useState(false);
   const [isExplicit, setIsExplicit] = useState(false);
   const [isPromotional, setIsPromotional] = useState(false);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [artworkFile, setArtworkFile] = useState<File | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [additionalDetails, setAdditionalDetails] = useState('');
-  const [uploadProgress, setUploadProgress] = useState({ thumbnail: 0, artwork: 0, media: 0 });
+  const [additionalDetails, setAdditionalDetails] = useState("");
+  const [uploadProgress, setUploadProgress] = useState({
+    thumbnail: 0,
+    artwork: 0,
+    media: 0,
+  });
 
   const { data: shows = [] } = useGetMyPodcastShows();
   const createEpisode = useCreatePodcastEpisode();
-  const { data: isBlocked, isLoading: blockCheckLoading } = useIsCurrentUserBlockedPodcastSubmission();
+  const { data: isBlocked, isLoading: blockCheckLoading } =
+    useIsCurrentUserBlockedPodcastSubmission();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (isBlocked) {
-      toast.error('Your access blocked due to submission limit is full');
+      toast.error("Your access blocked due to submission limit is full");
       return;
     }
 
-    if (!selectedShowId || !title || !description || !thumbnailFile || !artworkFile || !mediaFile) {
+    if (
+      !selectedShowId ||
+      !title ||
+      !description ||
+      !thumbnailFile ||
+      !artworkFile ||
+      !mediaFile
+    ) {
       return;
     }
 
     try {
-      const thumbnailBlob = await fileToExternalBlob(thumbnailFile, (progress) => {
-        setUploadProgress((prev) => ({ ...prev, thumbnail: progress }));
-      });
+      const thumbnailBlob = await fileToExternalBlob(
+        thumbnailFile,
+        (progress) => {
+          setUploadProgress((prev) => ({ ...prev, thumbnail: progress }));
+        },
+      );
 
       const artworkBlob = await fileToExternalBlob(artworkFile, (progress) => {
         setUploadProgress((prev) => ({ ...prev, artwork: progress }));
@@ -66,8 +93,8 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
         showId: selectedShowId,
         title,
         description,
-        seasonNumber: BigInt(parseInt(seasonNumber) || 1),
-        episodeNumber: BigInt(parseInt(episodeNumber) || 1),
+        seasonNumber: BigInt(Number.parseInt(seasonNumber) || 1),
+        episodeNumber: BigInt(Number.parseInt(episodeNumber) || 1),
         episodeType: EpisodeType[episodeType as keyof typeof EpisodeType],
         isEighteenPlus,
         isExplicit,
@@ -78,23 +105,26 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
       });
 
       // Reset form
-      setTitle('');
-      setDescription('');
-      setSeasonNumber('1');
-      setEpisodeNumber('1');
-      setEpisodeType('full');
+      setTitle("");
+      setDescription("");
+      setSeasonNumber("1");
+      setEpisodeNumber("1");
+      setEpisodeType("full");
       setIsEighteenPlus(false);
       setIsExplicit(false);
       setIsPromotional(false);
       setThumbnailFile(null);
       setArtworkFile(null);
       setMediaFile(null);
-      setAdditionalDetails('');
+      setAdditionalDetails("");
       setUploadProgress({ thumbnail: 0, artwork: 0, media: 0 });
     } catch (error: any) {
-      console.error('Failed to create episode:', error);
-      if (error.message?.includes('blocked') || error.message?.includes('submission limit')) {
-        toast.error('Your access blocked due to submission limit is full');
+      console.error("Failed to create episode:", error);
+      if (
+        error.message?.includes("blocked") ||
+        error.message?.includes("submission limit")
+      ) {
+        toast.error("Your access blocked due to submission limit is full");
       }
     }
   };
@@ -224,17 +254,29 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="eighteenPlus">18+ Only</Label>
-              <Switch id="eighteenPlus" checked={isEighteenPlus} onCheckedChange={setIsEighteenPlus} />
+              <Switch
+                id="eighteenPlus"
+                checked={isEighteenPlus}
+                onCheckedChange={setIsEighteenPlus}
+              />
             </div>
 
             <div className="flex items-center justify-between">
               <Label htmlFor="explicit">Explicit Content</Label>
-              <Switch id="explicit" checked={isExplicit} onCheckedChange={setIsExplicit} />
+              <Switch
+                id="explicit"
+                checked={isExplicit}
+                onCheckedChange={setIsExplicit}
+              />
             </div>
 
             <div className="flex items-center justify-between">
               <Label htmlFor="promotional">Promotional Content</Label>
-              <Switch id="promotional" checked={isPromotional} onCheckedChange={setIsPromotional} />
+              <Switch
+                id="promotional"
+                checked={isPromotional}
+                onCheckedChange={setIsPromotional}
+              />
             </div>
           </div>
 
@@ -255,7 +297,9 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
                     style={{ width: `${uploadProgress.thumbnail}%` }}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{uploadProgress.thumbnail}% uploaded</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {uploadProgress.thumbnail}% uploaded
+                </p>
               </div>
             )}
           </div>
@@ -277,7 +321,9 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
                     style={{ width: `${uploadProgress.artwork}%` }}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{uploadProgress.artwork}% uploaded</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {uploadProgress.artwork}% uploaded
+                </p>
               </div>
             )}
           </div>
@@ -299,13 +345,17 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
                     style={{ width: `${uploadProgress.media}%` }}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{uploadProgress.media}% uploaded</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {uploadProgress.media}% uploaded
+                </p>
               </div>
             )}
           </div>
 
           <div>
-            <Label htmlFor="additionalDetails">Additional Details (Optional)</Label>
+            <Label htmlFor="additionalDetails">
+              Additional Details (Optional)
+            </Label>
             <Textarea
               id="additionalDetails"
               value={additionalDetails}
@@ -322,7 +372,7 @@ export default function PodcastEpisodeForm({ showId }: PodcastEpisodeFormProps) 
                 Creating Episode...
               </>
             ) : (
-              'Create Episode'
+              "Create Episode"
             )}
           </Button>
         </form>

@@ -1,22 +1,51 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { UserPlus, Edit2, Trash2, Mail, Phone, Instagram, Facebook } from 'lucide-react';
-import { SiSpotify, SiApplemusic } from 'react-icons/si';
-import { useGetMyArtistProfiles, useDeleteArtistProfile } from '../hooks/useQueries';
-import ArtistSetupForm from './ArtistSetupForm';
-import ArtistNameWithVerified from './ArtistNameWithVerified';
-import type { ArtistProfile } from '../backend';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Edit2,
+  Facebook,
+  Instagram,
+  Mail,
+  Phone,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
+import { useState } from "react";
+import { SiApplemusic, SiSpotify } from "react-icons/si";
+import type { ArtistProfile } from "../backend";
+import {
+  useDeleteArtistProfile,
+  useGetMyArtistProfiles,
+} from "../hooks/useQueries";
+import ArtistNameWithVerified from "./ArtistNameWithVerified";
+import ArtistSetupForm from "./ArtistSetupForm";
 
 export default function UserArtistProfilesManager() {
   const { data: profiles, isLoading } = useGetMyArtistProfiles();
   const deleteProfile = useDeleteArtistProfile();
-  
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editingProfile, setEditingProfile] = useState<ArtistProfile | null>(null);
-  const [deletingProfileId, setDeletingProfileId] = useState<string | null>(null);
+  const [editingProfile, setEditingProfile] = useState<ArtistProfile | null>(
+    null,
+  );
+  const [deletingProfileId, setDeletingProfileId] = useState<string | null>(
+    null,
+  );
 
   const handleDeleteConfirm = async () => {
     if (deletingProfileId) {
@@ -24,7 +53,7 @@ export default function UserArtistProfilesManager() {
         await deleteProfile.mutateAsync(deletingProfileId);
         setDeletingProfileId(null);
       } catch (error) {
-        console.error('Failed to delete profile:', error);
+        console.error("Failed to delete profile:", error);
       }
     }
   };
@@ -34,7 +63,9 @@ export default function UserArtistProfilesManager() {
       <Card>
         <CardContent className="py-12 text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading your artist profiles...</p>
+          <p className="text-muted-foreground">
+            Loading your artist profiles...
+          </p>
         </CardContent>
       </Card>
     );
@@ -57,7 +88,9 @@ export default function UserArtistProfilesManager() {
         <Card className="bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-blue-500/10 border-primary/20">
           <CardContent className="py-12 text-center">
             <UserPlus className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No Artist Profiles Yet</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              No Artist Profiles Yet
+            </h3>
             <p className="text-muted-foreground mb-4">
               Create your first artist profile to get started
             </p>
@@ -70,7 +103,10 @@ export default function UserArtistProfilesManager() {
       ) : (
         <div className="grid gap-4">
           {profiles.map((profile) => (
-            <Card key={profile.id} className="bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-blue-500/5">
+            <Card
+              key={profile.id}
+              className="bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-blue-500/5"
+            >
               <CardContent className="py-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   <img
@@ -90,7 +126,9 @@ export default function UserArtistProfilesManager() {
                             />
                           </h3>
                         </div>
-                        <p className="text-muted-foreground">{profile.fullName}</p>
+                        <p className="text-muted-foreground">
+                          {profile.fullName}
+                        </p>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -191,7 +229,10 @@ export default function UserArtistProfilesManager() {
 
       {/* Edit Dialog */}
       {editingProfile && (
-        <Dialog open={!!editingProfile} onOpenChange={(open) => !open && setEditingProfile(null)}>
+        <Dialog
+          open={!!editingProfile}
+          onOpenChange={(open) => !open && setEditingProfile(null)}
+        >
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Artist Profile</DialogTitle>
@@ -207,12 +248,16 @@ export default function UserArtistProfilesManager() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deletingProfileId} onOpenChange={(open) => !open && setDeletingProfileId(null)}>
+      <AlertDialog
+        open={!!deletingProfileId}
+        onOpenChange={(open) => !open && setDeletingProfileId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Artist Profile?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your artist profile.
+              This action cannot be undone. This will permanently delete your
+              artist profile.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -1,7 +1,7 @@
-import { useNavigate } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function ThankYouPage() {
   const navigate = useNavigate();
@@ -19,14 +19,15 @@ export default function ThankYouPage() {
         </CardHeader>
         <CardContent className="text-center space-y-6">
           <p className="text-lg text-muted-foreground">
-            Your song has been successfully submitted for review. Our team will review your submission and get back to you soon.
+            Your song has been successfully submitted for review. Our team will
+            review your submission and get back to you soon.
           </p>
           <p className="text-sm text-muted-foreground">
             You can track the status of your submission in your dashboard.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
             <Button
-              onClick={() => navigate({ to: '/user-dashboard' })}
+              onClick={() => navigate({ to: "/user-dashboard" })}
               size="lg"
               className="rounded-full"
             >

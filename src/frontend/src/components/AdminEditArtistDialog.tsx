@@ -1,13 +1,20 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useAdminEditArtistProfile } from '../hooks/useQueries';
-import { ArtistProfile, ExternalBlob } from '../backend';
-import { Upload, User } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Upload, User } from "lucide-react";
+import { useState } from "react";
+import { type ArtistProfile, ExternalBlob } from "../backend";
+import { useAdminEditArtistProfile } from "../hooks/useQueries";
 
 interface AdminEditArtistDialogProps {
   artistProfile: ArtistProfile;
@@ -15,7 +22,11 @@ interface AdminEditArtistDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export default function AdminEditArtistDialog({ artistProfile, open, onOpenChange }: AdminEditArtistDialogProps) {
+export default function AdminEditArtistDialog({
+  artistProfile,
+  open,
+  onOpenChange,
+}: AdminEditArtistDialogProps) {
   const [formData, setFormData] = useState({
     fullName: artistProfile.fullName,
     stageName: artistProfile.stageName,
@@ -28,11 +39,17 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
     youtubeChannelLink: artistProfile.youtubeChannelLink,
   });
 
-  const [hasSpotifyProfile, setHasSpotifyProfile] = useState(!!artistProfile.spotifyProfile);
-  const [hasAppleProfile, setHasAppleProfile] = useState(!!artistProfile.appleProfile);
+  const [hasSpotifyProfile, setHasSpotifyProfile] = useState(
+    !!artistProfile.spotifyProfile,
+  );
+  const [hasAppleProfile, setHasAppleProfile] = useState(
+    !!artistProfile.appleProfile,
+  );
 
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>(artistProfile.profilePhoto.getDirectURL());
+  const [photoPreview, setPhotoPreview] = useState<string>(
+    artistProfile.profilePhoto.getDirectURL(),
+  );
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const editArtistProfile = useAdminEditArtistProfile();
@@ -56,14 +73,14 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
   const handleSpotifyCheckboxChange = (checked: boolean) => {
     setHasSpotifyProfile(checked);
     if (!checked) {
-      setFormData((prev) => ({ ...prev, spotifyProfile: '' }));
+      setFormData((prev) => ({ ...prev, spotifyProfile: "" }));
     }
   };
 
   const handleAppleCheckboxChange = (checked: boolean) => {
     setHasAppleProfile(checked);
     if (!checked) {
-      setFormData((prev) => ({ ...prev, appleProfile: '' }));
+      setFormData((prev) => ({ ...prev, appleProfile: "" }));
     }
   };
 
@@ -76,7 +93,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
 
       if (profilePhotoFile) {
         const photoBytes = new Uint8Array(await profilePhotoFile.arrayBuffer());
-        profilePhotoBlob = ExternalBlob.fromBytes(photoBytes).withUploadProgress((percentage) => {
+        profilePhotoBlob = ExternalBlob.fromBytes(
+          photoBytes,
+        ).withUploadProgress((percentage) => {
           setUploadProgress(percentage);
         });
         profilePhotoFilename = profilePhotoFile.name;
@@ -97,7 +116,7 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
       setUploadProgress(0);
       onOpenChange(false);
     } catch (error) {
-      console.error('Edit artist profile error:', error);
+      console.error("Edit artist profile error:", error);
       setUploadProgress(0);
     }
   };
@@ -109,7 +128,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Artist Profile</DialogTitle>
-          <DialogDescription>Update the artist's profile information</DialogDescription>
+          <DialogDescription>
+            Update the artist's profile information
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
@@ -126,7 +147,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => document.getElementById('profilePhoto')?.click()}
+                    onClick={() =>
+                      document.getElementById("profilePhoto")?.click()
+                    }
                   >
                     Change Photo
                   </Button>
@@ -138,7 +161,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => document.getElementById('profilePhoto')?.click()}
+                      onClick={() =>
+                        document.getElementById("profilePhoto")?.click()
+                      }
                     >
                       <Upload className="w-4 h-4 mr-2" />
                       Upload Photo
@@ -157,7 +182,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
             {uploadProgress > 0 && uploadProgress < 100 && (
               <div className="space-y-1">
                 <Progress value={uploadProgress} />
-                <p className="text-xs text-muted-foreground text-center">Uploading: {uploadProgress}%</p>
+                <p className="text-xs text-muted-foreground text-center">
+                  Uploading: {uploadProgress}%
+                </p>
               </div>
             )}
           </div>
@@ -168,7 +195,7 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
               <Input
                 id="fullName"
                 value={formData.fullName}
-                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                onChange={(e) => handleInputChange("fullName", e.target.value)}
                 required
               />
             </div>
@@ -178,7 +205,7 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
               <Input
                 id="stageName"
                 value={formData.stageName}
-                onChange={(e) => handleInputChange('stageName', e.target.value)}
+                onChange={(e) => handleInputChange("stageName", e.target.value)}
                 required
               />
             </div>
@@ -189,7 +216,7 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                onChange={(e) => handleInputChange("email", e.target.value)}
                 required
               />
             </div>
@@ -199,7 +226,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
               <Input
                 id="mobileNumber"
                 value={formData.mobileNumber}
-                onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("mobileNumber", e.target.value)
+                }
                 required
               />
             </div>
@@ -209,7 +238,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
               <Input
                 id="instagramLink"
                 value={formData.instagramLink}
-                onChange={(e) => handleInputChange('instagramLink', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("instagramLink", e.target.value)
+                }
               />
             </div>
 
@@ -218,7 +249,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
               <Input
                 id="facebookLink"
                 value={formData.facebookLink}
-                onChange={(e) => handleInputChange('facebookLink', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("facebookLink", e.target.value)
+                }
               />
             </div>
 
@@ -227,7 +260,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
               <Input
                 id="youtubeChannelLink"
                 value={formData.youtubeChannelLink}
-                onChange={(e) => handleInputChange('youtubeChannelLink', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("youtubeChannelLink", e.target.value)
+                }
                 placeholder="https://youtube.com/..."
               />
             </div>
@@ -252,7 +287,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
                   <Input
                     id="spotifyProfile"
                     value={formData.spotifyProfile}
-                    onChange={(e) => handleInputChange('spotifyProfile', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("spotifyProfile", e.target.value)
+                    }
                     required={hasSpotifyProfile}
                   />
                 </div>
@@ -277,7 +314,9 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
                   <Input
                     id="appleProfile"
                     value={formData.appleProfile}
-                    onChange={(e) => handleInputChange('appleProfile', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("appleProfile", e.target.value)
+                    }
                     required={hasAppleProfile}
                   />
                 </div>
@@ -300,8 +339,8 @@ export default function AdminEditArtistDialog({ artistProfile, open, onOpenChang
               {isUploading
                 ? `Uploading... ${uploadProgress}%`
                 : editArtistProfile.isPending
-                ? 'Saving...'
-                : 'Save Changes'}
+                  ? "Saving..."
+                  : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

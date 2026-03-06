@@ -1,24 +1,24 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useSubmitVideo } from '../hooks/useQueries';
-import { fileToExternalBlob } from '../utils/fileToExternalBlob';
-import { VideoSubmissionInput } from '../backend';
-import { Loader2, Upload } from 'lucide-react';
-import { toast } from 'sonner';
-import { useNavigate } from '@tanstack/react-router';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useNavigate } from "@tanstack/react-router";
+import { Loader2, Upload } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import type { VideoSubmissionInput } from "../backend";
+import { useSubmitVideo } from "../hooks/useQueries";
+import { fileToExternalBlob } from "../utils/fileToExternalBlob";
 
 export default function VideoSubmissionForm() {
   const submitVideo = useSubmitVideo();
   const navigate = useNavigate();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [tags, setTags] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [artworkFile, setArtworkFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -33,27 +33,27 @@ export default function VideoSubmissionForm() {
 
     // Validation
     if (!title.trim()) {
-      toast.error('Title is required');
+      toast.error("Title is required");
       return;
     }
     if (!description.trim()) {
-      toast.error('Description is required');
+      toast.error("Description is required");
       return;
     }
     if (!category.trim()) {
-      toast.error('Category is required');
+      toast.error("Category is required");
       return;
     }
     if (!thumbnailFile) {
-      toast.error('Thumbnail is required');
+      toast.error("Thumbnail is required");
       return;
     }
     if (!artworkFile) {
-      toast.error('Artwork is required');
+      toast.error("Artwork is required");
       return;
     }
     if (!videoFile) {
-      toast.error('Video file is required');
+      toast.error("Video file is required");
       return;
     }
 
@@ -61,9 +61,12 @@ export default function VideoSubmissionForm() {
       setIsUploading(true);
 
       // Convert files to ExternalBlob with progress tracking
-      const thumbnailBlob = await fileToExternalBlob(thumbnailFile, (progress) => {
-        setThumbnailProgress(progress);
-      });
+      const thumbnailBlob = await fileToExternalBlob(
+        thumbnailFile,
+        (progress) => {
+          setThumbnailProgress(progress);
+        },
+      );
 
       const artworkBlob = await fileToExternalBlob(artworkFile, (progress) => {
         setArtworkProgress(progress);
@@ -75,7 +78,7 @@ export default function VideoSubmissionForm() {
 
       // Parse tags
       const tagArray = tags
-        .split(',')
+        .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
 
@@ -92,10 +95,10 @@ export default function VideoSubmissionForm() {
       await submitVideo.mutateAsync(input);
 
       // Reset form
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      setTags('');
+      setTitle("");
+      setDescription("");
+      setCategory("");
+      setTags("");
       setThumbnailFile(null);
       setArtworkFile(null);
       setVideoFile(null);
@@ -104,10 +107,10 @@ export default function VideoSubmissionForm() {
       setVideoProgress(0);
 
       // Navigate to thank you page
-      navigate({ to: '/thank-you' });
+      navigate({ to: "/thank-you" });
     } catch (error: any) {
-      console.error('Submission error:', error);
-      toast.error(error.message || 'Failed to submit video');
+      console.error("Submission error:", error);
+      toast.error(error.message || "Failed to submit video");
     } finally {
       setIsUploading(false);
     }
