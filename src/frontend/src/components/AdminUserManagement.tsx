@@ -59,11 +59,11 @@ const CATEGORY_LABELS: Record<UserCategory, string> = {
 };
 
 const CATEGORY_COLORS: Record<UserCategory, string> = {
-  generalArtist: "bg-blue-100 text-blue-800 border-blue-200",
-  proArtist: "bg-purple-100 text-purple-800 border-purple-200",
-  ultraArtist: "bg-green-100 text-green-800 border-green-200",
-  generalLabel: "bg-orange-100 text-orange-800 border-orange-200",
-  proLabel: "bg-pink-100 text-pink-800 border-pink-200",
+  generalArtist: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+  proArtist: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
+  ultraArtist: "bg-green-500/15 text-green-400 border border-green-500/30",
+  generalLabel: "bg-orange-500/15 text-orange-400 border border-orange-500/30",
+  proLabel: "bg-pink-500/15 text-pink-400 border border-pink-500/30",
 };
 
 export default function AdminUserManagement() {

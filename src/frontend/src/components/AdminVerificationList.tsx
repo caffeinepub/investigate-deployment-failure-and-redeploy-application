@@ -12,12 +12,12 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { VerificationStatus } from "../backend";
 import {
   useGetAllArtistsWithUserIds,
   useGetVerificationRequestsForAdmin,
   useUpdateVerificationStatus,
 } from "../hooks/useQueries";
+import { VerificationStatus } from "../lib/constants";
 
 export default function AdminVerificationList() {
   const { data: requests, isLoading } = useGetVerificationRequestsForAdmin();

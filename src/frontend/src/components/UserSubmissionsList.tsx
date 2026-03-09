@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Edit, ExternalLink, Loader2, Music } from "lucide-react";
 import { useState } from "react";
-import { SongStatus } from "../backend";
 import { useGetMySubmissions } from "../hooks/useQueries";
+import { SongStatus } from "../lib/constants";
 import UserEditSubmissionDialog from "./UserEditSubmissionDialog";
 
 export default function UserSubmissionsList() {
@@ -16,20 +16,40 @@ export default function UserSubmissionsList() {
   const getStatusBadge = (status: SongStatus, isManuallyRejected: boolean) => {
     // Show rejected submissions as Draft
     if (status === SongStatus.rejected || isManuallyRejected) {
-      return <Badge variant="outline">Draft</Badge>;
+      return (
+        <Badge variant="outline" className="text-muted-foreground">
+          Draft
+        </Badge>
+      );
     }
 
     switch (status) {
       case SongStatus.pending:
-        return <Badge variant="secondary">Pending</Badge>;
+        return (
+          <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/40">
+            Pending
+          </Badge>
+        );
       case SongStatus.approved:
-        return <Badge className="bg-green-600">Approved</Badge>;
+        return (
+          <Badge className="bg-green-500/20 text-green-400 border border-green-500/40">
+            Approved
+          </Badge>
+        );
       case SongStatus.draft:
-        return <Badge variant="outline">Draft</Badge>;
+        return (
+          <Badge variant="outline" className="text-muted-foreground">
+            Draft
+          </Badge>
+        );
       case SongStatus.live:
-        return <Badge className="bg-blue-600">Live</Badge>;
+        return (
+          <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/40">
+            Live
+          </Badge>
+        );
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 

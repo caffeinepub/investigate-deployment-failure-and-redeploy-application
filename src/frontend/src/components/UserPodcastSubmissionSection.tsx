@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Plus, Radio } from "lucide-react";
 import { useState } from "react";
-import { type PodcastEpisode, PodcastShow } from "../backend";
+import type { PodcastEpisode, PodcastShow } from "../backend";
 import { useActor } from "../hooks/useActor";
 import { useGetMyPodcastShows } from "../hooks/useQueries";
 import PodcastEpisodeForm from "./PodcastEpisodeForm";

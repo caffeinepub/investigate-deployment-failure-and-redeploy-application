@@ -15,6 +15,7 @@ import { useActor } from "./hooks/useActor";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
 import { useGetCallerUserProfile } from "./hooks/useQueries";
 import AdminDashboard from "./pages/AdminDashboard";
+import LabelPage from "./pages/LabelPage";
 import LandingPage from "./pages/LandingPage";
 import SongPage from "./pages/SongPage";
 import ThankYouPage from "./pages/ThankYouPage";
@@ -68,12 +69,19 @@ const songPageRoute = createRoute({
   component: SongPage,
 });
 
+const labelPageRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/label/$labelName",
+  component: LabelPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   userDashboardRoute,
   adminDashboardRoute,
   thankYouRoute,
   songPageRoute,
+  labelPageRoute,
 ]);
 
 const router = createRouter({ routeTree });
@@ -119,7 +127,7 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <QueryClientProvider client={queryClient}>
         <AppContent />
       </QueryClientProvider>

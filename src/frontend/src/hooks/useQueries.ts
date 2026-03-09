@@ -1381,6 +1381,151 @@ export function useReorderTopVibingSongs() {
 }
 
 // ================================
+// LABEL PARTNERS HOOKS
+// ================================
+export function useGetAllLabelPartners() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<import("../backend").LabelPartner[]>({
+    queryKey: ["allLabelPartners"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllLabelPartners();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAddLabelPartner() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: import("../backend").LabelPartnerInput) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.addLabelPartner(input);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLabelPartners"] });
+    },
+  });
+}
+
+export function useUpdateLabelPartner() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (partner: import("../backend").LabelPartner) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateLabelPartner(partner);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLabelPartners"] });
+    },
+  });
+}
+
+export function useDeleteLabelPartner() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.deleteLabelPartner(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allLabelPartners"] });
+      queryClient.invalidateQueries({ queryKey: ["allLabelReleases"] });
+    },
+  });
+}
+
+export function useGetLabelReleases(labelId: bigint | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<import("../backend").LabelRelease[]>({
+    queryKey: ["labelReleases", labelId?.toString()],
+    queryFn: async () => {
+      if (!actor || labelId === null) return [];
+      return actor.getLabelReleases(labelId);
+    },
+    enabled: !!actor && !isFetching && labelId !== null,
+  });
+}
+
+export function useGetAllLabelReleases() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<import("../backend").LabelRelease[]>({
+    queryKey: ["allLabelReleases"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllLabelReleases();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAddLabelRelease() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: import("../backend").LabelReleaseInput) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.addLabelRelease(input);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["labelReleases", variables.labelId.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ["allLabelReleases"] });
+    },
+  });
+}
+
+export function useUpdateLabelRelease() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (release: import("../backend").LabelRelease) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.updateLabelRelease(release);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["labelReleases", variables.labelId.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ["allLabelReleases"] });
+    },
+  });
+}
+
+export function useDeleteLabelRelease() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      labelId: _labelId,
+    }: { id: bigint; labelId: bigint }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.deleteLabelRelease(id);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["labelReleases", variables.labelId.toString()],
+      });
+      queryClient.invalidateQueries({ queryKey: ["allLabelReleases"] });
+    },
+  });
+}
+
+// ================================
 // MONTHLY LISTENER STATS HOOKS
 // ================================
 export function useGetLiveSongsForAnalysis() {

@@ -158,20 +158,36 @@ export default function AdminSubmissionsList() {
     }
   };
 
-  const getStatusBadgeVariant = (status: SongStatus) => {
+  const getStatusBadge = (status: SongStatus) => {
     switch (status) {
       case "pending":
-        return "default";
+        return (
+          <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/40">
+            PENDING
+          </Badge>
+        );
       case "approved":
-        return "secondary";
+        return (
+          <Badge className="bg-green-500/20 text-green-400 border border-green-500/40">
+            APPROVED
+          </Badge>
+        );
       case "live":
-        return "default";
+        return (
+          <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/40">
+            LIVE
+          </Badge>
+        );
       case "rejected":
-        return "destructive";
+        return <Badge variant="destructive">REJECTED</Badge>;
       case "draft":
-        return "outline";
+        return (
+          <Badge variant="outline" className="text-muted-foreground">
+            DRAFT
+          </Badge>
+        );
       default:
-        return "default";
+        return <Badge variant="outline">{String(status).toUpperCase()}</Badge>;
     }
   };
 
@@ -195,9 +211,7 @@ export default function AdminSubmissionsList() {
                     {submission.language}
                   </p>
                 </div>
-                <Badge variant={getStatusBadgeVariant(submission.status)}>
-                  {submission.status.toUpperCase()}
-                </Badge>
+                {getStatusBadge(submission.status)}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

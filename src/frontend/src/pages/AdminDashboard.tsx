@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminArtistManagement from "../components/AdminArtistManagement";
 import AdminChatInbox from "../components/AdminChatInbox";
 import AdminFeaturedArtistsManagement from "../components/AdminFeaturedArtistsManagement";
+import AdminLabelPartnersManagement from "../components/AdminLabelPartnersManagement";
 import AdminMonthlyListenersManagement from "../components/AdminMonthlyListenersManagement";
 import AdminPodcastSubmissions from "../components/AdminPodcastSubmissions";
 import AdminSubmissionsList from "../components/AdminSubmissionsList";
@@ -46,6 +47,7 @@ export default function AdminDashboard() {
           <TabsTrigger value="plans">Plans</TabsTrigger>
           <TabsTrigger value="featured">Featured Artists</TabsTrigger>
           <TabsTrigger value="topVibing">Top Vibing Songs</TabsTrigger>
+          <TabsTrigger value="labelPartners">Label Partners</TabsTrigger>
           <TabsTrigger value="adminroles">Admin Role Management</TabsTrigger>
           <TabsTrigger value="messages">
             <MessagesTabLabel />
@@ -90,6 +92,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="topVibing">
           <AdminTopVibingSongsManagement />
+        </TabsContent>
+
+        <TabsContent value="labelPartners">
+          <AdminLabelPartnersManagement />
         </TabsContent>
 
         <TabsContent value="adminroles">

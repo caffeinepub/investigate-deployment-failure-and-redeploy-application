@@ -412,6 +412,34 @@ export interface _CaffeineStorageRefillResult {
     success?: boolean;
     topped_up_amount?: bigint;
 }
+export interface LabelPartnerInput {
+    websiteLink?: string;
+    labelName: string;
+    description: string;
+    logoUrl: string;
+}
+export interface LabelPartner {
+    id: bigint;
+    websiteLink?: string;
+    labelName: string;
+    description: string;
+    logoUrl: string;
+}
+export interface LabelReleaseInput {
+    labelId: bigint;
+    streamingLink: string;
+    songTitle: string;
+    artworkUrl: string;
+    artistName: string;
+}
+export interface LabelRelease {
+    id: bigint;
+    labelId: bigint;
+    streamingLink: string;
+    songTitle: string;
+    artworkUrl: string;
+    artistName: string;
+}
 export interface VerificationRequest {
     id: string;
     status: VerificationStatus;
@@ -420,87 +448,98 @@ export interface VerificationRequest {
     verificationApprovedTimestamp?: Time;
     timestamp: Time;
 }
-export enum ApprovalStatus {
-    pending = "pending",
-    approved = "approved",
-    rejected = "rejected"
-}
-export enum EpisodeType {
-    full = "full",
-    trailer = "trailer",
-    bonus = "bonus"
-}
-export enum Language {
-    tamil = "tamil",
-    hindi = "hindi",
-    other = "other",
-    marathi = "marathi",
-    gujarati = "gujarati",
-    punjabi = "punjabi",
-    malayalam = "malayalam",
-    kannada = "kannada",
-    telugu = "telugu",
-    bengali = "bengali",
-    english = "english"
-}
-export enum PodcastCategory {
-    kidsFamily = "kidsFamily",
-    music = "music",
-    newsPolitics = "newsPolitics",
-    other = "other",
-    arts = "arts",
-    education = "education",
-    religionSpirituality = "religionSpirituality",
-    healthFitness = "healthFitness",
-    tvFilm = "tvFilm",
-    technology = "technology",
-    business = "business",
-    sports = "sports",
-    comedy = "comedy",
-    science = "science"
-}
-export enum PodcastModerationStatus {
-    pending = "pending",
-    live = "live",
-    approved = "approved",
-    rejected = "rejected"
-}
-export enum PodcastType {
-    audio = "audio",
-    video = "video"
-}
-export enum SongStatus {
-    pending = "pending",
-    live = "live",
-    approved = "approved",
-    rejected = "rejected",
-    draft = "draft"
-}
-export enum UserCategory {
-    generalArtist = "generalArtist",
-    generalLabel = "generalLabel",
-    proArtist = "proArtist",
-    ultraArtist = "ultraArtist",
-    proLabel = "proLabel"
-}
-export enum UserRole {
-    admin = "admin",
-    user = "user",
-    guest = "guest"
-}
-export enum VerificationStatus {
-    pending = "pending",
-    approved = "approved",
-    rejected = "rejected",
-    waiting = "waiting"
-}
-export enum VideoSubmissionStatus {
-    pending = "pending",
-    live = "live",
-    approved = "approved",
-    rejected = "rejected",
-    waiting = "waiting"
-}
+export const ApprovalStatus = {
+    pending: "pending" as const,
+    approved: "approved" as const,
+    rejected: "rejected" as const,
+} as const;
+export type ApprovalStatus = typeof ApprovalStatus[keyof typeof ApprovalStatus];
+export const EpisodeType = {
+    full: "full" as const,
+    trailer: "trailer" as const,
+    bonus: "bonus" as const,
+} as const;
+export type EpisodeType = typeof EpisodeType[keyof typeof EpisodeType];
+export const Language = {
+    tamil: "tamil" as const,
+    hindi: "hindi" as const,
+    other: "other" as const,
+    marathi: "marathi" as const,
+    gujarati: "gujarati" as const,
+    punjabi: "punjabi" as const,
+    malayalam: "malayalam" as const,
+    kannada: "kannada" as const,
+    telugu: "telugu" as const,
+    bengali: "bengali" as const,
+    english: "english" as const,
+} as const;
+export type Language = typeof Language[keyof typeof Language];
+export const PodcastCategory = {
+    kidsFamily: "kidsFamily" as const,
+    music: "music" as const,
+    newsPolitics: "newsPolitics" as const,
+    other: "other" as const,
+    arts: "arts" as const,
+    education: "education" as const,
+    religionSpirituality: "religionSpirituality" as const,
+    healthFitness: "healthFitness" as const,
+    tvFilm: "tvFilm" as const,
+    technology: "technology" as const,
+    business: "business" as const,
+    sports: "sports" as const,
+    comedy: "comedy" as const,
+    science: "science" as const,
+} as const;
+export type PodcastCategory = typeof PodcastCategory[keyof typeof PodcastCategory];
+export const PodcastModerationStatus = {
+    pending: "pending" as const,
+    live: "live" as const,
+    approved: "approved" as const,
+    rejected: "rejected" as const,
+} as const;
+export type PodcastModerationStatus = typeof PodcastModerationStatus[keyof typeof PodcastModerationStatus];
+export const PodcastType = {
+    audio: "audio" as const,
+    video: "video" as const,
+} as const;
+export type PodcastType = typeof PodcastType[keyof typeof PodcastType];
+export const SongStatus = {
+    pending: "pending" as const,
+    live: "live" as const,
+    approved: "approved" as const,
+    rejected: "rejected" as const,
+    draft: "draft" as const,
+} as const;
+export type SongStatus = typeof SongStatus[keyof typeof SongStatus];
+export const UserCategory = {
+    generalArtist: "generalArtist" as const,
+    generalLabel: "generalLabel" as const,
+    proArtist: "proArtist" as const,
+    ultraArtist: "ultraArtist" as const,
+    proLabel: "proLabel" as const,
+} as const;
+export type UserCategory = typeof UserCategory[keyof typeof UserCategory];
+export const UserRole = {
+    admin: "admin" as const,
+    user: "user" as const,
+    guest: "guest" as const,
+} as const;
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+export const VerificationStatus = {
+    pending: "pending" as const,
+    approved: "approved" as const,
+    rejected: "rejected" as const,
+    waiting: "waiting" as const,
+} as const;
+export type VerificationStatus = typeof VerificationStatus[keyof typeof VerificationStatus];
+export const VideoSubmissionStatus = {
+    pending: "pending" as const,
+    live: "live" as const,
+    approved: "approved" as const,
+    rejected: "rejected" as const,
+    waiting: "waiting" as const,
+} as const;
+export type VideoSubmissionStatus = typeof VideoSubmissionStatus[keyof typeof VideoSubmissionStatus];
 export interface backendInterface {
     _caffeineStorageBlobIsLive(hash: Uint8Array): Promise<boolean>;
     _caffeineStorageBlobsToDelete(): Promise<Array<Uint8Array>>;
@@ -509,6 +548,8 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    addLabelPartner(input: LabelPartnerInput): Promise<bigint>;
+    addLabelRelease(input: LabelReleaseInput): Promise<bigint>;
     addTopVibingSong(song: TopVibingSong): Promise<bigint>;
     adminDeleteArtistProfile(id: string): Promise<void>;
     adminDeleteSubmission(id: string): Promise<void>;
@@ -528,6 +569,8 @@ export interface backendInterface {
     createPodcastShow(input: PodcastShowInput): Promise<string>;
     createSubscriptionPlan(plan: SubscriptionPlan): Promise<void>;
     deleteArtistProfile(id: string): Promise<void>;
+    deleteLabelPartner(id: bigint): Promise<void>;
+    deleteLabelRelease(id: bigint): Promise<void>;
     deleteSubscriptionPlan(planName: string): Promise<void>;
     deleteTopVibingSong(id: bigint): Promise<void>;
     deleteVideoSubmission(videoId: string): Promise<void>;
@@ -542,6 +585,8 @@ export interface backendInterface {
     getAllArtistProfilesForAdmin(): Promise<Array<ArtistProfile>>;
     getAllBlockedUsersAdmin(): Promise<Array<Principal>>;
     getAllEpisodes(): Promise<Array<PodcastEpisode>>;
+    getAllLabelPartners(): Promise<Array<LabelPartner>>;
+    getAllLabelReleases(): Promise<Array<LabelRelease>>;
     getAllPendingEpisodes(): Promise<Array<PodcastEpisode>>;
     getAllPendingPodcasts(): Promise<Array<PodcastShow>>;
     getAllPodcasts(): Promise<Array<PodcastShow>>;
@@ -560,6 +605,7 @@ export interface backendInterface {
     getEpisodesByShowId(showId: string): Promise<Array<PodcastEpisode>>;
     getFeaturedArtists(): Promise<Array<FeaturedArtist>>;
     getInviteCodes(): Promise<Array<InviteCode>>;
+    getLabelReleases(labelId: bigint): Promise<Array<LabelRelease>>;
     getMyArtistProfiles(): Promise<Array<ArtistProfile>>;
     getMyEpisodes(showId: string): Promise<Array<PodcastEpisode>>;
     getMyPodcastShows(): Promise<Array<PodcastShow>>;
@@ -608,6 +654,8 @@ export interface backendInterface {
     unblockUserPodcastSubmission(user: Principal): Promise<void>;
     unblockUserSongSubmission(user: Principal): Promise<void>;
     updateArtistProfile(id: string, input: SaveArtistProfileInput): Promise<void>;
+    updateLabelPartner(partner: LabelPartner): Promise<void>;
+    updateLabelRelease(release: LabelRelease): Promise<void>;
     updateSubscriptionPlan(plan: SubscriptionPlan): Promise<void>;
     updateTopVibingSong(song: TopVibingSong): Promise<void>;
     updateUserCategory(userId: Principal, newCategory: UserCategory): Promise<void>;
@@ -616,7 +664,7 @@ export interface backendInterface {
     updateVideoSubmission(input: VideoSubmissionInput, videoId: string): Promise<void>;
     upgradeUserToTeamMember(user: Principal): Promise<void>;
 }
-import type { ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, EpisodeType as _EpisodeType, ExternalBlob as _ExternalBlob, Language as _Language, PodcastCategory as _PodcastCategory, PodcastEpisode as _PodcastEpisode, PodcastEpisodeInput as _PodcastEpisodeInput, PodcastModerationStatus as _PodcastModerationStatus, PodcastShow as _PodcastShow, PodcastShowInput as _PodcastShowInput, PodcastType as _PodcastType, PublicSongInfo as _PublicSongInfo, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, SongSubmissionEditInput as _SongSubmissionEditInput, SongSubmissionInput as _SongSubmissionInput, StripeSessionStatus as _StripeSessionStatus, Time as _Time, TopVibingSong as _TopVibingSong, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserCategory as _UserCategory, UserProfile as _UserProfile, UserRole as _UserRole, VerificationRequest as _VerificationRequest, VerificationStatus as _VerificationStatus, VideoSubmission as _VideoSubmission, VideoSubmissionInput as _VideoSubmissionInput, VideoSubmissionStatus as _VideoSubmissionStatus, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, EpisodeType as _EpisodeType, ExternalBlob as _ExternalBlob, Language as _Language, LabelPartner as _LabelPartner, LabelPartnerInput as _LabelPartnerInput, PodcastCategory as _PodcastCategory, PodcastEpisode as _PodcastEpisode, PodcastEpisodeInput as _PodcastEpisodeInput, PodcastModerationStatus as _PodcastModerationStatus, PodcastShow as _PodcastShow, PodcastShowInput as _PodcastShowInput, PodcastType as _PodcastType, PublicSongInfo as _PublicSongInfo, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, SongSubmissionEditInput as _SongSubmissionEditInput, SongSubmissionInput as _SongSubmissionInput, StripeSessionStatus as _StripeSessionStatus, Time as _Time, TopVibingSong as _TopVibingSong, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserCategory as _UserCategory, UserProfile as _UserProfile, UserRole as _UserRole, VerificationRequest as _VerificationRequest, VerificationStatus as _VerificationStatus, VideoSubmission as _VideoSubmission, VideoSubmissionInput as _VideoSubmissionInput, VideoSubmissionStatus as _VideoSubmissionStatus, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -714,6 +762,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor._initializeAccessControlWithSecret(arg0);
+            return result;
+        }
+    }
+    async addLabelPartner(arg0: LabelPartnerInput): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addLabelPartner(to_candid_LabelPartnerInput_NEW(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addLabelPartner(to_candid_LabelPartnerInput_NEW(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async addLabelRelease(arg0: LabelReleaseInput): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addLabelRelease(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addLabelRelease(arg0);
             return result;
         }
     }
@@ -969,6 +1045,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteLabelPartner(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteLabelPartner(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteLabelPartner(arg0);
+            return result;
+        }
+    }
+    async deleteLabelRelease(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteLabelRelease(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteLabelRelease(arg0);
+            return result;
+        }
+    }
     async deleteArtistProfile(arg0: string): Promise<void> {
         if (this.processError) {
             try {
@@ -1162,6 +1266,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getAllBlockedUsersAdmin();
+            return result;
+        }
+    }
+    async getAllLabelPartners(): Promise<Array<LabelPartner>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllLabelPartners();
+                return from_candid_vec_LabelPartner_NEW(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllLabelPartners();
+            return from_candid_vec_LabelPartner_NEW(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllLabelReleases(): Promise<Array<LabelRelease>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllLabelReleases();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllLabelReleases();
             return result;
         }
     }
@@ -1414,6 +1546,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getFeaturedArtists();
+            return result;
+        }
+    }
+    async getLabelReleases(arg0: bigint): Promise<Array<LabelRelease>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getLabelReleases(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getLabelReleases(arg0);
             return result;
         }
     }
@@ -2086,6 +2232,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.unblockUserSongSubmission(arg0);
+            return result;
+        }
+    }
+    async updateLabelPartner(arg0: LabelPartner): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateLabelPartner(to_candid_LabelPartner_NEW(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateLabelPartner(to_candid_LabelPartner_NEW(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async updateLabelRelease(arg0: LabelRelease): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateLabelRelease(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateLabelRelease(arg0);
             return result;
         }
     }
@@ -3654,6 +3828,35 @@ function to_candid_variant_n97(_uploadFile: (file: ExternalBlob) => Promise<Uint
 }
 async function to_candid_vec_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<TrackMetadata>): Promise<Array<_TrackMetadata>> {
     return await Promise.all(value.map(async (x)=>await to_candid_TrackMetadata_n16(_uploadFile, _downloadFile, x)));
+}
+function from_candid_LabelPartner_NEW(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _LabelPartner): LabelPartner {
+    return {
+        id: value.id,
+        websiteLink: record_opt_to_undefined(value.websiteLink.length === 0 ? null : value.websiteLink[0]),
+        labelName: value.labelName,
+        description: value.description,
+        logoUrl: value.logoUrl
+    };
+}
+function from_candid_vec_LabelPartner_NEW(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_LabelPartner>): Array<LabelPartner> {
+    return value.map((x)=>from_candid_LabelPartner_NEW(_uploadFile, _downloadFile, x));
+}
+function to_candid_LabelPartnerInput_NEW(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: LabelPartnerInput): _LabelPartnerInput {
+    return {
+        websiteLink: value.websiteLink === undefined ? [] : [value.websiteLink],
+        labelName: value.labelName,
+        description: value.description,
+        logoUrl: value.logoUrl
+    };
+}
+function to_candid_LabelPartner_NEW(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: LabelPartner): _LabelPartner {
+    return {
+        id: value.id,
+        websiteLink: value.websiteLink === undefined ? [] : [value.websiteLink],
+        labelName: value.labelName,
+        description: value.description,
+        logoUrl: value.logoUrl
+    };
 }
 export interface CreateActorOptions {
     agent?: Agent;
