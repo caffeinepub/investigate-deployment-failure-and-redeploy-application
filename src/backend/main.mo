@@ -926,5 +926,183 @@ actor {
     UserApproval.listApprovals(approvalState);
   };
 
-  // Existing code...
+
+  // ── Artist Profile Management ──────────────────────────────────────────────
+
+  public shared ({ caller }) func createArtistProfile(input : SaveArtistProfileInput) : async Text {
+    requireUser(caller);
+    let blob = await Random.blob();
+    let id = InviteLinksModule.generateUUID(blob);
+    let profile : ArtistProfile = {
+      id;
+      owner = caller;
+      fullName = input.fullName;
+      stageName = input.stageName;
+      email = input.email;
+      mobileNumber = input.mobileNumber;
+      instagramLink = input.instagramLink;
+      facebookLink = input.facebookLink;
+      spotifyProfile = input.spotifyProfile;
+      appleProfile = input.appleProfile;
+      youtubeChannelLink = input.youtubeChannelLink;
+      profilePhoto = input.profilePhoto;
+      profilePhotoFilename = input.profilePhotoFilename;
+      isApproved = false;
+      isVerified = false;
+    };
+    artistProfiles.add(id, profile);
+    id;
+  };
+
+  public shared ({ caller }) func updateArtistProfile(id : Text, input : SaveArtistProfileInput) : async () {
+    requireUser(caller);
+    switch (artistProfiles.get(id)) {
+      case (null) { Runtime.trap("Artist profile not found") };
+      case (?existing) {
+        if (existing.owner != caller) {
+          Runtime.trap("Unauthorized: You can only edit your own profiles");
+        };
+        if (existing.isApproved and not artistProfileEditingAccessEnabled) {
+          Runtime.trap("Profile editing is currently disabled");
+        };
+        let updated : ArtistProfile = {
+          id;
+          owner = existing.owner;
+          fullName = input.fullName;
+          stageName = input.stageName;
+          email = input.email;
+          mobileNumber = input.mobileNumber;
+          instagramLink = input.instagramLink;
+          facebookLink = input.facebookLink;
+          spotifyProfile = input.spotifyProfile;
+          appleProfile = input.appleProfile;
+          youtubeChannelLink = input.youtubeChannelLink;
+          profilePhoto = input.profilePhoto;
+          profilePhotoFilename = input.profilePhotoFilename;
+          isApproved = existing.isApproved;
+          isVerified = existing.isVerified;
+        };
+        artistProfiles.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteArtistProfile(id : Text) : async () {
+    requireUser(caller);
+    switch (artistProfiles.get(id)) {
+      case (null) { Runtime.trap("Artist profile not found") };
+      case (?existing) {
+        if (existing.owner != caller) {
+          Runtime.trap("Unauthorized: You can only delete your own profiles");
+        };
+        artistProfiles.remove(id);
+      };
+    };
+  };
+
+  public query ({ caller }) func getMyArtistProfiles() : async [ArtistProfile] {
+    requireUser(caller);
+    artistProfiles.values().toArray().filter(
+      func(p : ArtistProfile) : Bool { p.owner == caller }
+    );
+  };
+
+  public query ({ caller }) func getAllArtistProfilesForAdmin() : async [ArtistProfile] {
+    requireAdminOrTeam(caller);
+    artistProfiles.values().toArray();
+  };
+
+  public query ({ caller }) func getAllArtistProfileOwnersForAdmin() : async [Principal] {
+    requireAdminOrTeam(caller);
+    artistProfiles.values().toArray().map(func(p : ArtistProfile) : Principal { p.owner });
+  };
+
+  public query ({ caller }) func getArtistProfilesByUserForAdmin(user : Principal) : async [ArtistProfile] {
+    requireAdminOrTeam(caller);
+    artistProfiles.values().toArray().filter(
+      func(p : ArtistProfile) : Bool { p.owner == user }
+    );
+  };
+
+  public query func getArtistProfileByOwner(owner : Principal) : async ?ArtistProfile {
+    let matches = artistProfiles.values().toArray().filter(
+      func(p : ArtistProfile) : Bool { p.owner == owner }
+    );
+    if (matches.size() > 0) { ?matches[0] } else { null };
+  };
+
+  public query func getArtistProfileIdByOwnerId(owner : Principal) : async ?Text {
+    let matches = artistProfiles.values().toArray().filter(
+      func(p : ArtistProfile) : Bool { p.owner == owner }
+    );
+    if (matches.size() > 0) { ?matches[0].id } else { null };
+  };
+
+  public query func doesUserHaveArtistProfile(owner : Principal) : async Bool {
+    artistProfiles.values().toArray().filter(
+      func(p : ArtistProfile) : Bool { p.owner == owner }
+    ).size() > 0;
+  };
+
+  public query func getArtistProfileEditingAccessStatus() : async Bool {
+    artistProfileEditingAccessEnabled;
+  };
+
+  public query func isArtistProfileEditingEnabled() : async Bool {
+    artistProfileEditingAccessEnabled;
+  };
+
+  public shared ({ caller }) func setArtistProfileEditingAccess(enabled : Bool) : async () {
+    requireAdmin(caller);
+    artistProfileEditingAccessEnabled := enabled;
+  };
+
+  public shared ({ caller }) func adminEditArtistProfile(id : Text, input : SaveArtistProfileInput) : async () {
+    requireAdminOrTeam(caller);
+    switch (artistProfiles.get(id)) {
+      case (null) { Runtime.trap("Artist profile not found") };
+      case (?existing) {
+        let updated : ArtistProfile = {
+          id;
+          owner = existing.owner;
+          fullName = input.fullName;
+          stageName = input.stageName;
+          email = input.email;
+          mobileNumber = input.mobileNumber;
+          instagramLink = input.instagramLink;
+          facebookLink = input.facebookLink;
+          spotifyProfile = input.spotifyProfile;
+          appleProfile = input.appleProfile;
+          youtubeChannelLink = input.youtubeChannelLink;
+          profilePhoto = input.profilePhoto;
+          profilePhotoFilename = input.profilePhotoFilename;
+          isApproved = input.isApproved;
+          isVerified = existing.isVerified;
+        };
+        artistProfiles.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func adminDeleteArtistProfile(id : Text) : async () {
+    requireAdminOrTeam(caller);
+    if (not artistProfiles.containsKey(id)) {
+      Runtime.trap("Artist profile not found");
+    };
+    artistProfiles.remove(id);
+  };
+
+  public query ({ caller }) func getMySubmissions() : async [SongSubmission] {
+    submissions.values().toArray().filter(
+      func(s : SongSubmission) : Bool { s.submitter == caller }
+    );
+  };
+
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    userProfiles.get(caller);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    userProfiles.add(caller, profile);
+  };
 };

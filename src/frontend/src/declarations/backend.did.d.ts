@@ -13,6 +13,24 @@ import type { Principal } from '@icp-sdk/core/principal';
 export type ApprovalStatus = { 'pending' : null } |
   { 'approved' : null } |
   { 'rejected' : null };
+export interface ArtistProfile {
+  'id' : string,
+  'isApproved' : boolean,
+  'instagramLink' : string,
+  'owner' : Principal,
+  'profilePhoto' : ExternalBlob,
+  'fullName' : string,
+  'mobileNumber' : string,
+  'email' : string,
+  'isVerified' : boolean,
+  'spotifyProfile' : string,
+  'youtubeChannelLink' : string,
+  'facebookLink' : string,
+  'appleProfile' : string,
+  'profilePhotoFilename' : string,
+  'stageName' : string,
+}
+export type ExternalBlob = Uint8Array;
 export interface InviteCode {
   'created' : Time,
   'code' : string,
@@ -51,6 +69,20 @@ export interface RSVP {
   'inviteCode' : string,
   'timestamp' : Time,
   'attending' : boolean,
+}
+export interface SaveArtistProfileInput {
+  'isApproved' : boolean,
+  'instagramLink' : string,
+  'profilePhoto' : ExternalBlob,
+  'fullName' : string,
+  'mobileNumber' : string,
+  'email' : string,
+  'spotifyProfile' : string,
+  'youtubeChannelLink' : string,
+  'facebookLink' : string,
+  'appleProfile' : string,
+  'profilePhotoFilename' : string,
+  'stageName' : string,
 }
 export interface ShoppingItem {
   'productName' : string,
@@ -120,30 +152,54 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addLabelPartner' : ActorMethod<[LabelPartnerInput], bigint>,
   'addLabelRelease' : ActorMethod<[LabelReleaseInput], bigint>,
+  'adminDeleteArtistProfile' : ActorMethod<[string], undefined>,
+  'adminEditArtistProfile' : ActorMethod<
+    [string, SaveArtistProfileInput],
+    undefined
+  >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'createArtistProfile' : ActorMethod<[SaveArtistProfileInput], string>,
   'createCheckoutSession' : ActorMethod<
     [Array<ShoppingItem>, string, string],
     string
   >,
+  'deleteArtistProfile' : ActorMethod<[string], undefined>,
   'deleteLabelPartner' : ActorMethod<[bigint], undefined>,
   'deleteLabelRelease' : ActorMethod<[bigint], undefined>,
+  'doesUserHaveArtistProfile' : ActorMethod<[Principal], boolean>,
   'generateInviteCode' : ActorMethod<[], string>,
+  'getAllArtistProfileOwnersForAdmin' : ActorMethod<[], Array<Principal>>,
+  'getAllArtistProfilesForAdmin' : ActorMethod<[], Array<ArtistProfile>>,
   'getAllLabelPartners' : ActorMethod<[], Array<LabelPartner>>,
   'getAllLabelReleases' : ActorMethod<[], Array<LabelRelease>>,
   'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
+  'getArtistProfileByOwner' : ActorMethod<[Principal], [] | [ArtistProfile]>,
+  'getArtistProfileEditingAccessStatus' : ActorMethod<[], boolean>,
+  'getArtistProfileIdByOwnerId' : ActorMethod<[Principal], [] | [string]>,
+  'getArtistProfilesByUserForAdmin' : ActorMethod<
+    [Principal],
+    Array<ArtistProfile>
+  >,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getInviteCodes' : ActorMethod<[], Array<InviteCode>>,
   'getLabelReleases' : ActorMethod<[bigint], Array<LabelRelease>>,
+  'getMyArtistProfiles' : ActorMethod<[], Array<ArtistProfile>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
+  'isArtistProfileEditingEnabled' : ActorMethod<[], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCallerApproved' : ActorMethod<[], boolean>,
   'isStripeConfigured' : ActorMethod<[], boolean>,
   'listApprovals' : ActorMethod<[], Array<UserApprovalInfo>>,
   'requestApproval' : ActorMethod<[], undefined>,
   'setApproval' : ActorMethod<[Principal, ApprovalStatus], undefined>,
+  'setArtistProfileEditingAccess' : ActorMethod<[boolean], undefined>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
   'submitRSVP' : ActorMethod<[string, boolean, string], undefined>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
+  'updateArtistProfile' : ActorMethod<
+    [string, SaveArtistProfileInput],
+    undefined
+  >,
   'updateLabelPartner' : ActorMethod<[LabelPartner], undefined>,
   'updateLabelRelease' : ActorMethod<[LabelRelease], undefined>,
 }

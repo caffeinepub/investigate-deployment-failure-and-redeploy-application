@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminArtistManagement from "../components/AdminArtistManagement";
 import AdminChatInbox from "../components/AdminChatInbox";
+import AdminDebugPanel from "../components/AdminDebugPanel";
 import AdminFeaturedArtistsManagement from "../components/AdminFeaturedArtistsManagement";
 import AdminLabelPartnersManagement from "../components/AdminLabelPartnersManagement";
 import AdminMonthlyListenersManagement from "../components/AdminMonthlyListenersManagement";
@@ -51,6 +52,9 @@ export default function AdminDashboard() {
           <TabsTrigger value="adminroles">Admin Role Management</TabsTrigger>
           <TabsTrigger value="messages">
             <MessagesTabLabel />
+          </TabsTrigger>
+          <TabsTrigger value="debug" data-ocid="debug.tab">
+            🔧 Debug
           </TabsTrigger>
         </TabsList>
 
@@ -104,6 +108,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="messages">
           <AdminChatInbox />
+        </TabsContent>
+
+        <TabsContent value="debug">
+          <AdminDebugPanel />
         </TabsContent>
       </Tabs>
     </div>

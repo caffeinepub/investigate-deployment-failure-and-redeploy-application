@@ -97,37 +97,6 @@ declare module "./backend" {
         releaseType: string;
         featuredArtist: string;
     }
-    export interface SaveArtistProfileInput {
-        isApproved: boolean;
-        instagramLink: string;
-        profilePhoto: ExternalBlob;
-        fullName: string;
-        mobileNumber: string;
-        email: string;
-        spotifyProfile: string;
-        youtubeChannelLink: string;
-        facebookLink: string;
-        appleProfile: string;
-        profilePhotoFilename: string;
-        stageName: string;
-    }
-    export interface ArtistProfile {
-        id: string;
-        isApproved: boolean;
-        instagramLink: string;
-        owner: Principal;
-        profilePhoto: ExternalBlob;
-        fullName: string;
-        mobileNumber: string;
-        email: string;
-        isVerified: boolean;
-        spotifyProfile: string;
-        youtubeChannelLink: string;
-        facebookLink: string;
-        appleProfile: string;
-        profilePhotoFilename: string;
-        stageName: string;
-    }
     export interface SubscriptionPlan {
         redirectUrl: string;
         pricePerYear: bigint;
