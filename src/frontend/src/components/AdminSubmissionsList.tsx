@@ -22,10 +22,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  AlertCircle,
   Download,
   Edit,
   ExternalLink,
   Link as LinkIcon,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
@@ -42,7 +44,13 @@ import AdminEditSubmissionDialog from "./AdminEditSubmissionDialog";
 import AdminManageLinksDialog from "./AdminManageLinksDialog";
 
 export default function AdminSubmissionsList() {
-  const { data: submissions, isLoading } = useGetAllSubmissionsForAdmin();
+  const {
+    data: submissions,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetAllSubmissionsForAdmin();
   const updateSubmission = useAdminUpdateSubmission();
   const setSubmissionLive = useAdminSetSubmissionLive();
   const deleteSubmission = useAdminDeleteSubmission();
@@ -69,6 +77,30 @@ export default function AdminSubmissionsList() {
           <p className="text-muted-foreground">Loading submissions...</p>
         </div>
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="border-destructive/40">
+        <CardContent className="py-12 text-center space-y-4">
+          <AlertCircle className="w-12 h-12 mx-auto text-destructive" />
+          <div>
+            <p className="font-semibold text-destructive">
+              Failed to load submissions
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {error instanceof Error
+                ? error.message
+                : "Unable to fetch submissions. Make sure you are logged in as admin."}
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => refetch()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -193,6 +225,17 @@ export default function AdminSubmissionsList() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">
+          {sortedSubmissions.length} submission
+          {sortedSubmissions.length !== 1 ? "s" : ""} total
+        </p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
       {sortedSubmissions.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">

@@ -198,28 +198,6 @@ actor {
     albumTracks : ?[TrackMetadata];
   };
 
-  public type RetrieveSongSubmissionEditDataResponseText = {
-    songSubmissionId : Text;
-    title : Text;
-    releaseType : Text;
-    genre : Text;
-    language : Text;
-    releaseDate : Text;
-    artwork : Storage.ExternalBlob;
-    artworkFilename : Text;
-    artist : Text;
-    featuredArtist : Text;
-    composer : Text;
-    producer : Text;
-    lyricist : Text;
-    audioFile : Storage.ExternalBlob;
-    audioFilename : Text;
-    additionalDetails : Text;
-    discountCode : ?Text;
-    musicVideoLink : ?Text;
-    albumTracks : ?[TrackMetadata];
-  };
-
   public type ArtistSubmissionLinksOutput = {
     artist : Text;
     spotifyProfile : Text;
@@ -747,7 +725,7 @@ actor {
     switch (submission.status) {
       case (#draft) { true };
       case (#rejected) { true };
-      case (#pending) { false };
+      case (#pending) { true };
       case (#approved) { false };
       case (#live) { false };
     };
@@ -1092,10 +1070,276 @@ actor {
     artistProfiles.remove(id);
   };
 
+  // ── Song Submission ────────────────────────────────────────────────────────
+
+  public shared ({ caller }) func submitSong(input : SongSubmissionInput) : async Text {
+    requireUser(caller);
+    requireUserNotBlockedForSongs(caller);
+    let blob = await Random.blob();
+    let id = InviteLinksModule.generateUUID(blob);
+    let submission : SongSubmission = {
+      id;
+      title = input.title;
+      releaseType = input.releaseType;
+      genre = input.genre;
+      language = input.language;
+      releaseDate = input.releaseDate;
+      artwork = input.artworkBlob;
+      artworkFilename = input.artworkFilename;
+      artist = input.artist;
+      featuredArtist = input.featuredArtist;
+      composer = input.composer;
+      producer = input.producer;
+      lyricist = input.lyricist;
+      audioFile = input.audioBlob;
+      audioFilename = input.audioFilename;
+      additionalDetails = input.additionalDetails;
+      status = #pending;
+      adminRemarks = "";
+      adminComment = "";
+      submitter = caller;
+      timestamp = Time.now();
+      discountCode = input.discountCode;
+      acrResult = null;
+      preSaveLink = null;
+      liveStreamLink = null;
+      musicVideoLink = input.musicVideoLink;
+      albumTracks = input.albumTracks;
+      publicLink = null;
+      adminLiveLink = null;
+      isManuallyRejected = false;
+      spotifyLink = input.spotifyLink;
+      appleMusicLink = input.appleMusicLink;
+    };
+    submissions.add(id, submission);
+    id;
+  };
+
+  // User edits their own submission (only when in editable state)
+  public shared ({ caller }) func editSongSubmission(input : SongSubmissionEditInput) : async () {
+    requireUser(caller);
+    switch (submissions.get(input.songSubmissionId)) {
+      case (null) { Runtime.trap("Submission not found") };
+      case (?existing) {
+        if (existing.submitter != caller) {
+          Runtime.trap("Unauthorized: You can only edit your own submissions");
+        };
+        if (not canEditSubmission(existing)) {
+          Runtime.trap("This submission cannot be edited in its current state");
+        };
+        let updated : SongSubmission = {
+          id = existing.id;
+          title = input.title;
+          releaseType = input.releaseType;
+          genre = input.genre;
+          language = input.language;
+          releaseDate = input.releaseDate;
+          artwork = input.artworkBlob;
+          artworkFilename = input.artworkFilename;
+          artist = input.artist;
+          featuredArtist = input.featuredArtist;
+          composer = input.composer;
+          producer = input.producer;
+          lyricist = input.lyricist;
+          audioFile = input.audioFile;
+          audioFilename = input.audioFilename;
+          additionalDetails = input.additionalDetails;
+          status = existing.status;
+          adminRemarks = existing.adminRemarks;
+          adminComment = existing.adminComment;
+          submitter = existing.submitter;
+          timestamp = existing.timestamp;
+          discountCode = input.discountCode;
+          acrResult = existing.acrResult;
+          preSaveLink = existing.preSaveLink;
+          liveStreamLink = existing.liveStreamLink;
+          musicVideoLink = input.musicVideoLink;
+          albumTracks = input.albumTracks;
+          publicLink = existing.publicLink;
+          adminLiveLink = existing.adminLiveLink;
+          isManuallyRejected = existing.isManuallyRejected;
+          spotifyLink = input.spotifyLink;
+          appleMusicLink = input.appleMusicLink;
+        };
+        submissions.add(input.songSubmissionId, updated);
+      };
+    };
+  };
+
+  // Admin updates submission status and notes
+  public shared ({ caller }) func adminUpdateSubmission(
+    id : Text,
+    newStatus : SongStatus,
+    adminRemarks : Text,
+    adminComment : Text
+  ) : async () {
+    requireAdminOrTeam(caller);
+    switch (submissions.get(id)) {
+      case (null) { Runtime.trap("Submission not found") };
+      case (?existing) {
+        let isRejected = switch (newStatus) { case (#rejected) { true }; case (_) { false } };
+        let updated : SongSubmission = {
+          id = existing.id;
+          title = existing.title;
+          releaseType = existing.releaseType;
+          genre = existing.genre;
+          language = existing.language;
+          releaseDate = existing.releaseDate;
+          artwork = existing.artwork;
+          artworkFilename = existing.artworkFilename;
+          artist = existing.artist;
+          featuredArtist = existing.featuredArtist;
+          composer = existing.composer;
+          producer = existing.producer;
+          lyricist = existing.lyricist;
+          audioFile = existing.audioFile;
+          audioFilename = existing.audioFilename;
+          additionalDetails = existing.additionalDetails;
+          status = newStatus;
+          adminRemarks;
+          adminComment;
+          submitter = existing.submitter;
+          timestamp = existing.timestamp;
+          discountCode = existing.discountCode;
+          acrResult = existing.acrResult;
+          preSaveLink = existing.preSaveLink;
+          liveStreamLink = existing.liveStreamLink;
+          musicVideoLink = existing.musicVideoLink;
+          albumTracks = existing.albumTracks;
+          publicLink = existing.publicLink;
+          adminLiveLink = existing.adminLiveLink;
+          isManuallyRejected = isRejected;
+          spotifyLink = existing.spotifyLink;
+          appleMusicLink = existing.appleMusicLink;
+        };
+        submissions.add(id, updated);
+      };
+    };
+  };
+
+  // Admin marks submission as live and sets the live link
+  public shared ({ caller }) func adminSetSubmissionLive(
+    id : Text,
+    liveUrl : Text,
+    adminRemarks : Text,
+    adminComment : Text
+  ) : async () {
+    requireAdminOrTeam(caller);
+    switch (submissions.get(id)) {
+      case (null) { Runtime.trap("Submission not found") };
+      case (?existing) {
+        let updated : SongSubmission = {
+          id = existing.id;
+          title = existing.title;
+          releaseType = existing.releaseType;
+          genre = existing.genre;
+          language = existing.language;
+          releaseDate = existing.releaseDate;
+          artwork = existing.artwork;
+          artworkFilename = existing.artworkFilename;
+          artist = existing.artist;
+          featuredArtist = existing.featuredArtist;
+          composer = existing.composer;
+          producer = existing.producer;
+          lyricist = existing.lyricist;
+          audioFile = existing.audioFile;
+          audioFilename = existing.audioFilename;
+          additionalDetails = existing.additionalDetails;
+          status = #live;
+          adminRemarks;
+          adminComment;
+          submitter = existing.submitter;
+          timestamp = existing.timestamp;
+          discountCode = existing.discountCode;
+          acrResult = existing.acrResult;
+          preSaveLink = existing.preSaveLink;
+          liveStreamLink = existing.liveStreamLink;
+          musicVideoLink = existing.musicVideoLink;
+          albumTracks = existing.albumTracks;
+          publicLink = existing.publicLink;
+          adminLiveLink = ?liveUrl;
+          isManuallyRejected = false;
+          spotifyLink = existing.spotifyLink;
+          appleMusicLink = existing.appleMusicLink;
+        };
+        submissions.add(id, updated);
+      };
+    };
+  };
+
+  // Admin edits submission details (including artwork/audio)
+  public shared ({ caller }) func adminEditSubmission(input : SongSubmissionEditInput) : async () {
+    requireAdminOrTeam(caller);
+    switch (submissions.get(input.songSubmissionId)) {
+      case (null) { Runtime.trap("Submission not found") };
+      case (?existing) {
+        let updated : SongSubmission = {
+          id = existing.id;
+          title = input.title;
+          releaseType = input.releaseType;
+          genre = input.genre;
+          language = input.language;
+          releaseDate = input.releaseDate;
+          artwork = input.artworkBlob;
+          artworkFilename = input.artworkFilename;
+          artist = input.artist;
+          featuredArtist = input.featuredArtist;
+          composer = input.composer;
+          producer = input.producer;
+          lyricist = input.lyricist;
+          audioFile = input.audioFile;
+          audioFilename = input.audioFilename;
+          additionalDetails = input.additionalDetails;
+          status = existing.status;
+          adminRemarks = existing.adminRemarks;
+          adminComment = existing.adminComment;
+          submitter = existing.submitter;
+          timestamp = existing.timestamp;
+          discountCode = input.discountCode;
+          acrResult = existing.acrResult;
+          preSaveLink = existing.preSaveLink;
+          liveStreamLink = existing.liveStreamLink;
+          musicVideoLink = input.musicVideoLink;
+          albumTracks = input.albumTracks;
+          publicLink = existing.publicLink;
+          adminLiveLink = existing.adminLiveLink;
+          isManuallyRejected = existing.isManuallyRejected;
+          spotifyLink = input.spotifyLink;
+          appleMusicLink = input.appleMusicLink;
+        };
+        submissions.add(input.songSubmissionId, updated);
+      };
+    };
+  };
+
+  // Admin deletes a submission
+  public shared ({ caller }) func adminDeleteSubmission(id : Text) : async () {
+    requireAdminOrTeam(caller);
+    if (not submissions.containsKey(id)) {
+      Runtime.trap("Submission not found");
+    };
+    submissions.remove(id);
+  };
+
   public query ({ caller }) func getMySubmissions() : async [SongSubmission] {
     submissions.values().toArray().filter(
       func(s : SongSubmission) : Bool { s.submitter == caller }
     );
+  };
+
+  public query ({ caller }) func getAllSubmissionsForAdmin() : async [SongSubmission] {
+    requireAdminOrTeam(caller);
+    submissions.values().toArray();
+  };
+
+  // Check if a user is blocked for song submissions
+  public query func isUserBlockedSongSubmission(user : Principal) : async Bool {
+    isBlockedForSongs(user);
+  };
+
+  // Check if a user is blocked for podcast submissions
+  public query func isUserBlockedPodcastSubmission(user : Principal) : async Bool {
+    isBlockedForPodcasts(user);
   };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {

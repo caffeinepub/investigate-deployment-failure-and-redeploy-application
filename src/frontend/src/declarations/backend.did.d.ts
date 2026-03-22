@@ -133,6 +133,91 @@ export interface http_request_result {
   'body' : Uint8Array,
   'headers' : Array<http_header>,
 }
+export type SongStatus = { 'pending' : null } |
+  { 'approved' : null } |
+  { 'rejected' : null } |
+  { 'draft' : null } |
+  { 'live' : null };
+export interface ACRResult {
+  'statusCode' : string,
+  'music' : string,
+}
+export interface TrackMetadata {
+  'title' : string,
+  'artist' : string,
+  'featuredArtist' : string,
+  'composer' : string,
+  'producer' : string,
+  'lyricist' : string,
+  'audioFile' : ExternalBlob,
+  'audioFilename' : string,
+}
+export interface SongSubmission {
+  'id' : string,
+  'title' : string,
+  'releaseType' : string,
+  'genre' : string,
+  'language' : string,
+  'releaseDate' : Time,
+  'artwork' : ExternalBlob,
+  'artworkFilename' : string,
+  'artist' : string,
+  'featuredArtist' : string,
+  'composer' : string,
+  'producer' : string,
+  'lyricist' : string,
+  'audioFile' : ExternalBlob,
+  'audioFilename' : string,
+  'additionalDetails' : string,
+  'status' : SongStatus,
+  'adminRemarks' : string,
+  'adminComment' : string,
+  'submitter' : Principal,
+  'timestamp' : Time,
+  'discountCode' : [] | [string],
+  'acrResult' : [] | [ACRResult],
+  'preSaveLink' : [] | [string],
+  'liveStreamLink' : [] | [string],
+  'musicVideoLink' : [] | [string],
+  'albumTracks' : [] | [Array<TrackMetadata>],
+  'publicLink' : [] | [string],
+  'adminLiveLink' : [] | [string],
+  'isManuallyRejected' : boolean,
+  'spotifyLink' : [] | [string],
+  'appleMusicLink' : [] | [string],
+}
+export interface SongSubmissionInput {
+  'title' : string,
+  'language' : string,
+  'releaseDate' : Time,
+  'releaseType' : string,
+  'genre' : string,
+  'artworkBlob' : ExternalBlob,
+  'artworkFilename' : string,
+  'artist' : string,
+  'featuredArtist' : string,
+  'composer' : string,
+  'producer' : string,
+  'lyricist' : string,
+  'audioBlob' : ExternalBlob,
+  'audioFilename' : string,
+  'additionalDetails' : string,
+  'discountCode' : [] | [string],
+  'albumTracks' : [] | [Array<TrackMetadata>],
+  'musicVideoLink' : [] | [string],
+  'spotifyLink' : [] | [string],
+  'appleMusicLink' : [] | [string],
+}
+export type UserCategory = { 'generalArtist' : null } |
+  { 'proArtist' : null } |
+  { 'ultraArtist' : null } |
+  { 'generalLabel' : null } |
+  { 'proLabel' : null };
+export interface UserProfile {
+  'name' : string,
+  'artistId' : string,
+  'category' : UserCategory,
+}
 export interface _SERVICE {
   '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
   '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
@@ -195,6 +280,7 @@ export interface _SERVICE {
   'setArtistProfileEditingAccess' : ActorMethod<[boolean], undefined>,
   'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
   'submitRSVP' : ActorMethod<[string, boolean, string], undefined>,
+  'submitSong' : ActorMethod<[SongSubmissionInput], string>,
   'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'updateArtistProfile' : ActorMethod<
     [string, SaveArtistProfileInput],
@@ -202,6 +288,17 @@ export interface _SERVICE {
   >,
   'updateLabelPartner' : ActorMethod<[LabelPartner], undefined>,
   'updateLabelRelease' : ActorMethod<[LabelRelease], undefined>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
+  'getAllSubmissionsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
+  'getMySubmissions' : ActorMethod<[], Array<SongSubmission>>,
+  'editSongSubmission' : ActorMethod<[SongSubmissionEditInput], undefined>,
+  'adminUpdateSubmission' : ActorMethod<[string, SongStatus, string, string], undefined>,
+  'adminSetSubmissionLive' : ActorMethod<[string, string, string, string], undefined>,
+  'adminEditSubmission' : ActorMethod<[SongSubmissionEditInput], undefined>,
+  'adminDeleteSubmission' : ActorMethod<[string], undefined>,
+  'isUserBlockedSongSubmission' : ActorMethod<[Principal], boolean>,
+  'isUserBlockedPodcastSubmission' : ActorMethod<[Principal], boolean>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
