@@ -731,6 +731,8 @@ actor {
     };
   };
 
+  // ── Label Partners ─────────────────────────────────────────────────────────
+
   public shared ({ caller }) func addLabelPartner(input : LabelPartnerInput) : async Nat {
     requireAdmin(caller);
     let partnerId = labelPartnersSize + 1;
@@ -825,7 +827,8 @@ actor {
     labelReleases.values().toArray();
   };
 
-  // Authentication and Stripe integration
+  // ── Stripe & Payments ──────────────────────────────────────────────────────
+
   public query func isStripeConfigured() : async Bool {
     stripeConfiguration != null;
   };
@@ -854,7 +857,8 @@ actor {
     OutCall.transform(input);
   };
 
-  // Invite links and RSVP system
+  // ── Invite Links ───────────────────────────────────────────────────────────
+
   public shared ({ caller }) func generateInviteCode() : async Text {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can generate invite codes");
@@ -883,7 +887,8 @@ actor {
     InviteLinksModule.getInviteCodes(inviteState);
   };
 
-  // Approval-based user system
+  // ── User Approval ──────────────────────────────────────────────────────────
+
   public query ({ caller }) func isCallerApproved() : async Bool {
     AccessControl.hasPermission(accessControlState, caller, #admin) or UserApproval.isApproved(approvalState, caller);
   };
@@ -903,7 +908,6 @@ actor {
     };
     UserApproval.listApprovals(approvalState);
   };
-
 
   // ── Artist Profile Management ──────────────────────────────────────────────
 
@@ -1115,7 +1119,6 @@ actor {
     id;
   };
 
-  // User edits their own submission (only when in editable state)
   public shared ({ caller }) func editSongSubmission(input : SongSubmissionEditInput) : async () {
     requireUser(caller);
     switch (submissions.get(input.songSubmissionId)) {
@@ -1166,7 +1169,6 @@ actor {
     };
   };
 
-  // Admin updates submission status and notes
   public shared ({ caller }) func adminUpdateSubmission(
     id : Text,
     newStatus : SongStatus,
@@ -1217,7 +1219,6 @@ actor {
     };
   };
 
-  // Admin marks submission as live and sets the live link
   public shared ({ caller }) func adminSetSubmissionLive(
     id : Text,
     liveUrl : Text,
@@ -1267,7 +1268,6 @@ actor {
     };
   };
 
-  // Admin edits submission details (including artwork/audio)
   public shared ({ caller }) func adminEditSubmission(input : SongSubmissionEditInput) : async () {
     requireAdminOrTeam(caller);
     switch (submissions.get(input.songSubmissionId)) {
@@ -1312,7 +1312,6 @@ actor {
     };
   };
 
-  // Admin deletes a submission
   public shared ({ caller }) func adminDeleteSubmission(id : Text) : async () {
     requireAdminOrTeam(caller);
     if (not submissions.containsKey(id)) {
@@ -1332,15 +1331,38 @@ actor {
     submissions.values().toArray();
   };
 
-  // Check if a user is blocked for song submissions
+  public query func getSongInfo(songId : Text) : async ?PublicSongInfo {
+    switch (submissions.get(songId)) {
+      case (null) { null };
+      case (?s) {
+        if (s.status == #live) {
+          ?{
+            id = s.id;
+            title = s.title;
+            artist = s.artist;
+            featuredArtist = s.featuredArtist;
+            artwork = s.artwork;
+            spotifyLink = s.spotifyLink;
+            appleMusicLink = s.appleMusicLink;
+            releaseDate = s.releaseDate;
+            genre = s.genre;
+            language = s.language;
+            musicVideoLink = s.musicVideoLink;
+          };
+        } else { null };
+      };
+    };
+  };
+
   public query func isUserBlockedSongSubmission(user : Principal) : async Bool {
     isBlockedForSongs(user);
   };
 
-  // Check if a user is blocked for podcast submissions
   public query func isUserBlockedPodcastSubmission(user : Principal) : async Bool {
     isBlockedForPodcasts(user);
   };
+
+  // ── User Profile ───────────────────────────────────────────────────────────
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     userProfiles.get(caller);
@@ -1348,5 +1370,719 @@ actor {
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
     userProfiles.add(caller, profile);
+  };
+
+  public query func getUserProfile(user : Principal) : async ?UserProfile {
+    userProfiles.get(user);
+  };
+
+  public query ({ caller }) func getUsersByCategory(category : UserCategory) : async [Principal] {
+    requireAdminOrTeam(caller);
+    userProfiles.entries().toArray().filter(
+      func(entry : (Principal, UserProfile)) : Bool { entry.1.category == category }
+    ).map(func(entry : (Principal, UserProfile)) : Principal { entry.0 });
+  };
+
+  public shared ({ caller }) func updateUserCategory(user : Principal, category : UserCategory) : async () {
+    requireAdmin(caller);
+    switch (userProfiles.get(user)) {
+      case (null) {
+        let profile : UserProfile = { name = ""; artistId = ""; category };
+        userProfiles.add(user, profile);
+      };
+      case (?existing) {
+        let updated : UserProfile = { name = existing.name; artistId = existing.artistId; category };
+        userProfiles.add(user, updated);
+      };
+    };
+  };
+
+  // ── Admin User Management ──────────────────────────────────────────────────
+
+  public shared ({ caller }) func promoteToAdmin(user : Principal) : async () {
+    requireAdmin(caller);
+    AccessControl.assignRole(accessControlState, caller, user, #admin);
+  };
+
+  public shared ({ caller }) func demoteFromAdmin(user : Principal) : async () {
+    requireAdmin(caller);
+    AccessControl.assignRole(accessControlState, caller, user, #user);
+  };
+
+  public query ({ caller }) func listAdmins() : async [Principal] {
+    requireAdmin(caller);
+    accessControlState.userRoles.entries().toArray().filter(func(e : (Principal, AccessControl.UserRole)) : Bool { e.1 == #admin }).map(func(e : (Principal, AccessControl.UserRole)) : Principal { e.0 });
+  };
+
+  public shared ({ caller }) func blockUserSongSubmission(user : Principal) : async () {
+    requireAdmin(caller);
+    switch (blockedUsers.get(user)) {
+      case (null) {
+        blockedUsers.add(user, { songSubmissionBlocked = true; podcastSubmissionBlocked = false });
+      };
+      case (?existing) {
+        blockedUsers.add(user, { songSubmissionBlocked = true; podcastSubmissionBlocked = existing.podcastSubmissionBlocked });
+      };
+    };
+  };
+
+  public shared ({ caller }) func unblockUserSongSubmission(user : Principal) : async () {
+    requireAdmin(caller);
+    switch (blockedUsers.get(user)) {
+      case (null) { };
+      case (?existing) {
+        blockedUsers.add(user, { songSubmissionBlocked = false; podcastSubmissionBlocked = existing.podcastSubmissionBlocked });
+      };
+    };
+  };
+
+  public shared ({ caller }) func blockUserPodcastSubmission(user : Principal) : async () {
+    requireAdmin(caller);
+    switch (blockedUsers.get(user)) {
+      case (null) {
+        blockedUsers.add(user, { songSubmissionBlocked = false; podcastSubmissionBlocked = true });
+      };
+      case (?existing) {
+        blockedUsers.add(user, { songSubmissionBlocked = existing.songSubmissionBlocked; podcastSubmissionBlocked = true });
+      };
+    };
+  };
+
+  public shared ({ caller }) func unblockUserPodcastSubmission(user : Principal) : async () {
+    requireAdmin(caller);
+    switch (blockedUsers.get(user)) {
+      case (null) { };
+      case (?existing) {
+        blockedUsers.add(user, { songSubmissionBlocked = existing.songSubmissionBlocked; podcastSubmissionBlocked = false });
+      };
+    };
+  };
+
+  public query ({ caller }) func getAllBlockedUsersAdmin() : async [Principal] {
+    requireAdmin(caller);
+    blockedUsers.keys().toArray();
+  };
+
+  public shared ({ caller }) func upgradeUserToTeamMember(user : Principal) : async () {
+    requireAdmin(caller);
+    teamMembers.add(user, true);
+  };
+
+  public shared ({ caller }) func downgradeTeamMember(user : Principal) : async () {
+    requireAdmin(caller);
+    teamMembers.remove(user);
+  };
+
+  public query func isUserTeamMember(user : Principal) : async Bool {
+    isTeamMember(user);
+  };
+
+  public query ({ caller }) func getAllTeamMembers() : async [Principal] {
+    requireAdmin(caller);
+    teamMembers.keys().toArray();
+  };
+
+  // ── Website Branding ───────────────────────────────────────────────────────
+
+  public query func getWebsiteLogo() : async ?Storage.ExternalBlob {
+    websiteLogo;
+  };
+
+  public shared ({ caller }) func setWebsiteLogo(logo : Storage.ExternalBlob) : async () {
+    requireAdmin(caller);
+    websiteLogo := ?logo;
+  };
+
+  public shared ({ caller }) func removeWebsiteLogo() : async () {
+    requireAdmin(caller);
+    websiteLogo := null;
+  };
+
+  // ── Announcement ───────────────────────────────────────────────────────────
+
+  public query func getAnnouncement() : async Text {
+    globalAnnouncement;
+  };
+
+  public shared ({ caller }) func setAnnouncement(text : Text) : async () {
+    requireAdmin(caller);
+    globalAnnouncement := text;
+  };
+
+  // ── Verification System ────────────────────────────────────────────────────
+
+  public shared ({ caller }) func applyForVerification() : async Text {
+    requireUser(caller);
+    let blob = await Random.blob();
+    let id = InviteLinksModule.generateUUID(blob);
+    let request : VerificationRequest = {
+      id;
+      user = caller;
+      status = #pending;
+      timestamp = Time.now();
+      verificationApprovedTimestamp = null;
+      expiryExtensionDays = 0;
+    };
+    verificationRequests.add(id, request);
+    id;
+  };
+
+  public query ({ caller }) func getVerificationRequests() : async [VerificationRequest] {
+    requireAdminOrTeam(caller);
+    verificationRequests.values().toArray();
+  };
+
+  public query func getVerificationRequestsByUser(user : Principal) : async [VerificationRequest] {
+    verificationRequests.values().toArray().filter(
+      func(r : VerificationRequest) : Bool { r.user == user }
+    );
+  };
+
+  public shared ({ caller }) func handleVerificationRequest(
+    id : Text,
+    isApproved : Bool,
+    remarks : Text,
+    newStatus : VerificationStatus
+  ) : async () {
+    requireAdmin(caller);
+    switch (verificationRequests.get(id)) {
+      case (null) { Runtime.trap("Verification request not found") };
+      case (?existing) {
+        let approvedTimestamp = if (isApproved) { ?Time.now() } else { existing.verificationApprovedTimestamp };
+        let updated : VerificationRequest = {
+          id = existing.id;
+          user = existing.user;
+          status = newStatus;
+          timestamp = existing.timestamp;
+          verificationApprovedTimestamp = approvedTimestamp;
+          expiryExtensionDays = existing.expiryExtensionDays;
+        };
+        verificationRequests.add(id, updated);
+        if (isApproved) {
+          // Mark all artist profiles as verified
+          let profiles = artistProfiles.values().toArray().filter(
+            func(p : ArtistProfile) : Bool { p.owner == existing.user }
+          );
+          for (profile in profiles.values()) {
+            let updatedProfile : ArtistProfile = {
+              id = profile.id;
+              owner = profile.owner;
+              fullName = profile.fullName;
+              stageName = profile.stageName;
+              email = profile.email;
+              mobileNumber = profile.mobileNumber;
+              instagramLink = profile.instagramLink;
+              facebookLink = profile.facebookLink;
+              spotifyProfile = profile.spotifyProfile;
+              appleProfile = profile.appleProfile;
+              youtubeChannelLink = profile.youtubeChannelLink;
+              profilePhoto = profile.profilePhoto;
+              profilePhotoFilename = profile.profilePhotoFilename;
+              isApproved = profile.isApproved;
+              isVerified = true;
+            };
+            artistProfiles.add(profile.id, updatedProfile);
+          };
+        };
+      };
+    };
+  };
+
+  public shared ({ caller }) func updateVerificationStatus(
+    id : Text,
+    newStatus : VerificationStatus,
+    extensionDays : Nat
+  ) : async () {
+    requireAdmin(caller);
+    switch (verificationRequests.get(id)) {
+      case (null) { Runtime.trap("Verification request not found") };
+      case (?existing) {
+        let updated : VerificationRequest = {
+          id = existing.id;
+          user = existing.user;
+          status = newStatus;
+          timestamp = existing.timestamp;
+          verificationApprovedTimestamp = existing.verificationApprovedTimestamp;
+          expiryExtensionDays = extensionDays;
+        };
+        verificationRequests.add(id, updated);
+      };
+    };
+  };
+
+  public query func isArtistVerified(user : Principal) : async Bool {
+    let profiles = artistProfiles.values().toArray().filter(
+      func(p : ArtistProfile) : Bool { p.owner == user }
+    );
+    if (profiles.size() > 0) { profiles[0].isVerified } else { false };
+  };
+
+  // ── Podcast System ─────────────────────────────────────────────────────────
+
+  public shared ({ caller }) func createPodcastShow(input : PodcastShowInput) : async Text {
+    requireUser(caller);
+    let blob = await Random.blob();
+    let id = InviteLinksModule.generateUUID(blob);
+    let show : PodcastShow = {
+      id;
+      title = input.title;
+      description = input.description;
+      podcastType = input.podcastType;
+      category = input.category;
+      language = input.language;
+      artwork = input.artwork;
+      createdBy = caller;
+      timestamp = Time.now();
+      moderationStatus = #pending;
+      liveLink = null;
+    };
+    podcasts.add(id, show);
+    id;
+  };
+
+  public query ({ caller }) func getMyPodcastShows() : async [PodcastShow] {
+    requireUser(caller);
+    podcasts.values().toArray().filter(
+      func(p : PodcastShow) : Bool { p.createdBy == caller }
+    );
+  };
+
+  public query ({ caller }) func getAllPodcasts() : async [PodcastShow] {
+    requireAdminOrTeam(caller);
+    podcasts.values().toArray();
+  };
+
+  public query ({ caller }) func getAllPendingPodcasts() : async [PodcastShow] {
+    requireAdminOrTeam(caller);
+    podcasts.values().toArray().filter(
+      func(p : PodcastShow) : Bool { p.moderationStatus == #pending }
+    );
+  };
+
+  public query func getPodcastsByCategory(category : PodcastCategory) : async [PodcastShow] {
+    podcasts.values().toArray().filter(
+      func(p : PodcastShow) : Bool { p.category == category and p.moderationStatus == #live }
+    );
+  };
+
+  public shared ({ caller }) func approvePodcast(id : Text) : async () {
+    requireAdminOrTeam(caller);
+    switch (podcasts.get(id)) {
+      case (null) { Runtime.trap("Podcast not found") };
+      case (?existing) {
+        let updated : PodcastShow = {
+          id = existing.id; title = existing.title; description = existing.description;
+          podcastType = existing.podcastType; category = existing.category; language = existing.language;
+          artwork = existing.artwork; createdBy = existing.createdBy; timestamp = existing.timestamp;
+          moderationStatus = #approved; liveLink = existing.liveLink;
+        };
+        podcasts.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func rejectPodcast(id : Text) : async () {
+    requireAdminOrTeam(caller);
+    switch (podcasts.get(id)) {
+      case (null) { Runtime.trap("Podcast not found") };
+      case (?existing) {
+        let updated : PodcastShow = {
+          id = existing.id; title = existing.title; description = existing.description;
+          podcastType = existing.podcastType; category = existing.category; language = existing.language;
+          artwork = existing.artwork; createdBy = existing.createdBy; timestamp = existing.timestamp;
+          moderationStatus = #rejected; liveLink = existing.liveLink;
+        };
+        podcasts.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func markPodcastLive(id : Text, liveLink : Text) : async () {
+    requireAdminOrTeam(caller);
+    switch (podcasts.get(id)) {
+      case (null) { Runtime.trap("Podcast not found") };
+      case (?existing) {
+        let updated : PodcastShow = {
+          id = existing.id; title = existing.title; description = existing.description;
+          podcastType = existing.podcastType; category = existing.category; language = existing.language;
+          artwork = existing.artwork; createdBy = existing.createdBy; timestamp = existing.timestamp;
+          moderationStatus = #live; liveLink = ?liveLink;
+        };
+        podcasts.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func createPodcastEpisode(input : PodcastEpisodeInput) : async Text {
+    requireUser(caller);
+    let blob = await Random.blob();
+    let id = InviteLinksModule.generateUUID(blob);
+    let episode : PodcastEpisode = {
+      id;
+      showId = input.showId;
+      title = input.title;
+      description = input.description;
+      seasonNumber = input.seasonNumber;
+      episodeNumber = input.episodeNumber;
+      episodeType = input.episodeType;
+      isEighteenPlus = input.isEighteenPlus;
+      isExplicit = input.isExplicit;
+      isPromotional = input.isPromotional;
+      artwork = input.artwork;
+      thumbnail = input.thumbnail;
+      mediaFile = input.mediaFile;
+      createdBy = caller;
+      timestamp = Time.now();
+      moderationStatus = #pending;
+    };
+    podcastEpisodes.add(id, episode);
+    id;
+  };
+
+  public query ({ caller }) func getMyEpisodes(showId : Text) : async [PodcastEpisode] {
+    requireUser(caller);
+    podcastEpisodes.values().toArray().filter(
+      func(e : PodcastEpisode) : Bool { e.showId == showId and e.createdBy == caller }
+    );
+  };
+
+  public query func getEpisodesByShowId(showId : Text) : async [PodcastEpisode] {
+    podcastEpisodes.values().toArray().filter(
+      func(e : PodcastEpisode) : Bool { e.showId == showId }
+    );
+  };
+
+  public query ({ caller }) func getAllEpisodes() : async [PodcastEpisode] {
+    requireAdminOrTeam(caller);
+    podcastEpisodes.values().toArray();
+  };
+
+  public query ({ caller }) func getAllPendingEpisodes() : async [PodcastEpisode] {
+    requireAdminOrTeam(caller);
+    podcastEpisodes.values().toArray().filter(
+      func(e : PodcastEpisode) : Bool { e.moderationStatus == #pending }
+    );
+  };
+
+  public shared ({ caller }) func approveEpisode(id : Text) : async () {
+    requireAdminOrTeam(caller);
+    switch (podcastEpisodes.get(id)) {
+      case (null) { Runtime.trap("Episode not found") };
+      case (?existing) {
+        let updated : PodcastEpisode = {
+          id = existing.id; showId = existing.showId; title = existing.title;
+          description = existing.description; seasonNumber = existing.seasonNumber;
+          episodeNumber = existing.episodeNumber; episodeType = existing.episodeType;
+          isEighteenPlus = existing.isEighteenPlus; isExplicit = existing.isExplicit;
+          isPromotional = existing.isPromotional; artwork = existing.artwork;
+          thumbnail = existing.thumbnail; mediaFile = existing.mediaFile;
+          createdBy = existing.createdBy; timestamp = existing.timestamp;
+          moderationStatus = #approved;
+        };
+        podcastEpisodes.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func rejectEpisode(id : Text) : async () {
+    requireAdminOrTeam(caller);
+    switch (podcastEpisodes.get(id)) {
+      case (null) { Runtime.trap("Episode not found") };
+      case (?existing) {
+        let updated : PodcastEpisode = {
+          id = existing.id; showId = existing.showId; title = existing.title;
+          description = existing.description; seasonNumber = existing.seasonNumber;
+          episodeNumber = existing.episodeNumber; episodeType = existing.episodeType;
+          isEighteenPlus = existing.isEighteenPlus; isExplicit = existing.isExplicit;
+          isPromotional = existing.isPromotional; artwork = existing.artwork;
+          thumbnail = existing.thumbnail; mediaFile = existing.mediaFile;
+          createdBy = existing.createdBy; timestamp = existing.timestamp;
+          moderationStatus = #rejected;
+        };
+        podcastEpisodes.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func markEpisodeLive(id : Text) : async () {
+    requireAdminOrTeam(caller);
+    switch (podcastEpisodes.get(id)) {
+      case (null) { Runtime.trap("Episode not found") };
+      case (?existing) {
+        let updated : PodcastEpisode = {
+          id = existing.id; showId = existing.showId; title = existing.title;
+          description = existing.description; seasonNumber = existing.seasonNumber;
+          episodeNumber = existing.episodeNumber; episodeType = existing.episodeType;
+          isEighteenPlus = existing.isEighteenPlus; isExplicit = existing.isExplicit;
+          isPromotional = existing.isPromotional; artwork = existing.artwork;
+          thumbnail = existing.thumbnail; mediaFile = existing.mediaFile;
+          createdBy = existing.createdBy; timestamp = existing.timestamp;
+          moderationStatus = #live;
+        };
+        podcastEpisodes.add(id, updated);
+      };
+    };
+  };
+
+  // ── Video Submission ───────────────────────────────────────────────────────
+
+  public shared ({ caller }) func submitVideo(input : VideoSubmissionInput) : async Text {
+    requireUser(caller);
+    let blob = await Random.blob();
+    let id = InviteLinksModule.generateUUID(blob);
+    let video : VideoSubmission = {
+      id;
+      userId = caller;
+      title = input.title;
+      description = input.description;
+      category = input.category;
+      tags = input.tags;
+      thumbnail = input.thumbnail;
+      artwork = input.artwork;
+      videoFile = input.videoFile;
+      status = #pending;
+      liveUrl = null;
+      submittedAt = Time.now();
+      updatedAt = Time.now();
+    };
+    videoSubmissions.add(id, video);
+    id;
+  };
+
+  public query ({ caller }) func getUserVideoSubmissions() : async [VideoSubmission] {
+    requireUser(caller);
+    videoSubmissions.values().toArray().filter(
+      func(v : VideoSubmission) : Bool { v.userId == caller }
+    );
+  };
+
+  public query ({ caller }) func getAllVideoSubmissions() : async [VideoSubmission] {
+    requireAdminOrTeam(caller);
+    videoSubmissions.values().toArray();
+  };
+
+  public shared ({ caller }) func updateVideoSubmission(id : Text, input : VideoSubmissionInput) : async () {
+    requireUser(caller);
+    switch (videoSubmissions.get(id)) {
+      case (null) { Runtime.trap("Video submission not found") };
+      case (?existing) {
+        if (existing.userId != caller) { Runtime.trap("Unauthorized") };
+        let updated : VideoSubmission = {
+          id = existing.id; userId = existing.userId;
+          title = input.title; description = input.description;
+          category = input.category; tags = input.tags;
+          thumbnail = input.thumbnail; artwork = input.artwork;
+          videoFile = input.videoFile; status = existing.status;
+          liveUrl = existing.liveUrl; submittedAt = existing.submittedAt;
+          updatedAt = Time.now();
+        };
+        videoSubmissions.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func updateVideoStatus(id : Text, status : VideoSubmissionStatus, liveUrl : ?Text) : async () {
+    requireAdminOrTeam(caller);
+    switch (videoSubmissions.get(id)) {
+      case (null) { Runtime.trap("Video submission not found") };
+      case (?existing) {
+        let updated : VideoSubmission = {
+          id = existing.id; userId = existing.userId;
+          title = existing.title; description = existing.description;
+          category = existing.category; tags = existing.tags;
+          thumbnail = existing.thumbnail; artwork = existing.artwork;
+          videoFile = existing.videoFile; status;
+          liveUrl; submittedAt = existing.submittedAt;
+          updatedAt = Time.now();
+        };
+        videoSubmissions.add(id, updated);
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteVideoSubmission(id : Text) : async () {
+    requireUser(caller);
+    switch (videoSubmissions.get(id)) {
+      case (null) { Runtime.trap("Video submission not found") };
+      case (?existing) {
+        if (existing.userId != caller and not isAdminOrTeam(caller)) {
+          Runtime.trap("Unauthorized");
+        };
+        videoSubmissions.remove(id);
+      };
+    };
+  };
+
+  public query func downloadVideoFile(id : Text) : async ?Storage.ExternalBlob {
+    switch (videoSubmissions.get(id)) {
+      case (null) { null };
+      case (?v) { ?v.videoFile };
+    };
+  };
+
+  // ── Featured Artists ───────────────────────────────────────────────────────
+
+  public shared ({ caller }) func setFeaturedArtist(slotIndex : Nat, input : FeaturedArtistInput) : async () {
+    requireAdmin(caller);
+    let artist : FeaturedArtist = {
+      id = slotIndex;
+      slotIndex;
+      artistName = input.artistName;
+      photoUrl = input.photoUrl;
+      aboutBlurb = input.aboutBlurb;
+      songs = input.songs;
+      isActive = input.isActive;
+    };
+    featuredArtists.add(slotIndex, artist);
+  };
+
+  public shared ({ caller }) func toggleFeaturedArtistSlot(slotIndex : Nat, isActive : Bool) : async () {
+    requireAdmin(caller);
+    switch (featuredArtists.get(slotIndex)) {
+      case (null) { };
+      case (?existing) {
+        let updated : FeaturedArtist = {
+          id = existing.id;
+          slotIndex = existing.slotIndex;
+          artistName = existing.artistName;
+          photoUrl = existing.photoUrl;
+          aboutBlurb = existing.aboutBlurb;
+          songs = existing.songs;
+          isActive;
+        };
+        featuredArtists.add(slotIndex, updated);
+      };
+    };
+  };
+
+  public query func getActiveFeaturedArtists() : async [FeaturedArtist] {
+    featuredArtists.values().toArray().filter(
+      func(a : FeaturedArtist) : Bool { a.isActive }
+    );
+  };
+
+  public query ({ caller }) func getFeaturedArtists() : async [FeaturedArtist] {
+    requireAdmin(caller);
+    featuredArtists.values().toArray();
+  };
+
+  // ── Top Vibing Songs ───────────────────────────────────────────────────────
+
+  public shared ({ caller }) func addTopVibingSong(song : TopVibingSong) : async Nat {
+    requireAdmin(caller);
+    let id = topVibingSongsSize + 1;
+    let newSong : TopVibingSong = {
+      id;
+      title = song.title;
+      artistName = song.artistName;
+      genre = song.genre;
+      artworkUrl = song.artworkUrl;
+      streamingLink = song.streamingLink;
+      tagline = song.tagline;
+      rank = id;
+    };
+    topVibingSongs.add(id, newSong);
+    topVibingSongsSize += 1;
+    id;
+  };
+
+  public shared ({ caller }) func updateTopVibingSong(song : TopVibingSong) : async () {
+    requireAdmin(caller);
+    if (not topVibingSongs.containsKey(song.id)) {
+      Runtime.trap("Top vibing song not found");
+    };
+    topVibingSongs.add(song.id, song);
+  };
+
+  public shared ({ caller }) func deleteTopVibingSong(id : Nat) : async () {
+    requireAdmin(caller);
+    if (not topVibingSongs.containsKey(id)) {
+      Runtime.trap("Top vibing song not found");
+    };
+    topVibingSongs.remove(id);
+  };
+
+  public query ({ caller }) func getAllTopVibingSongs() : async [TopVibingSong] {
+    requireAdmin(caller);
+    topVibingSongs.values().toArray();
+  };
+
+  public query func getRankedTopVibingSongs() : async [TopVibingSong] {
+    let songs = topVibingSongs.values().toArray();
+    songs.sort(func(a : TopVibingSong, b : TopVibingSong) : { #less; #equal; #greater } {
+      if (a.rank < b.rank) { #less } else if (a.rank > b.rank) { #greater } else { #equal };
+    });
+  };
+
+  public query func getTopVibingSong(id : Nat) : async ?TopVibingSong {
+    topVibingSongs.get(id);
+  };
+
+  public shared ({ caller }) func reorderTopVibingSongs(ids : [Nat]) : async () {
+    requireAdmin(caller);
+    var rank = 1;
+    for (id in ids.values()) {
+      switch (topVibingSongs.get(id)) {
+        case (null) { };
+        case (?existing) {
+          let updated : TopVibingSong = {
+            id = existing.id;
+            title = existing.title;
+            artistName = existing.artistName;
+            genre = existing.genre;
+            artworkUrl = existing.artworkUrl;
+            streamingLink = existing.streamingLink;
+            tagline = existing.tagline;
+            rank;
+          };
+          topVibingSongs.add(id, updated);
+          rank += 1;
+        };
+      };
+    };
+  };
+
+  // ── Subscription Plans ─────────────────────────────────────────────────────
+
+  public shared ({ caller }) func createSubscriptionPlan(plan : SubscriptionPlan) : async () {
+    requireAdmin(caller);
+    subscriptionPlans.add(plan.planName, plan);
+  };
+
+  public shared ({ caller }) func updateSubscriptionPlan(plan : SubscriptionPlan) : async () {
+    requireAdmin(caller);
+    if (not subscriptionPlans.containsKey(plan.planName)) {
+      Runtime.trap("Subscription plan not found");
+    };
+    subscriptionPlans.add(plan.planName, plan);
+  };
+
+  public shared ({ caller }) func deleteSubscriptionPlan(planName : Text) : async () {
+    requireAdmin(caller);
+    if (not subscriptionPlans.containsKey(planName)) {
+      Runtime.trap("Subscription plan not found");
+    };
+    subscriptionPlans.remove(planName);
+  };
+
+  public query func getAllSubscriptionPlans() : async [SubscriptionPlan] {
+    subscriptionPlans.values().toArray();
+  };
+
+  // ── Monthly Listener Stats ─────────────────────────────────────────────────
+
+  public shared ({ caller }) func updateMonthlyListenerStats(
+    songId : Text,
+    stats : [MonthlyListenerStats]
+  ) : async () {
+    requireAdminOrTeam(caller);
+    monthlyListenerStats.add(songId, stats);
+  };
+
+  public query func getSongMonthlyListenerStats(songId : Text) : async [MonthlyListenerStats] {
+    switch (monthlyListenerStats.get(songId)) {
+      case (null) { [] };
+      case (?stats) { stats };
+    };
   };
 };
