@@ -466,6 +466,7 @@ export interface _SERVICE {
   'handleVerificationRequest' : ActorMethod<[string, boolean, string, VerificationStatus], undefined>,
   'isArtistProfileEditingEnabled' : ActorMethod<[], boolean>,
   'isArtistVerified' : ActorMethod<[Principal], boolean>,
+  'bootstrapAdmin' : ActorMethod<[], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isCallerApproved' : ActorMethod<[], boolean>,
   'isStripeConfigured' : ActorMethod<[], boolean>,
