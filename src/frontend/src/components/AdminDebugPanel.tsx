@@ -427,6 +427,25 @@ export default function AdminDebugPanel() {
     new Set(["Backend Functions", "Frontend Routes", "Dashboard Panels"]),
   );
   const errorLogRef = useRef<ErrorLogEntry[]>([]);
+  const [bootstrapStatus, setBootstrapStatus] = useState<string | null>(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(false);
+
+  const handleBootstrapAdmin = useCallback(async () => {
+    if (!actor) return;
+    setIsBootstrapping(true);
+    setBootstrapStatus(null);
+    try {
+      await actor.bootstrapAdmin();
+      setBootstrapStatus("success");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setBootstrapStatus(
+        msg.includes("already done") ? "already-done" : `error:${msg}`,
+      );
+    } finally {
+      setIsBootstrapping(false);
+    }
+  }, [actor]);
 
   // Capture global errors
   useEffect(() => {
@@ -743,6 +762,28 @@ export default function AdminDebugPanel() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Button
+            onClick={handleBootstrapAdmin}
+            disabled={isBootstrapping || !actor}
+            className="bg-amber-700 hover:bg-amber-600 text-white border border-amber-500/40 font-mono text-sm"
+          >
+            {isBootstrapping ? "Bootstrapping…" : "🔑 Bootstrap Admin"}
+          </Button>
+          {bootstrapStatus === "success" && (
+            <span className="text-green-400 font-mono text-xs self-center">
+              ✅ Admin role granted! Reload the page.
+            </span>
+          )}
+          {bootstrapStatus === "already-done" && (
+            <span className="text-yellow-400 font-mono text-xs self-center">
+              ⚠️ Bootstrap already done (admin exists).
+            </span>
+          )}
+          {bootstrapStatus?.startsWith("error:") && (
+            <span className="text-red-400 font-mono text-xs self-center">
+              ❌ {bootstrapStatus.replace("error:", "")}
+            </span>
+          )}
           <Button
             data-ocid="debug.run_scan_button"
             onClick={runFullScan}

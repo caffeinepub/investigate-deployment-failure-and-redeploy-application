@@ -391,6 +391,7 @@ declare module "./backend" {
         listApprovals(): Promise<Array<UserApprovalInfo>>;
         markEpisodeLive(id: string): Promise<void>;
         markPodcastLive(id: string, liveLink: string): Promise<void>;
+        bootstrapAdmin(): Promise<void>;
         promoteToAdmin(target: Principal): Promise<void>;
         rejectEpisode(id: string): Promise<void>;
         rejectPodcast(id: string): Promise<void>;

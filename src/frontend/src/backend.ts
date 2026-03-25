@@ -634,6 +634,7 @@ export interface backendInterface {
     listApprovals(): Promise<Array<UserApprovalInfo>>;
     markEpisodeLive(id: string): Promise<void>;
     markPodcastLive(id: string, liveLink: string): Promise<void>;
+    bootstrapAdmin(): Promise<void>;
     promoteToAdmin(target: Principal): Promise<void>;
     rejectEpisode(id: string): Promise<void>;
     rejectPodcast(id: string): Promise<void>;
@@ -1966,6 +1967,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.markPodcastLive(arg0, arg1);
+            return result;
+        }
+    }
+    async bootstrapAdmin(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.bootstrapAdmin();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.bootstrapAdmin();
             return result;
         }
     }

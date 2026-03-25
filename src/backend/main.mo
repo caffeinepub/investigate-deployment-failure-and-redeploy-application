@@ -1399,6 +1399,18 @@ actor {
 
   // ── Admin User Management ──────────────────────────────────────────────────
 
+
+  // Bootstrap: canister controller can self-assign admin when no admins exist yet
+  public shared ({ caller }) func bootstrapAdmin() : async () {
+    let admins = accessControlState.userRoles.entries().toArray().filter(
+      func(e : (Principal, AccessControl.UserRole)) : Bool { e.1 == #admin }
+    );
+    if (admins.size() > 0) {
+      Runtime.trap("Bootstrap already done: at least one admin exists");
+    };
+    // Directly write to state to bypass the requireAdmin check
+    accessControlState.userRoles.add(caller, #admin);
+  };
   public shared ({ caller }) func promoteToAdmin(user : Principal) : async () {
     requireAdmin(caller);
     AccessControl.assignRole(accessControlState, caller, user, #admin);
