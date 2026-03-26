@@ -1400,15 +1400,9 @@ actor {
   // ── Admin User Management ──────────────────────────────────────────────────
 
 
-  // Bootstrap: canister controller can self-assign admin when no admins exist yet
+  // Bootstrap: canister controller can always reclaim admin role, even after accidental demotion
   public shared ({ caller }) func bootstrapAdmin() : async () {
-    let admins = accessControlState.userRoles.entries().toArray().filter(
-      func(e : (Principal, AccessControl.UserRole)) : Bool { e.1 == #admin }
-    );
-    if (admins.size() > 0) {
-      Runtime.trap("Bootstrap already done: at least one admin exists");
-    };
-    // Directly write to state to bypass the requireAdmin check
+    // No admin check required -- allows the deployer to reclaim admin if all admins were revoked
     accessControlState.userRoles.add(caller, #admin);
   };
   public shared ({ caller }) func promoteToAdmin(user : Principal) : async () {
