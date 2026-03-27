@@ -502,6 +502,38 @@ actor {
     benefits : [Text];
   };
 
+
+  public type WithdrawStatus = {
+    #pending;
+    #approved;
+    #rejected;
+  };
+
+  public type WithdrawRequestInput = {
+    fullName : Text;
+    googlePayAccountName : Text;
+    upiId : Text;
+    message : Text;
+    amount : Float;
+    qrCodeBlob : Storage.ExternalBlob;
+    qrCodeFilename : Text;
+  };
+
+  public type WithdrawRequest = {
+    id : Text;
+    submitter : Principal;
+    fullName : Text;
+    googlePayAccountName : Text;
+    upiId : Text;
+    message : Text;
+    amount : Float;
+    qrCodeBlob : Storage.ExternalBlob;
+    qrCodeFilename : Text;
+    status : WithdrawStatus;
+    rejectionReason : Text;
+    timestamp : Time.Time;
+  };
+
   public type VideoSubmissionStatus = {
     #pending;
     #approved;
@@ -642,6 +674,9 @@ actor {
   var labelPartnersSize = 0;
   var labelReleasesSize = 0;
   let subscriptionPlans = Map.empty<Text, SubscriptionPlan>();
+  let songRevenues = Map.empty<Text, Float>();
+  let withdrawRequests = Map.empty<Text, WithdrawRequest>();
+  let withdrawnAmounts = Map.empty<Principal, Float>();
 
   func isTeamMember(user : Principal) : Bool {
     switch (teamMembers.get(user)) {
@@ -1330,6 +1365,12 @@ actor {
     requireAdminOrTeam(caller);
     submissions.values().toArray();
   };
+
+  public query ({ caller }) func getLiveSongsForAdmin() : async [SongSubmission] {
+    requireAdminOrTeam(caller);
+    submissions.values().filter(func(s : SongSubmission) : Bool { s.status == #live }).toArray();
+  };
+
 
   public query func getSongInfo(songId : Text) : async ?PublicSongInfo {
     switch (submissions.get(songId)) {
@@ -2091,4 +2132,156 @@ actor {
       case (?stats) { stats };
     };
   };
+
+  // ── Song Revenue ───────────────────────────────────────────────────────────
+
+  public shared ({ caller }) func setSongRevenue(songId : Text, amount : Float) : async () {
+    requireAdmin(caller);
+    songRevenues.add(songId, amount);
+  };
+
+  public query func getSongRevenue(songId : Text) : async Float {
+    switch (songRevenues.get(songId)) {
+      case (null) { 0.0 };
+      case (?amt) { amt };
+    };
+  };
+
+  public query ({ caller }) func getAllSongRevenues() : async [(Text, Float)] {
+    requireAdmin(caller);
+    songRevenues.entries().toArray();
+  };
+
+  // ── Withdrawal Requests ────────────────────────────────────────────────────
+
+  public shared ({ caller }) func submitWithdrawRequest(input : WithdrawRequestInput) : async Text {
+    requireUser(caller);
+    // Check no pending request exists
+    let existing = withdrawRequests.values().toArray();
+    for (req in existing.vals()) {
+      if (req.submitter == caller) {
+        switch (req.status) {
+          case (#pending) { Runtime.trap("You already have a pending withdrawal request. Please wait for it to be processed.") };
+          case (_) { };
+        };
+      };
+    };
+    if (input.amount <= 0.0) {
+      Runtime.trap("Withdrawal amount must be greater than 0");
+    };
+    let blob = await Random.blob();
+    let id = InviteLinksModule.generateUUID(blob);
+    // Calculate total revenue for this user
+    let userSubmissions = submissions.values().toArray();
+    var totalRevenue : Float = 0.0;
+    for (sub in userSubmissions.vals()) {
+      if (sub.submitter == caller) {
+        switch (sub.status) {
+          case (#approved) {
+            switch (songRevenues.get(sub.id)) {
+              case (?amt) { totalRevenue += amt };
+              case (null) { };
+            };
+          };
+          case (#live) {
+            switch (songRevenues.get(sub.id)) {
+              case (?amt) { totalRevenue += amt };
+              case (null) { };
+            };
+          };
+          case (_) { };
+        };
+      };
+    };
+    let alreadyWithdrawn = switch (withdrawnAmounts.get(caller)) {
+      case (null) { 0.0 };
+      case (?amt) { amt };
+    };
+    let availableRevenue = totalRevenue - alreadyWithdrawn;
+    if (input.amount > availableRevenue) {
+      Runtime.trap("Withdrawal amount exceeds available revenue balance");
+    };
+    let request : WithdrawRequest = {
+      id;
+      submitter = caller;
+      fullName = input.fullName;
+      googlePayAccountName = input.googlePayAccountName;
+      upiId = input.upiId;
+      message = input.message;
+      amount = input.amount;
+      qrCodeBlob = input.qrCodeBlob;
+      qrCodeFilename = input.qrCodeFilename;
+      status = #pending;
+      rejectionReason = "";
+      timestamp = Time.now();
+    };
+    withdrawRequests.add(id, request);
+    id;
+  };
+
+  public query ({ caller }) func getMyWithdrawRequests() : async [WithdrawRequest] {
+    requireUser(caller);
+    let all = withdrawRequests.values().toArray();
+    all.filter(func(r : WithdrawRequest) : Bool { r.submitter == caller });
+  };
+
+  public query ({ caller }) func getAllWithdrawRequestsForAdmin() : async [WithdrawRequest] {
+    requireAdmin(caller);
+    withdrawRequests.values().toArray();
+  };
+
+  public shared ({ caller }) func approveWithdrawRequest(requestId : Text) : async () {
+    requireAdmin(caller);
+    switch (withdrawRequests.get(requestId)) {
+      case (null) { Runtime.trap("Withdrawal request not found") };
+      case (?req) {
+        let updated : WithdrawRequest = {
+          id = req.id;
+          submitter = req.submitter;
+          fullName = req.fullName;
+          googlePayAccountName = req.googlePayAccountName;
+          upiId = req.upiId;
+          message = req.message;
+          amount = req.amount;
+          qrCodeBlob = req.qrCodeBlob;
+          qrCodeFilename = req.qrCodeFilename;
+          status = #approved;
+          rejectionReason = req.rejectionReason;
+          timestamp = req.timestamp;
+        };
+        withdrawRequests.add(requestId, updated);
+        // Deduct from withdrawn amounts
+        let current = switch (withdrawnAmounts.get(req.submitter)) {
+          case (null) { 0.0 };
+          case (?amt) { amt };
+        };
+        withdrawnAmounts.add(req.submitter, current + req.amount);
+      };
+    };
+  };
+
+  public shared ({ caller }) func rejectWithdrawRequest(requestId : Text, reason : Text) : async () {
+    requireAdmin(caller);
+    switch (withdrawRequests.get(requestId)) {
+      case (null) { Runtime.trap("Withdrawal request not found") };
+      case (?req) {
+        let updated : WithdrawRequest = {
+          id = req.id;
+          submitter = req.submitter;
+          fullName = req.fullName;
+          googlePayAccountName = req.googlePayAccountName;
+          upiId = req.upiId;
+          message = req.message;
+          amount = req.amount;
+          qrCodeBlob = req.qrCodeBlob;
+          qrCodeFilename = req.qrCodeFilename;
+          status = #rejected;
+          rejectionReason = reason;
+          timestamp = req.timestamp;
+        };
+        withdrawRequests.add(requestId, updated);
+      };
+    };
+  };
+
 };

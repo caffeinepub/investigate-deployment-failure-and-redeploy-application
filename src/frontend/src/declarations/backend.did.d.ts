@@ -380,6 +380,30 @@ export interface PublicSongInfo {
   'language' : string,
   'musicVideoLink' : [] | [string],
 }
+export type WithdrawStatus = { 'pending' : null } | { 'approved' : null } | { 'rejected' : null };
+export interface WithdrawRequestInput {
+  'fullName' : string,
+  'googlePayAccountName' : string,
+  'upiId' : string,
+  'message' : string,
+  'amount' : number,
+  'qrCodeBlob' : ExternalBlob,
+  'qrCodeFilename' : string,
+}
+export interface WithdrawRequest {
+  'id' : string,
+  'submitter' : Principal,
+  'fullName' : string,
+  'googlePayAccountName' : string,
+  'upiId' : string,
+  'message' : string,
+  'amount' : number,
+  'qrCodeBlob' : ExternalBlob,
+  'qrCodeFilename' : string,
+  'status' : WithdrawStatus,
+  'rejectionReason' : string,
+  'timestamp' : Time,
+}
 export interface _SERVICE {
   '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
   '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
@@ -432,6 +456,7 @@ export interface _SERVICE {
   'getAllPodcasts' : ActorMethod<[], Array<PodcastShow>>,
   'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
   'getAllSubmissionsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
+  'getLiveSongsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
   'getAllSubscriptionPlans' : ActorMethod<[], Array<SubscriptionPlan>>,
   'getAllTeamMembers' : ActorMethod<[], Array<Principal>>,
   'getAllTopVibingSongs' : ActorMethod<[], Array<TopVibingSong>>,
@@ -455,6 +480,8 @@ export interface _SERVICE {
   'getRankedTopVibingSongs' : ActorMethod<[], Array<TopVibingSong>>,
   'getSongInfo' : ActorMethod<[string], [] | [PublicSongInfo]>,
   'getSongMonthlyListenerStats' : ActorMethod<[string], Array<MonthlyListenerStats>>,
+  'getSongRevenue' : ActorMethod<[string], number>,
+  'getAllSongRevenues' : ActorMethod<[], Array<[string, number]>>,
   'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
   'getTopVibingSong' : ActorMethod<[bigint], [] | [TopVibingSong]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
@@ -501,6 +528,14 @@ export interface _SERVICE {
   'updateLabelPartner' : ActorMethod<[LabelPartner], undefined>,
   'updateLabelRelease' : ActorMethod<[LabelRelease], undefined>,
   'updateMonthlyListenerStats' : ActorMethod<[string, Array<MonthlyListenerStats>], undefined>,
+  'setSongRevenue' : ActorMethod<[string, number], undefined>,
+  'submitWithdrawRequest' : ActorMethod<[WithdrawRequestInput], string>,
+  'getMyWithdrawRequests' : ActorMethod<[], Array<WithdrawRequest>>,
+  'getAllWithdrawRequestsForAdmin' : ActorMethod<[], Array<WithdrawRequest>>,
+  'approveWithdrawRequest' : ActorMethod<[string], undefined>,
+  'rejectWithdrawRequest' : ActorMethod<[string, string], undefined>,
+  'getWithdrawnAmountForUser' : ActorMethod<[], number>,
+
   'updateSubscriptionPlan' : ActorMethod<[SubscriptionPlan], undefined>,
   'updateTopVibingSong' : ActorMethod<[TopVibingSong], undefined>,
   'updateUserCategory' : ActorMethod<[Principal, UserCategory], undefined>,

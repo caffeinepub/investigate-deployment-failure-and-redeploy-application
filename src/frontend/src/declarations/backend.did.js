@@ -351,6 +351,8 @@ export const idlService = IDL.Service({
   'getRankedTopVibingSongs' : IDL.Func([], [IDL.Vec(TopVibingSong)], ['query']),
   'getSongInfo' : IDL.Func([IDL.Text], [IDL.Opt(PublicSongInfo)], ['query']),
   'getSongMonthlyListenerStats' : IDL.Func([IDL.Text], [IDL.Vec(MonthlyListenerStats)], ['query']),
+  'getSongRevenue' : IDL.Func([IDL.Text], [IDL.Float64], ['query']),
+  'getAllSongRevenues' : IDL.Func([], [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64))], ['query']),
   'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
   'getTopVibingSong' : IDL.Func([IDL.Nat], [IDL.Opt(TopVibingSong)], ['query']),
   'getUserProfile' : IDL.Func([IDL.Principal], [IDL.Opt(UserProfile)], ['query']),
@@ -397,6 +399,7 @@ export const idlService = IDL.Service({
   'updateLabelPartner' : IDL.Func([LabelPartner], [], []),
   'updateLabelRelease' : IDL.Func([LabelRelease], [], []),
   'updateMonthlyListenerStats' : IDL.Func([IDL.Text, IDL.Vec(MonthlyListenerStats)], [], []),
+  'setSongRevenue' : IDL.Func([IDL.Text, IDL.Float64], [], []),
   'updateSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
   'updateTopVibingSong' : IDL.Func([TopVibingSong], [], []),
   'updateUserCategory' : IDL.Func([IDL.Principal, UserCategory], [], []),
@@ -408,6 +411,35 @@ export const idlService = IDL.Service({
 
 export const idlInitArgs = [];
 
+
+export const WithdrawStatus = IDL.Variant({
+  'pending' : IDL.Null,
+  'approved' : IDL.Null,
+  'rejected' : IDL.Null,
+});
+export const WithdrawRequestInput = IDL.Record({
+  'fullName' : IDL.Text,
+  'googlePayAccountName' : IDL.Text,
+  'upiId' : IDL.Text,
+  'message' : IDL.Text,
+  'amount' : IDL.Float64,
+  'qrCodeBlob' : IDL.Vec(IDL.Nat8),
+  'qrCodeFilename' : IDL.Text,
+});
+export const WithdrawRequest = IDL.Record({
+  'id' : IDL.Text,
+  'submitter' : IDL.Principal,
+  'fullName' : IDL.Text,
+  'googlePayAccountName' : IDL.Text,
+  'upiId' : IDL.Text,
+  'message' : IDL.Text,
+  'amount' : IDL.Float64,
+  'qrCodeBlob' : IDL.Vec(IDL.Nat8),
+  'qrCodeFilename' : IDL.Text,
+  'status' : WithdrawStatus,
+  'rejectionReason' : IDL.Text,
+  'timestamp' : IDL.Int,
+});
 export const idlFactory = ({ IDL }) => {
   const _CaffeineStorageCreateCertificateResult = IDL.Record({
     'method' : IDL.Text,
@@ -673,6 +705,34 @@ export const idlFactory = ({ IDL }) => {
   const MonthlyListenerStats = IDL.Record({'year': IDL.Nat, 'month': IDL.Nat, 'value': IDL.Nat});
   const PublicSongInfo = IDL.Record({'id': IDL.Text, 'title': IDL.Text, 'artist': IDL.Text, 'featuredArtist': IDL.Text, 'artwork': IDL.Vec(IDL.Nat8), 'spotifyLink': IDL.Opt(IDL.Text), 'appleMusicLink': IDL.Opt(IDL.Text), 'releaseDate': IDL.Int, 'genre': IDL.Text, 'language': IDL.Text, 'musicVideoLink': IDL.Opt(IDL.Text)});
 
+    const WithdrawStatus = IDL.Variant({
+      'pending' : IDL.Null,
+      'approved' : IDL.Null,
+      'rejected' : IDL.Null,
+    });
+    const WithdrawRequestInput = IDL.Record({
+      'fullName' : IDL.Text,
+      'googlePayAccountName' : IDL.Text,
+      'upiId' : IDL.Text,
+      'message' : IDL.Text,
+      'amount' : IDL.Float64,
+      'qrCodeBlob' : IDL.Vec(IDL.Nat8),
+      'qrCodeFilename' : IDL.Text,
+    });
+    const WithdrawRequest = IDL.Record({
+      'id' : IDL.Text,
+      'submitter' : IDL.Principal,
+      'fullName' : IDL.Text,
+      'googlePayAccountName' : IDL.Text,
+      'upiId' : IDL.Text,
+      'message' : IDL.Text,
+      'amount' : IDL.Float64,
+      'qrCodeBlob' : IDL.Vec(IDL.Nat8),
+      'qrCodeFilename' : IDL.Text,
+      'status' : WithdrawStatus,
+      'rejectionReason' : IDL.Text,
+      'timestamp' : IDL.Int,
+    });
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func([IDL.Vec(IDL.Nat8)], [IDL.Bool], ['query']),
     '_caffeineStorageBlobsToDelete' : IDL.Func([], [IDL.Vec(IDL.Vec(IDL.Nat8))], ['query']),
@@ -748,6 +808,8 @@ export const idlFactory = ({ IDL }) => {
     'getRankedTopVibingSongs' : IDL.Func([], [IDL.Vec(TopVibingSong)], ['query']),
     'getSongInfo' : IDL.Func([IDL.Text], [IDL.Opt(PublicSongInfo)], ['query']),
     'getSongMonthlyListenerStats' : IDL.Func([IDL.Text], [IDL.Vec(MonthlyListenerStats)], ['query']),
+    'getSongRevenue' : IDL.Func([IDL.Text], [IDL.Float64], ['query']),
+    'getAllSongRevenues' : IDL.Func([], [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64))], ['query']),
     'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
     'getTopVibingSong' : IDL.Func([IDL.Nat], [IDL.Opt(TopVibingSong)], ['query']),
     'getUserProfile' : IDL.Func([IDL.Principal], [IDL.Opt(UserProfile)], ['query']),
@@ -794,6 +856,12 @@ export const idlFactory = ({ IDL }) => {
     'updateLabelPartner' : IDL.Func([LabelPartner], [], []),
     'updateLabelRelease' : IDL.Func([LabelRelease], [], []),
     'updateMonthlyListenerStats' : IDL.Func([IDL.Text, IDL.Vec(MonthlyListenerStats)], [], []),
+    'setSongRevenue' : IDL.Func([IDL.Text, IDL.Float64], [], []),
+    'submitWithdrawRequest' : IDL.Func([WithdrawRequestInput], [IDL.Text], []),
+    'getMyWithdrawRequests' : IDL.Func([], [IDL.Vec(WithdrawRequest)], ['query']),
+    'getAllWithdrawRequestsForAdmin' : IDL.Func([], [IDL.Vec(WithdrawRequest)], ['query']),
+    'approveWithdrawRequest' : IDL.Func([IDL.Text], [], []),
+    'rejectWithdrawRequest' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'updateSubscriptionPlan' : IDL.Func([SubscriptionPlan], [], []),
     'updateTopVibingSong' : IDL.Func([TopVibingSong], [], []),
     'updateUserCategory' : IDL.Func([IDL.Principal, UserCategory], [], []),

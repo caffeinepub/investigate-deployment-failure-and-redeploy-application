@@ -1535,8 +1535,7 @@ export function useGetLiveSongsForAnalysis() {
     queryKey: ["liveSongsForAnalysis"],
     queryFn: async () => {
       if (!actor) return [];
-      const allSongs = await actor.getMySubmissions();
-      return allSongs.filter((s) => s.status === ("live" as any));
+      return await (actor as any).getLiveSongsForAdmin();
     },
     enabled: !!actor && !isFetching,
   });

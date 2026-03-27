@@ -6,6 +6,7 @@ import AdminFeaturedArtistsManagement from "../components/AdminFeaturedArtistsMa
 import AdminLabelPartnersManagement from "../components/AdminLabelPartnersManagement";
 import AdminMonthlyListenersManagement from "../components/AdminMonthlyListenersManagement";
 import AdminPodcastSubmissions from "../components/AdminPodcastSubmissions";
+import AdminRevenueManagement from "../components/AdminRevenueManagement";
 import AdminSubmissionsList from "../components/AdminSubmissionsList";
 import AdminSubscriptionPlansManagement from "../components/AdminSubscriptionPlansManagement";
 import AdminTopVibingSongsManagement from "../components/AdminTopVibingSongsManagement";
@@ -13,6 +14,7 @@ import AdminUserManagement from "../components/AdminUserManagement";
 import AdminUserRoleManagement from "../components/AdminUserRoleManagement";
 import AdminVerificationList from "../components/AdminVerificationList";
 import AdminVideoSubmissions from "../components/AdminVideoSubmissions";
+import AdminWithdrawalRequestsManagement from "../components/AdminWithdrawalRequestsManagement";
 import { useGetChatThreads } from "../hooks/useQueries";
 
 function MessagesTabLabel() {
@@ -44,6 +46,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="videos">Video Submissions</TabsTrigger>
           <TabsTrigger value="verification">Verification List</TabsTrigger>
           <TabsTrigger value="listeners">Monthly Listeners</TabsTrigger>
+          <TabsTrigger value="revenue">₹ Revenue</TabsTrigger>
+          <TabsTrigger value="withdrawals" data-ocid="withdrawal.tab">
+            💸 Withdrawals
+          </TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="plans">Plans</TabsTrigger>
           <TabsTrigger value="featured">Featured Artists</TabsTrigger>
@@ -80,6 +86,14 @@ export default function AdminDashboard() {
 
         <TabsContent value="listeners">
           <AdminMonthlyListenersManagement />
+        </TabsContent>
+
+        <TabsContent value="revenue">
+          <AdminRevenueManagement />
+        </TabsContent>
+
+        <TabsContent value="withdrawals">
+          <AdminWithdrawalRequestsManagement />
         </TabsContent>
 
         <TabsContent value="users">

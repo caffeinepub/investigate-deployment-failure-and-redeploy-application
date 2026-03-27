@@ -5,6 +5,7 @@ import UserAnalysisPanel from "../components/UserAnalysisPanel";
 import UserArtistProfilesManager from "../components/UserArtistProfilesManager";
 import UserChatPanel from "../components/UserChatPanel";
 import UserPodcastSubmissionSection from "../components/UserPodcastSubmissionSection";
+import UserRevenuePanel from "../components/UserRevenuePanel";
 import UserSubmissionsList from "../components/UserSubmissionsList";
 import UserVideoSubmissionSection from "../components/UserVideoSubmissionSection";
 import VideoSubmissionForm from "../components/VideoSubmissionForm";
@@ -23,6 +24,7 @@ export default function UserDashboard() {
           <TabsTrigger value="video">Video Submissions</TabsTrigger>
           <TabsTrigger value="topVibing">Top Vibing Songs</TabsTrigger>
           <TabsTrigger value="analysis">Analysis</TabsTrigger>
+          <TabsTrigger value="revenue">₹ My Revenue</TabsTrigger>
           <TabsTrigger value="chat">💬 Chat</TabsTrigger>
         </TabsList>
 
@@ -65,6 +67,10 @@ export default function UserDashboard() {
 
         <TabsContent value="analysis">
           <UserAnalysisPanel />
+        </TabsContent>
+
+        <TabsContent value="revenue">
+          <UserRevenuePanel />
         </TabsContent>
 
         <TabsContent value="chat">

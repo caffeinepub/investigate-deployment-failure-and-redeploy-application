@@ -510,6 +510,31 @@ export const SongStatus = {
     rejected: "rejected" as const,
     draft: "draft" as const,
 } as const;
+
+export type WithdrawStatus = { pending: null } | { approved: null } | { rejected: null };
+export interface WithdrawRequestInput {
+    fullName: string;
+    googlePayAccountName: string;
+    upiId: string;
+    message: string;
+    amount: number;
+    qrCodeBlob: Uint8Array;
+    qrCodeFilename: string;
+}
+export interface WithdrawRequest {
+    id: string;
+    submitter: Principal;
+    fullName: string;
+    googlePayAccountName: string;
+    upiId: string;
+    message: string;
+    amount: number;
+    qrCodeBlob: Uint8Array;
+    qrCodeFilename: string;
+    status: WithdrawStatus;
+    rejectionReason: string;
+    timestamp: bigint;
+}
 export type SongStatus = typeof SongStatus[keyof typeof SongStatus];
 export const UserCategory = {
     generalArtist: "generalArtist" as const,
@@ -592,7 +617,16 @@ export interface backendInterface {
     getAllPodcasts(): Promise<Array<PodcastShow>>;
     getAllRSVPs(): Promise<Array<RSVP>>;
     getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
+    getLiveSongsForAdmin(): Promise<Array<SongSubmission>>;
     getAllSubscriptionPlans(): Promise<Array<SubscriptionPlan>>;
+    getSongRevenue(songId: string): Promise<number>;
+    getAllSongRevenues(): Promise<Array<[string, number]>>;
+    setSongRevenue(songId: string, amount: number): Promise<void>;
+    submitWithdrawRequest(input: WithdrawRequestInput): Promise<string>;
+    getMyWithdrawRequests(): Promise<Array<WithdrawRequest>>;
+    getAllWithdrawRequestsForAdmin(): Promise<Array<WithdrawRequest>>;
+    approveWithdrawRequest(requestId: string): Promise<void>;
+    rejectWithdrawRequest(requestId: string, reason: string): Promise<void>;
     getAllTeamMembers(): Promise<Array<Principal>>;
     getAllTopVibingSongs(): Promise<Array<TopVibingSong>>;
     getAllVideoSubmissions(): Promise<Array<VideoSubmission>>;
@@ -1380,6 +1414,119 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getAllSubmissionsForAdmin();
             return from_candid_vec_n55(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getLiveSongsForAdmin(): Promise<Array<SongSubmission>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getLiveSongsForAdmin();
+                return from_candid_vec_n55(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getLiveSongsForAdmin();
+            return from_candid_vec_n55(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getSongRevenue(songId: string): Promise<number> {
+        if (this.processError) {
+            try {
+                return await this.actor.getSongRevenue(songId);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            return await this.actor.getSongRevenue(songId);
+        }
+    }
+    async getAllSongRevenues(): Promise<Array<[string, number]>> {
+        if (this.processError) {
+            try {
+                return await this.actor.getAllSongRevenues() as Array<[string, number]>;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            return await this.actor.getAllSongRevenues() as Array<[string, number]>;
+        }
+    }
+    async setSongRevenue(songId: string, amount: number): Promise<void> {
+        if (this.processError) {
+            try {
+                await this.actor.setSongRevenue(songId, amount);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            await this.actor.setSongRevenue(songId, amount);
+        }
+    }
+    async submitWithdrawRequest(input: WithdrawRequestInput): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitWithdrawRequest(input);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            return await this.actor.submitWithdrawRequest(input);
+        }
+    }
+    async getMyWithdrawRequests(): Promise<Array<WithdrawRequest>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMyWithdrawRequests();
+                return result as Array<WithdrawRequest>;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            return await this.actor.getMyWithdrawRequests() as Array<WithdrawRequest>;
+        }
+    }
+    async getAllWithdrawRequestsForAdmin(): Promise<Array<WithdrawRequest>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllWithdrawRequestsForAdmin();
+                return result as Array<WithdrawRequest>;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            return await this.actor.getAllWithdrawRequestsForAdmin() as Array<WithdrawRequest>;
+        }
+    }
+    async approveWithdrawRequest(requestId: string): Promise<void> {
+        if (this.processError) {
+            try {
+                await this.actor.approveWithdrawRequest(requestId);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            await this.actor.approveWithdrawRequest(requestId);
+        }
+    }
+    async rejectWithdrawRequest(requestId: string, reason: string): Promise<void> {
+        if (this.processError) {
+            try {
+                await this.actor.rejectWithdrawRequest(requestId, reason);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            await this.actor.rejectWithdrawRequest(requestId, reason);
         }
     }
     async getAllSubscriptionPlans(): Promise<Array<SubscriptionPlan>> {
