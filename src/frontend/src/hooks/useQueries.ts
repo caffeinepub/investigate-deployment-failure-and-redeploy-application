@@ -13,6 +13,7 @@ import type {
   RSVP,
   SaveArtistProfileInput,
   SongSubmission,
+  SongSubmissionAdmin,
   SongSubmissionEditInput,
   SongSubmissionInput,
   SubscriptionPlan,
@@ -308,6 +309,19 @@ export function useGetAllSubmissionsForAdmin() {
   });
 }
 
+export function useGetAllSubmissionsWithStatsForAdmin() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<SongSubmissionAdmin[]>({
+    queryKey: ["allSubmissionsWithStats"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllSubmissionsWithStatsForAdmin();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
 export function useSubmitSong() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -428,6 +442,33 @@ export function useAdminDeleteSubmission() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allSubmissions"] });
+    },
+  });
+}
+
+export function useAdminUpdateSongStats() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      songId,
+      monthlyListeners,
+      revenue,
+    }: {
+      songId: string;
+      monthlyListeners?: number;
+      revenue?: number;
+    }) => {
+      if (!actor) throw new Error("Actor not available");
+      const ml: [] | [number] =
+        monthlyListeners !== undefined ? [monthlyListeners] : [];
+      const rev: [] | [number] = revenue !== undefined ? [revenue] : [];
+      return actor.adminUpdateSongStats(songId, ml, rev);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allSubmissions"] });
+      queryClient.invalidateQueries({ queryKey: ["mySubmissions"] });
     },
   });
 }

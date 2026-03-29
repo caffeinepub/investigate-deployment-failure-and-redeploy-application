@@ -28,16 +28,22 @@ import {
   ExternalLink,
   Link as LinkIcon,
   RefreshCw,
+  Save,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { SongStatus, SongSubmission } from "../backend";
+import type {
+  SongStatus,
+  SongSubmission,
+  SongSubmissionAdmin,
+} from "../backend";
 import {
   useAdminDeleteSubmission,
   useAdminSetSubmissionLive,
+  useAdminUpdateSongStats,
   useAdminUpdateSubmission,
-  useGetAllSubmissionsForAdmin,
+  useGetAllSubmissionsWithStatsForAdmin,
 } from "../hooks/useQueries";
 import { downloadExternalBlob } from "../utils/downloadExternalBlob";
 import AdminEditSubmissionDialog from "./AdminEditSubmissionDialog";
@@ -50,15 +56,16 @@ export default function AdminSubmissionsList() {
     isError,
     error,
     refetch,
-  } = useGetAllSubmissionsForAdmin();
+  } = useGetAllSubmissionsWithStatsForAdmin();
   const updateSubmission = useAdminUpdateSubmission();
   const setSubmissionLive = useAdminSetSubmissionLive();
   const deleteSubmission = useAdminDeleteSubmission();
+  const updateSongStats = useAdminUpdateSongStats();
 
   const [editingSubmission, setEditingSubmission] =
-    useState<SongSubmission | null>(null);
+    useState<SongSubmissionAdmin | null>(null);
   const [managingLinksSubmission, setManagingLinksSubmission] =
-    useState<SongSubmission | null>(null);
+    useState<SongSubmissionAdmin | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [submissionToDelete, setSubmissionToDelete] = useState<string | null>(
     null,
@@ -68,6 +75,11 @@ export default function AdminSubmissionsList() {
   const [adminComments, setAdminComments] = useState<Record<string, string>>(
     {},
   );
+  // Stats editing state: songId -> {monthlyListeners, revenue}
+  const [statsEdits, setStatsEdits] = useState<
+    Record<string, { monthlyListeners: string; revenue: string }>
+  >({});
+  const [savingStats, setSavingStats] = useState<Record<string, boolean>>({});
 
   if (isLoading) {
     return (
@@ -166,6 +178,40 @@ export default function AdminSubmissionsList() {
     }
   };
 
+  const handleSaveStats = async (songId: string) => {
+    const edit = statsEdits[songId];
+    const mlStr = edit?.monthlyListeners ?? "";
+    const revStr = edit?.revenue ?? "";
+
+    const monthlyListeners =
+      mlStr !== "" && !Number.isNaN(Number(mlStr)) ? Number(mlStr) : undefined;
+    const revenue =
+      revStr !== "" && !Number.isNaN(Number(revStr))
+        ? Number(revStr)
+        : undefined;
+
+    if (monthlyListeners === undefined && revenue === undefined) {
+      toast.error("Enter at least one value to save");
+      return;
+    }
+
+    setSavingStats((prev) => ({ ...prev, [songId]: true }));
+    try {
+      await updateSongStats.mutateAsync({ songId, monthlyListeners, revenue });
+      toast.success("Stats updated successfully");
+      // Clear the edit inputs for this song
+      setStatsEdits((prev) => {
+        const next = { ...prev };
+        delete next[songId];
+        return next;
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update stats");
+    } finally {
+      setSavingStats((prev) => ({ ...prev, [songId]: false }));
+    }
+  };
+
   const handleDownloadArtwork = async (submission: SongSubmission) => {
     try {
       await downloadExternalBlob(
@@ -243,255 +289,348 @@ export default function AdminSubmissionsList() {
           </CardContent>
         </Card>
       ) : (
-        sortedSubmissions.map((submission) => (
-          <Card key={submission.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-xl">{submission.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {submission.artist} • {submission.genre} •{" "}
-                    {submission.language}
-                  </p>
+        sortedSubmissions.map((submission) => {
+          const currentML = submission.monthlyListeners ?? null;
+          const currentRev = submission.revenue ?? null;
+          const edit = statsEdits[submission.id];
+          const mlValue = edit?.monthlyListeners ?? "";
+          const revValue = edit?.revenue ?? "";
+
+          return (
+            <Card key={submission.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-xl">
+                      {submission.title}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {submission.artist} • {submission.genre} •{" "}
+                      {submission.language}
+                    </p>
+                  </div>
+                  {getStatusBadge(submission.status)}
                 </div>
-                {getStatusBadge(submission.status)}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Release Type:</span>{" "}
-                  {submission.releaseType}
-                </div>
-                <div>
-                  <span className="font-medium">Release Date:</span>{" "}
-                  {new Date(
-                    Number(submission.releaseDate / BigInt(1000000)),
-                  ).toLocaleDateString()}
-                </div>
-                {submission.featuredArtist && (
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">Featured Artist:</span>{" "}
-                    {submission.featuredArtist}
+                    <span className="font-medium">Release Type:</span>{" "}
+                    {submission.releaseType}
                   </div>
-                )}
-                {submission.composer && (
                   <div>
-                    <span className="font-medium">Composer:</span>{" "}
-                    {submission.composer}
+                    <span className="font-medium">Release Date:</span>{" "}
+                    {new Date(
+                      Number(submission.releaseDate / BigInt(1000000)),
+                    ).toLocaleDateString()}
                   </div>
-                )}
-                {submission.producer && (
-                  <div>
-                    <span className="font-medium">Producer:</span>{" "}
-                    {submission.producer}
-                  </div>
-                )}
-                {submission.lyricist && (
-                  <div>
-                    <span className="font-medium">Lyricist:</span>{" "}
-                    {submission.lyricist}
-                  </div>
-                )}
-                {submission.musicVideoLink && (
-                  <div className="col-span-2">
-                    <span className="font-medium">Music Video:</span>{" "}
-                    <a
-                      href={submission.musicVideoLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      View Video <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {submission.additionalDetails && (
-                <div className="text-sm">
-                  <span className="font-medium">Additional Details:</span>
-                  <p className="text-muted-foreground mt-1">
-                    {submission.additionalDetails}
-                  </p>
-                </div>
-              )}
-
-              {submission.adminRemarks && (
-                <div className="text-sm">
-                  <span className="font-medium">Admin Remarks:</span>
-                  <p className="text-muted-foreground mt-1">
-                    {submission.adminRemarks}
-                  </p>
-                </div>
-              )}
-
-              {submission.adminComment && (
-                <div className="text-sm">
-                  <span className="font-medium">Admin Comment:</span>
-                  <p className="text-muted-foreground mt-1">
-                    {submission.adminComment}
-                  </p>
-                </div>
-              )}
-
-              {submission.status === "live" && submission.adminLiveLink && (
-                <div className="text-sm">
-                  <span className="font-medium">Live URL:</span>{" "}
-                  <a
-                    href={submission.adminLiveLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    {submission.adminLiveLink}{" "}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              )}
-
-              <div className="space-y-3 pt-4 border-t">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor={`status-${submission.id}`}>Status</Label>
-                    <Select
-                      value={submission.status}
-                      onValueChange={(value) =>
-                        handleStatusChange(submission.id, value as SongStatus)
-                      }
-                    >
-                      <SelectTrigger id={`status-${submission.id}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="live">Live</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {submission.status !== "live" && (
-                    <div className="space-y-2">
-                      <Label htmlFor={`liveUrl-${submission.id}`}>
-                        Live URL (for Live status)
-                      </Label>
-                      <Input
-                        id={`liveUrl-${submission.id}`}
-                        placeholder="https://..."
-                        value={liveUrls[submission.id] || ""}
-                        onChange={(e) =>
-                          setLiveUrls((prev) => ({
-                            ...prev,
-                            [submission.id]: e.target.value,
-                          }))
-                        }
-                      />
+                  {submission.featuredArtist && (
+                    <div>
+                      <span className="font-medium">Featured Artist:</span>{" "}
+                      {submission.featuredArtist}
+                    </div>
+                  )}
+                  {submission.composer && (
+                    <div>
+                      <span className="font-medium">Composer:</span>{" "}
+                      {submission.composer}
+                    </div>
+                  )}
+                  {submission.producer && (
+                    <div>
+                      <span className="font-medium">Producer:</span>{" "}
+                      {submission.producer}
+                    </div>
+                  )}
+                  {submission.lyricist && (
+                    <div>
+                      <span className="font-medium">Lyricist:</span>{" "}
+                      {submission.lyricist}
+                    </div>
+                  )}
+                  {submission.musicVideoLink && (
+                    <div className="col-span-2">
+                      <span className="font-medium">Music Video:</span>{" "}
+                      <a
+                        href={submission.musicVideoLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        View Video <ExternalLink className="w-3 h-3" />
+                      </a>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor={`remarks-${submission.id}`}>
-                    Admin Remarks
-                  </Label>
-                  <Textarea
-                    id={`remarks-${submission.id}`}
-                    placeholder="Internal notes..."
-                    value={
-                      adminRemarks[submission.id] || submission.adminRemarks
-                    }
-                    onChange={(e) =>
-                      setAdminRemarks((prev) => ({
-                        ...prev,
-                        [submission.id]: e.target.value,
-                      }))
-                    }
-                    rows={2}
-                  />
+                {submission.additionalDetails && (
+                  <div className="text-sm">
+                    <span className="font-medium">Additional Details:</span>
+                    <p className="text-muted-foreground mt-1">
+                      {submission.additionalDetails}
+                    </p>
+                  </div>
+                )}
+
+                {submission.adminRemarks && (
+                  <div className="text-sm">
+                    <span className="font-medium">Admin Remarks:</span>
+                    <p className="text-muted-foreground mt-1">
+                      {submission.adminRemarks}
+                    </p>
+                  </div>
+                )}
+
+                {submission.adminComment && (
+                  <div className="text-sm">
+                    <span className="font-medium">Admin Comment:</span>
+                    <p className="text-muted-foreground mt-1">
+                      {submission.adminComment}
+                    </p>
+                  </div>
+                )}
+
+                {submission.status === "live" && submission.adminLiveLink && (
+                  <div className="text-sm">
+                    <span className="font-medium">Live URL:</span>{" "}
+                    <a
+                      href={submission.adminLiveLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      {submission.adminLiveLink}{" "}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+
+                {/* Monthly Listeners & Revenue Stats */}
+                <div className="space-y-3 pt-4 border-t border-primary/20">
+                  <p className="text-sm font-semibold text-primary">
+                    📊 Song Stats
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">
+                        Monthly Listeners
+                        {currentML !== null && (
+                          <span className="ml-2 text-primary font-semibold">
+                            (current: {currentML.toLocaleString()})
+                          </span>
+                        )}
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder={
+                          currentML !== null ? String(currentML) : "Not set"
+                        }
+                        value={mlValue}
+                        onChange={(e) =>
+                          setStatsEdits((prev) => ({
+                            ...prev,
+                            [submission.id]: {
+                              monthlyListeners: e.target.value,
+                              revenue: prev[submission.id]?.revenue ?? "",
+                            },
+                          }))
+                        }
+                        className="bg-background"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">
+                        Revenue (₹)
+                        {currentRev !== null && (
+                          <span className="ml-2 text-cyan-400 font-semibold">
+                            (current: ₹
+                            {currentRev.toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                            )
+                          </span>
+                        )}
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder={
+                          currentRev !== null ? String(currentRev) : "Not set"
+                        }
+                        value={revValue}
+                        onChange={(e) =>
+                          setStatsEdits((prev) => ({
+                            ...prev,
+                            [submission.id]: {
+                              monthlyListeners:
+                                prev[submission.id]?.monthlyListeners ?? "",
+                              revenue: e.target.value,
+                            },
+                          }))
+                        }
+                        className="bg-background"
+                      />
+                    </div>
+                  </div>
+                  {(mlValue !== "" || revValue !== "") && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveStats(submission.id)}
+                      disabled={savingStats[submission.id]}
+                      className="w-full"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {savingStats[submission.id] ? "Saving..." : "Save Stats"}
+                    </Button>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor={`comment-${submission.id}`}>
-                    Admin Comment (visible to user)
-                  </Label>
-                  <Textarea
-                    id={`comment-${submission.id}`}
-                    placeholder="Feedback for the user..."
-                    value={
-                      adminComments[submission.id] || submission.adminComment
-                    }
-                    onChange={(e) =>
-                      setAdminComments((prev) => ({
-                        ...prev,
-                        [submission.id]: e.target.value,
-                      }))
-                    }
-                    rows={2}
-                  />
-                </div>
-              </div>
+                <div className="space-y-3 pt-4 border-t">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor={`status-${submission.id}`}>Status</Label>
+                      <Select
+                        value={submission.status}
+                        onValueChange={(value) =>
+                          handleStatusChange(submission.id, value as SongStatus)
+                        }
+                      >
+                        <SelectTrigger id={`status-${submission.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="approved">Approved</SelectItem>
+                          <SelectItem value="live">Live</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                          <SelectItem value="draft">Draft</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              <div className="flex flex-wrap gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setManagingLinksSubmission(submission)}
-                >
-                  <LinkIcon className="w-4 h-4 mr-2" />
-                  Manage Links
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingSubmission(submission)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Details
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownloadArtwork(submission)}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Artwork
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownloadAudio(submission)}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Audio
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    setSubmissionToDelete(submission.id);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))
+                    {submission.status !== "live" && (
+                      <div className="space-y-2">
+                        <Label htmlFor={`liveUrl-${submission.id}`}>
+                          Live URL (for Live status)
+                        </Label>
+                        <Input
+                          id={`liveUrl-${submission.id}`}
+                          placeholder="https://..."
+                          value={liveUrls[submission.id] || ""}
+                          onChange={(e) =>
+                            setLiveUrls((prev) => ({
+                              ...prev,
+                              [submission.id]: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`remarks-${submission.id}`}>
+                      Admin Remarks
+                    </Label>
+                    <Textarea
+                      id={`remarks-${submission.id}`}
+                      placeholder="Internal notes..."
+                      value={
+                        adminRemarks[submission.id] || submission.adminRemarks
+                      }
+                      onChange={(e) =>
+                        setAdminRemarks((prev) => ({
+                          ...prev,
+                          [submission.id]: e.target.value,
+                        }))
+                      }
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`comment-${submission.id}`}>
+                      Admin Comment (visible to user)
+                    </Label>
+                    <Textarea
+                      id={`comment-${submission.id}`}
+                      placeholder="Feedback for the user..."
+                      value={
+                        adminComments[submission.id] || submission.adminComment
+                      }
+                      onChange={(e) =>
+                        setAdminComments((prev) => ({
+                          ...prev,
+                          [submission.id]: e.target.value,
+                        }))
+                      }
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setManagingLinksSubmission(submission)}
+                  >
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Manage Links
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingSubmission(submission)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Details
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadArtwork(submission)}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Artwork
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownloadAudio(submission)}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Audio
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setSubmissionToDelete(submission.id);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })
       )}
 
       <AdminEditSubmissionDialog
-        submission={editingSubmission}
+        submission={editingSubmission as any}
         open={!!editingSubmission}
         onOpenChange={(open) => !open && setEditingSubmission(null)}
       />
 
       <AdminManageLinksDialog
-        song={managingLinksSubmission}
+        song={managingLinksSubmission as any}
         open={!!managingLinksSubmission}
         onOpenChange={(open) => !open && setManagingLinksSubmission(null)}
       />

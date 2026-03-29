@@ -4,9 +4,7 @@ import AdminChatInbox from "../components/AdminChatInbox";
 import AdminDebugPanel from "../components/AdminDebugPanel";
 import AdminFeaturedArtistsManagement from "../components/AdminFeaturedArtistsManagement";
 import AdminLabelPartnersManagement from "../components/AdminLabelPartnersManagement";
-import AdminMonthlyListenersManagement from "../components/AdminMonthlyListenersManagement";
 import AdminPodcastSubmissions from "../components/AdminPodcastSubmissions";
-import AdminRevenueManagement from "../components/AdminRevenueManagement";
 import AdminSubmissionsList from "../components/AdminSubmissionsList";
 import AdminSubscriptionPlansManagement from "../components/AdminSubscriptionPlansManagement";
 import AdminTopVibingSongsManagement from "../components/AdminTopVibingSongsManagement";
@@ -45,8 +43,6 @@ export default function AdminDashboard() {
           <TabsTrigger value="podcasts">Podcast Submission</TabsTrigger>
           <TabsTrigger value="videos">Video Submissions</TabsTrigger>
           <TabsTrigger value="verification">Verification List</TabsTrigger>
-          <TabsTrigger value="listeners">Monthly Listeners</TabsTrigger>
-          <TabsTrigger value="revenue">₹ Revenue</TabsTrigger>
           <TabsTrigger value="withdrawals" data-ocid="withdrawal.tab">
             💸 Withdrawals
           </TabsTrigger>
@@ -82,14 +78,6 @@ export default function AdminDashboard() {
 
         <TabsContent value="verification">
           <AdminVerificationList />
-        </TabsContent>
-
-        <TabsContent value="listeners">
-          <AdminMonthlyListenersManagement />
-        </TabsContent>
-
-        <TabsContent value="revenue">
-          <AdminRevenueManagement />
         </TabsContent>
 
         <TabsContent value="withdrawals">

@@ -674,6 +674,7 @@ actor {
   var labelPartnersSize = 0;
   var labelReleasesSize = 0;
   let subscriptionPlans = Map.empty<Text, SubscriptionPlan>();
+  let songMonthlyListeners = Map.empty<Text, Float>();
   let songRevenues = Map.empty<Text, Float>();
   let withdrawRequests = Map.empty<Text, WithdrawRequest>();
   let withdrawnAmounts = Map.empty<Principal, Float>();
@@ -1353,6 +1354,107 @@ actor {
       Runtime.trap("Submission not found");
     };
     submissions.remove(id);
+  };
+
+  public shared ({ caller }) func adminUpdateSongStats(songId : Text, monthlyListeners : ?Float, revenue : ?Float) : async () {
+    requireAdminOrTeam(caller);
+    if (not submissions.containsKey(songId)) {
+      Runtime.trap("Submission not found");
+    };
+    switch (monthlyListeners) {
+      case (null) {};
+      case (?v) { songMonthlyListeners.add(songId, v) };
+    };
+    switch (revenue) {
+      case (null) {};
+      case (?v) { songRevenues.add(songId, v) };
+    };
+  };
+
+  public query func getSongMonthlyListeners(songId : Text) : async Float {
+    switch (songMonthlyListeners.get(songId)) {
+      case (null) { 0.0 };
+      case (?v) { v };
+    };
+  };
+
+  public type SongSubmissionAdmin = {
+    id : Text;
+    title : Text;
+    releaseType : Text;
+    genre : Text;
+    language : Text;
+    releaseDate : Time.Time;
+    artwork : Storage.ExternalBlob;
+    artworkFilename : Text;
+    artist : Text;
+    featuredArtist : Text;
+    composer : Text;
+    producer : Text;
+    lyricist : Text;
+    audioFile : Storage.ExternalBlob;
+    audioFilename : Text;
+    additionalDetails : Text;
+    status : SongStatus;
+    adminRemarks : Text;
+    adminComment : Text;
+    submitter : Principal;
+    timestamp : Time.Time;
+    discountCode : ?Text;
+    acrResult : ?ACRResult;
+    preSaveLink : ?Text;
+    liveStreamLink : ?Text;
+    musicVideoLink : ?Text;
+    albumTracks : ?[TrackMetadata];
+    publicLink : ?Text;
+    adminLiveLink : ?Text;
+    isManuallyRejected : Bool;
+    spotifyLink : ?Text;
+    appleMusicLink : ?Text;
+    monthlyListeners : ?Float;
+    revenue : ?Float;
+  };
+
+  public query ({ caller }) func getAllSubmissionsWithStatsForAdmin() : async [SongSubmissionAdmin] {
+    requireAdminOrTeam(caller);
+    submissions.values().toArray().map(func (s : SongSubmission) : SongSubmissionAdmin {
+      {
+        id = s.id;
+        title = s.title;
+        releaseType = s.releaseType;
+        genre = s.genre;
+        language = s.language;
+        releaseDate = s.releaseDate;
+        artwork = s.artwork;
+        artworkFilename = s.artworkFilename;
+        artist = s.artist;
+        featuredArtist = s.featuredArtist;
+        composer = s.composer;
+        producer = s.producer;
+        lyricist = s.lyricist;
+        audioFile = s.audioFile;
+        audioFilename = s.audioFilename;
+        additionalDetails = s.additionalDetails;
+        status = s.status;
+        adminRemarks = s.adminRemarks;
+        adminComment = s.adminComment;
+        submitter = s.submitter;
+        timestamp = s.timestamp;
+        discountCode = s.discountCode;
+        acrResult = s.acrResult;
+        preSaveLink = s.preSaveLink;
+        liveStreamLink = s.liveStreamLink;
+        musicVideoLink = s.musicVideoLink;
+        albumTracks = s.albumTracks;
+        publicLink = s.publicLink;
+        adminLiveLink = s.adminLiveLink;
+        isManuallyRejected = s.isManuallyRejected;
+        spotifyLink = s.spotifyLink;
+        appleMusicLink = s.appleMusicLink;
+        monthlyListeners = songMonthlyListeners.get(s.id);
+        revenue = songRevenues.get(s.id);
+      }
+    });
   };
 
   public query ({ caller }) func getMySubmissions() : async [SongSubmission] {

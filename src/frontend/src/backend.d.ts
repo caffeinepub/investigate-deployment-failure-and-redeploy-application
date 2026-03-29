@@ -225,6 +225,42 @@ declare module "./backend" {
         adminRemarks: string;
         featuredArtist: string;
     }
+    export interface SongSubmissionAdmin {
+        id: string;
+        status: SongStatus;
+        albumTracks?: Array<TrackMetadata>;
+        adminLiveLink?: string;
+        title: string;
+        preSaveLink?: string;
+        additionalDetails: string;
+        lyricist: string;
+        spotifyLink?: string;
+        publicLink?: string;
+        submitter: Principal;
+        discountCode?: string;
+        artworkFilename: string;
+        audioFile: ExternalBlob;
+        liveStreamLink?: string;
+        artwork: ExternalBlob;
+        audioFilename: string;
+        language: string;
+        composer: string;
+        adminComment: string;
+        genre: string;
+        musicVideoLink?: string;
+        timestamp: Time;
+        artist: string;
+        appleMusicLink?: string;
+        acrResult?: ACRResult;
+        producer: string;
+        releaseDate: Time;
+        isManuallyRejected: boolean;
+        releaseType: string;
+        adminRemarks: string;
+        featuredArtist: string;
+        monthlyListeners?: number;
+        revenue?: number;
+    }
     export interface VerificationRequest {
         id: string;
         status: VerificationStatus;
@@ -314,6 +350,7 @@ declare module "./backend" {
         adminEditSubmission(input: SongSubmissionEditInput): Promise<void>;
         adminSetSubmissionLive(id: string, liveUrl: string, adminRemarks: string, adminComment: string): Promise<void>;
         adminUpdateSubmission(id: string, status: SongStatus, adminRemarks: string, adminComment: string): Promise<void>;
+        adminUpdateSongStats(songId: string, monthlyListeners: [] | [number], revenue: [] | [number]): Promise<void>;
         applyForVerification(): Promise<string>;
         approveEpisode(id: string): Promise<void>;
         approvePodcast(id: string): Promise<void>;
@@ -349,6 +386,7 @@ declare module "./backend" {
         getAllPodcasts(): Promise<Array<PodcastShow>>;
         getAllRSVPs(): Promise<Array<RSVP>>;
         getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
+        getAllSubmissionsWithStatsForAdmin(): Promise<Array<SongSubmissionAdmin>>;
         getAllSubscriptionPlans(): Promise<Array<SubscriptionPlan>>;
         getAllTeamMembers(): Promise<Array<Principal>>;
         getAllTopVibingSongs(): Promise<Array<TopVibingSong>>;

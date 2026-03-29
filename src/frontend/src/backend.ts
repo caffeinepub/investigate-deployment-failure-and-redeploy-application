@@ -440,6 +440,42 @@ export interface LabelRelease {
     artworkUrl: string;
     artistName: string;
 }
+export interface SongSubmissionAdmin {
+    id: string;
+    status: SongStatus;
+    albumTracks?: Array<TrackMetadata>;
+    adminLiveLink?: string;
+    title: string;
+    preSaveLink?: string;
+    additionalDetails: string;
+    lyricist: string;
+    spotifyLink?: string;
+    publicLink?: string;
+    submitter: Principal;
+    discountCode?: string;
+    artworkFilename: string;
+    audioFile: ExternalBlob;
+    liveStreamLink?: string;
+    artwork: ExternalBlob;
+    audioFilename: string;
+    language: string;
+    composer: string;
+    adminComment: string;
+    genre: string;
+    musicVideoLink?: string;
+    timestamp: Time;
+    artist: string;
+    appleMusicLink?: string;
+    acrResult?: ACRResult;
+    producer: string;
+    releaseDate: Time;
+    isManuallyRejected: boolean;
+    releaseType: string;
+    adminRemarks: string;
+    featuredArtist: string;
+    monthlyListeners?: number;
+    revenue?: number;
+}
 export interface VerificationRequest {
     id: string;
     status: VerificationStatus;
@@ -582,6 +618,7 @@ export interface backendInterface {
     adminEditSubmission(input: SongSubmissionEditInput): Promise<void>;
     adminSetSubmissionLive(id: string, liveUrl: string, adminRemarks: string, adminComment: string): Promise<void>;
     adminUpdateSubmission(id: string, status: SongStatus, adminRemarks: string, adminComment: string): Promise<void>;
+    adminUpdateSongStats(songId: string, monthlyListeners: [] | [number], revenue: [] | [number]): Promise<void>;
     applyForVerification(): Promise<string>;
     approveEpisode(id: string): Promise<void>;
     approvePodcast(id: string): Promise<void>;
@@ -617,9 +654,11 @@ export interface backendInterface {
     getAllPodcasts(): Promise<Array<PodcastShow>>;
     getAllRSVPs(): Promise<Array<RSVP>>;
     getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
+    getAllSubmissionsWithStatsForAdmin(): Promise<Array<SongSubmissionAdmin>>;
     getLiveSongsForAdmin(): Promise<Array<SongSubmission>>;
     getAllSubscriptionPlans(): Promise<Array<SubscriptionPlan>>;
     getSongRevenue(songId: string): Promise<number>;
+    getSongMonthlyListeners(songId: string): Promise<number>;
     getAllSongRevenues(): Promise<Array<[string, number]>>;
     setSongRevenue(songId: string, amount: number): Promise<void>;
     submitWithdrawRequest(input: WithdrawRequestInput): Promise<string>;
@@ -923,6 +962,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.adminUpdateSubmission(arg0, to_candid_SongStatus_n18(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+            return result;
+        }
+    }
+    async adminUpdateSongStats(arg0: string, arg1: [] | [number], arg2: [] | [number]): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminUpdateSongStats(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminUpdateSongStats(arg0, arg1, arg2);
             return result;
         }
     }
@@ -1416,6 +1469,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n55(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getAllSubmissionsWithStatsForAdmin(): Promise<Array<SongSubmissionAdmin>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllSubmissionsWithStatsForAdmin();
+                return from_candid_vec_SongSubmissionAdmin(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllSubmissionsWithStatsForAdmin();
+            return from_candid_vec_SongSubmissionAdmin(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getLiveSongsForAdmin(): Promise<Array<SongSubmission>> {
         if (this.processError) {
             try {
@@ -1440,6 +1507,18 @@ export class Backend implements backendInterface {
             }
         } else {
             return await this.actor.getSongRevenue(songId);
+        }
+    }
+    async getSongMonthlyListeners(songId: string): Promise<number> {
+        if (this.processError) {
+            try {
+                return await this.actor.getSongMonthlyListeners(songId);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            return await this.actor.getSongMonthlyListeners(songId);
         }
     }
     async getAllSongRevenues(): Promise<Array<[string, number]>> {
@@ -3296,6 +3375,16 @@ async function from_candid_vec_n45(_uploadFile: (file: ExternalBlob) => Promise<
 }
 async function from_candid_vec_n55(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_SongSubmission>): Promise<Array<SongSubmission>> {
     return await Promise.all(value.map(async (x)=>await from_candid_SongSubmission_n56(_uploadFile, _downloadFile, x)));
+}
+async function from_candid_vec_SongSubmissionAdmin(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<any>): Promise<Array<SongSubmissionAdmin>> {
+    return await Promise.all(value.map(async (x) => {
+        const base = await from_candid_SongSubmission_n56(_uploadFile, _downloadFile, x);
+        return {
+            ...base,
+            monthlyListeners: x.monthlyListeners && x.monthlyListeners.length > 0 ? x.monthlyListeners[0] : undefined,
+            revenue: x.revenue && x.revenue.length > 0 ? x.revenue[0] : undefined,
+        } as SongSubmissionAdmin;
+    }));
 }
 async function from_candid_vec_n61(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_TrackMetadata>): Promise<Array<TrackMetadata>> {
     return await Promise.all(value.map(async (x)=>await from_candid_TrackMetadata_n62(_uploadFile, _downloadFile, x)));
