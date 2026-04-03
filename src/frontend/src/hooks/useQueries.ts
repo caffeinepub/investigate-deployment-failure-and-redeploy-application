@@ -1,6 +1,7 @@
 import type { Principal } from "@dfinity/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  AdminUserView,
   ArtistProfile,
   FeaturedArtist,
   FeaturedArtistInput,
@@ -1281,6 +1282,203 @@ export function useListAdmins() {
       return actor.listAdmins();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+// ================================
+// USERS PANEL HOOKS
+// ================================
+export function useGetAllRegisteredUsers() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<AdminUserView[]>({
+    queryKey: ["allRegisteredUsers"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllRegisteredUsersForAdmin();
+    },
+    enabled: !!actor && !isFetching,
+    staleTime: 30000,
+  });
+}
+
+export function useGrantPremiumRole() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.grantPremiumRole(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+    },
+  });
+}
+
+export function useRevokePremiumRole() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.revokePremiumRole(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+    },
+  });
+}
+
+export function useIsCallerPremium() {
+  const { actor } = useActor();
+  return useQuery({
+    queryKey: ["isCallerPremium"],
+    queryFn: async () => {
+      if (!actor) return false;
+      try {
+        return await actor.isCallerPremium();
+      } catch {
+        return false;
+      }
+    },
+    retry: false,
+  });
+}
+
+export function useGetAllPremiumUsers() {
+  const { actor } = useActor();
+  return useQuery({
+    queryKey: ["allPremiumUsers"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllPremiumUsers();
+    },
+    retry: false,
+  });
+}
+
+export function useUpgradeUserToTeamMember() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.upgradeUserToTeamMember(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+    },
+  });
+}
+
+export function useDowngradeTeamMember() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.downgradeTeamMember(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+    },
+  });
+}
+
+export function usePromoteToAdminForUsers() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.promoteToAdmin(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
+    },
+  });
+}
+
+export function useDemoteFromAdminForUsers() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.demoteFromAdmin(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
+    },
+  });
+}
+
+export function useBlockSongForUsers() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.blockUserSongSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+    },
+  });
+}
+
+export function useUnblockSongForUsers() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.unblockUserSongSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+    },
+  });
+}
+
+export function useBlockPodcastForUsers() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.blockUserPodcastSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+    },
+  });
+}
+
+export function useUnblockPodcastForUsers() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (user: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.unblockUserPodcastSubmission(user);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allRegisteredUsers"] });
+    },
   });
 }
 

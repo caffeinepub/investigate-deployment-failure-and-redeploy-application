@@ -185,6 +185,17 @@ export interface SongSubmission {
   'isManuallyRejected' : boolean,
   'spotifyLink' : [] | [string],
   'appleMusicLink' : [] | [string],
+  'customCLine' : [] | [string],
+  'customPLine' : [] | [string],
+  'premiumLabel' : [] | [string],
+  'contentType' : [] | [string],
+  'sunoTrackLink' : [] | [string],
+  'sunoAgreementFile' : [] | [ExternalBlob],
+  'sunoAgreementFilename' : [] | [string],
+  'licenceFile' : [] | [ExternalBlob],
+  'licenceFilename' : [] | [string],
+  'contentId' : [] | [boolean],
+  'callerTuneStartSecond' : [] | [number],
 }
 export interface SongSubmissionInput {
   'title' : string,
@@ -207,6 +218,17 @@ export interface SongSubmissionInput {
   'musicVideoLink' : [] | [string],
   'spotifyLink' : [] | [string],
   'appleMusicLink' : [] | [string],
+  'customCLine' : [] | [string],
+  'customPLine' : [] | [string],
+  'premiumLabel' : [] | [string],
+  'contentType' : [] | [string],
+  'sunoTrackLink' : [] | [string],
+  'sunoAgreementFile' : [] | [ExternalBlob],
+  'sunoAgreementFilename' : [] | [string],
+  'licenceFile' : [] | [ExternalBlob],
+  'licenceFilename' : [] | [string],
+  'contentId' : [] | [boolean],
+  'callerTuneStartSecond' : [] | [number],
 }
 export interface SongSubmissionAdmin {
   'id' : string,
@@ -243,6 +265,17 @@ export interface SongSubmissionAdmin {
   'appleMusicLink' : [] | [string],
   'monthlyListeners' : [] | [number],
   'revenue' : [] | [number],
+  'customCLine' : [] | [string],
+  'customPLine' : [] | [string],
+  'premiumLabel' : [] | [string],
+  'contentType' : [] | [string],
+  'sunoTrackLink' : [] | [string],
+  'sunoAgreementFile' : [] | [ExternalBlob],
+  'sunoAgreementFilename' : [] | [string],
+  'licenceFile' : [] | [ExternalBlob],
+  'licenceFilename' : [] | [string],
+  'contentId' : [] | [boolean],
+  'callerTuneStartSecond' : [] | [number],
 }
 export interface SongSubmissionEditInput {
   'songSubmissionId' : string,
@@ -272,6 +305,15 @@ export type UserCategory = { 'generalArtist' : null } |
   { 'ultraArtist' : null } |
   { 'generalLabel' : null } |
   { 'proLabel' : null };
+export interface AdminUserView {
+  'principal' : Principal,
+  'displayName' : string,
+  'isAdmin' : boolean,
+  'isTeamMember' : boolean,
+  'isVerified' : boolean,
+  'isSongBlocked' : boolean,
+  'isPodcastBlocked' : boolean,
+}
 export interface UserProfile {
   'name' : string,
   'artistId' : string,
@@ -496,7 +538,11 @@ export interface _SERVICE {
   'getAllSubmissionsWithStatsForAdmin' : ActorMethod<[], Array<SongSubmissionAdmin>>,
   'getLiveSongsForAdmin' : ActorMethod<[], Array<SongSubmission>>,
   'getAllSubscriptionPlans' : ActorMethod<[], Array<SubscriptionPlan>>,
+  'getAllRegisteredUsersForAdmin' : ActorMethod<[], Array<AdminUserView>>,
   'getAllTeamMembers' : ActorMethod<[], Array<Principal>>,
+  'grantPremiumRole' : ActorMethod<[Principal], undefined>,
+  'isCallerPremium' : ActorMethod<[], boolean>,
+  'getAllPremiumUsers' : ActorMethod<[], Array<Principal>>,
   'getAllTopVibingSongs' : ActorMethod<[], Array<TopVibingSong>>,
   'getAllVideoSubmissions' : ActorMethod<[], Array<VideoSubmission>>,
   'getAnnouncement' : ActorMethod<[], string>,
@@ -582,6 +628,7 @@ export interface _SERVICE {
   'updateVideoStatus' : ActorMethod<[string, VideoSubmissionStatus, [] | [string]], undefined>,
   'updateVideoSubmission' : ActorMethod<[string, VideoSubmissionInput], undefined>,
   'upgradeUserToTeamMember' : ActorMethod<[Principal], undefined>,
+  'revokePremiumRole' : ActorMethod<[Principal], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

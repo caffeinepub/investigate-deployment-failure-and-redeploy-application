@@ -51,6 +51,48 @@ actor {
     audioFilename : Text;
   };
 
+  public type ACRResult = {
+    statusCode : Text;
+    music : Text;
+  };
+
+  // Legacy SongSubmission type (before premium fields were added)
+  // Used only for stable migration in postupgrade
+  public type SongSubmissionLegacy = {
+    id : Text;
+    title : Text;
+    releaseType : Text;
+    genre : Text;
+    language : Text;
+    releaseDate : Time.Time;
+    artwork : Storage.ExternalBlob;
+    artworkFilename : Text;
+    artist : Text;
+    featuredArtist : Text;
+    composer : Text;
+    producer : Text;
+    lyricist : Text;
+    audioFile : Storage.ExternalBlob;
+    audioFilename : Text;
+    additionalDetails : Text;
+    status : SongStatus;
+    adminRemarks : Text;
+    adminComment : Text;
+    submitter : Principal;
+    timestamp : Time.Time;
+    discountCode : ?Text;
+    acrResult : ?ACRResult;
+    preSaveLink : ?Text;
+    liveStreamLink : ?Text;
+    musicVideoLink : ?Text;
+    albumTracks : ?[TrackMetadata];
+    publicLink : ?Text;
+    adminLiveLink : ?Text;
+    isManuallyRejected : Bool;
+    spotifyLink : ?Text;
+    appleMusicLink : ?Text;
+  };
+
   public type SongSubmission = {
     id : Text;
     title : Text;
@@ -84,6 +126,18 @@ actor {
     isManuallyRejected : Bool;
     spotifyLink : ?Text;
     appleMusicLink : ?Text;
+    // Premium fields (optional)
+    customCLine : ?Text;
+    customPLine : ?Text;
+    premiumLabel : ?Text;
+    contentType : ?Text;
+    sunoTrackLink : ?Text;
+    sunoAgreementFile : ?Storage.ExternalBlob;
+    sunoAgreementFilename : ?Text;
+    licenceFile : ?Storage.ExternalBlob;
+    licenceFilename : ?Text;
+    contentId : ?Bool;
+    callerTuneStartSecond : ?Float;
   };
 
   public type PublicSongInfo = {
@@ -121,11 +175,18 @@ actor {
     musicVideoLink : ?Text;
     spotifyLink : ?Text;
     appleMusicLink : ?Text;
-  };
-
-  public type ACRResult = {
-    statusCode : Text;
-    music : Text;
+    // Premium fields (optional)
+    customCLine : ?Text;
+    customPLine : ?Text;
+    premiumLabel : ?Text;
+    contentType : ?Text;
+    sunoTrackLink : ?Text;
+    sunoAgreementFile : ?Storage.ExternalBlob;
+    sunoAgreementFilename : ?Text;
+    licenceFile : ?Storage.ExternalBlob;
+    licenceFilename : ?Text;
+    contentId : ?Bool;
+    callerTuneStartSecond : ?Float;
   };
 
   public type ACRCloudResponse = {
@@ -495,6 +556,17 @@ actor {
     podcastSubmissionBlocked : Bool;
   };
 
+
+  public type AdminUserView = {
+    principal : Principal;
+    displayName : Text;
+    isAdmin : Bool;
+    isTeamMember : Bool;
+    isVerified : Bool;
+    isSongBlocked : Bool;
+    isPodcastBlocked : Bool;
+  };
+
   public type SubscriptionPlan = {
     planName : Text;
     pricePerYear : Nat;
@@ -634,7 +706,11 @@ actor {
     streamingLink : Text;
   };
 
-  let submissions = Map.empty<Text, SongSubmission>();
+  // `submissions` holds pre-upgrade data (SongSubmissionLegacy = old type without premium fields)
+  // Motoko loads the deployed stable `submissions` map into this variable during upgrade
+  let submissions = Map.empty<Text, SongSubmissionLegacy>();
+  // submissionsV2 is the current stable store with premium fields
+  let submissionsV2 = Map.empty<Text, SongSubmission>();
   let podcasts = Map.empty<Text, PodcastShow>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let artistProfiles = Map.empty<Text, ArtistProfile>();
@@ -678,6 +754,7 @@ actor {
   let songRevenues = Map.empty<Text, Float>();
   let withdrawRequests = Map.empty<Text, WithdrawRequest>();
   let withdrawnAmounts = Map.empty<Principal, Float>();
+  let premiumUsers = Map.empty<Principal, Bool>();
 
   func isTeamMember(user : Principal) : Bool {
     switch (teamMembers.get(user)) {
@@ -1150,14 +1227,25 @@ actor {
       isManuallyRejected = false;
       spotifyLink = input.spotifyLink;
       appleMusicLink = input.appleMusicLink;
+      customCLine = input.customCLine;
+      customPLine = input.customPLine;
+      premiumLabel = input.premiumLabel;
+      contentType = input.contentType;
+      sunoTrackLink = input.sunoTrackLink;
+      sunoAgreementFile = input.sunoAgreementFile;
+      sunoAgreementFilename = input.sunoAgreementFilename;
+      licenceFile = input.licenceFile;
+      licenceFilename = input.licenceFilename;
+      contentId = input.contentId;
+      callerTuneStartSecond = input.callerTuneStartSecond;
     };
-    submissions.add(id, submission);
+    submissionsV2.add(id, submission);
     id;
   };
 
   public shared ({ caller }) func editSongSubmission(input : SongSubmissionEditInput) : async () {
     requireUser(caller);
-    switch (submissions.get(input.songSubmissionId)) {
+    switch (submissionsV2.get(input.songSubmissionId)) {
       case (null) { Runtime.trap("Submission not found") };
       case (?existing) {
         if (existing.submitter != caller) {
@@ -1199,8 +1287,19 @@ actor {
           isManuallyRejected = existing.isManuallyRejected;
           spotifyLink = input.spotifyLink;
           appleMusicLink = input.appleMusicLink;
+          customCLine = existing.customCLine;
+          customPLine = existing.customPLine;
+          premiumLabel = existing.premiumLabel;
+          contentType = existing.contentType;
+          sunoTrackLink = existing.sunoTrackLink;
+          sunoAgreementFile = existing.sunoAgreementFile;
+          sunoAgreementFilename = existing.sunoAgreementFilename;
+          licenceFile = existing.licenceFile;
+          licenceFilename = existing.licenceFilename;
+          contentId = existing.contentId;
+          callerTuneStartSecond = existing.callerTuneStartSecond;
         };
-        submissions.add(input.songSubmissionId, updated);
+        submissionsV2.add(input.songSubmissionId, updated);
       };
     };
   };
@@ -1212,7 +1311,7 @@ actor {
     adminComment : Text
   ) : async () {
     requireAdminOrTeam(caller);
-    switch (submissions.get(id)) {
+    switch (submissionsV2.get(id)) {
       case (null) { Runtime.trap("Submission not found") };
       case (?existing) {
         let isRejected = switch (newStatus) { case (#rejected) { true }; case (_) { false } };
@@ -1249,8 +1348,19 @@ actor {
           isManuallyRejected = isRejected;
           spotifyLink = existing.spotifyLink;
           appleMusicLink = existing.appleMusicLink;
+          customCLine = existing.customCLine;
+          customPLine = existing.customPLine;
+          premiumLabel = existing.premiumLabel;
+          contentType = existing.contentType;
+          sunoTrackLink = existing.sunoTrackLink;
+          sunoAgreementFile = existing.sunoAgreementFile;
+          sunoAgreementFilename = existing.sunoAgreementFilename;
+          licenceFile = existing.licenceFile;
+          licenceFilename = existing.licenceFilename;
+          contentId = existing.contentId;
+          callerTuneStartSecond = existing.callerTuneStartSecond;
         };
-        submissions.add(id, updated);
+        submissionsV2.add(id, updated);
       };
     };
   };
@@ -1262,7 +1372,7 @@ actor {
     adminComment : Text
   ) : async () {
     requireAdminOrTeam(caller);
-    switch (submissions.get(id)) {
+    switch (submissionsV2.get(id)) {
       case (null) { Runtime.trap("Submission not found") };
       case (?existing) {
         let updated : SongSubmission = {
@@ -1298,15 +1408,26 @@ actor {
           isManuallyRejected = false;
           spotifyLink = existing.spotifyLink;
           appleMusicLink = existing.appleMusicLink;
+          customCLine = existing.customCLine;
+          customPLine = existing.customPLine;
+          premiumLabel = existing.premiumLabel;
+          contentType = existing.contentType;
+          sunoTrackLink = existing.sunoTrackLink;
+          sunoAgreementFile = existing.sunoAgreementFile;
+          sunoAgreementFilename = existing.sunoAgreementFilename;
+          licenceFile = existing.licenceFile;
+          licenceFilename = existing.licenceFilename;
+          contentId = existing.contentId;
+          callerTuneStartSecond = existing.callerTuneStartSecond;
         };
-        submissions.add(id, updated);
+        submissionsV2.add(id, updated);
       };
     };
   };
 
   public shared ({ caller }) func adminEditSubmission(input : SongSubmissionEditInput) : async () {
     requireAdminOrTeam(caller);
-    switch (submissions.get(input.songSubmissionId)) {
+    switch (submissionsV2.get(input.songSubmissionId)) {
       case (null) { Runtime.trap("Submission not found") };
       case (?existing) {
         let updated : SongSubmission = {
@@ -1342,23 +1463,34 @@ actor {
           isManuallyRejected = existing.isManuallyRejected;
           spotifyLink = input.spotifyLink;
           appleMusicLink = input.appleMusicLink;
+          customCLine = existing.customCLine;
+          customPLine = existing.customPLine;
+          premiumLabel = existing.premiumLabel;
+          contentType = existing.contentType;
+          sunoTrackLink = existing.sunoTrackLink;
+          sunoAgreementFile = existing.sunoAgreementFile;
+          sunoAgreementFilename = existing.sunoAgreementFilename;
+          licenceFile = existing.licenceFile;
+          licenceFilename = existing.licenceFilename;
+          contentId = existing.contentId;
+          callerTuneStartSecond = existing.callerTuneStartSecond;
         };
-        submissions.add(input.songSubmissionId, updated);
+        submissionsV2.add(input.songSubmissionId, updated);
       };
     };
   };
 
   public shared ({ caller }) func adminDeleteSubmission(id : Text) : async () {
     requireAdminOrTeam(caller);
-    if (not submissions.containsKey(id)) {
+    if (not submissionsV2.containsKey(id)) {
       Runtime.trap("Submission not found");
     };
-    submissions.remove(id);
+    submissionsV2.remove(id);
   };
 
   public shared ({ caller }) func adminUpdateSongStats(songId : Text, monthlyListeners : ?Float, revenue : ?Float) : async () {
     requireAdminOrTeam(caller);
-    if (not submissions.containsKey(songId)) {
+    if (not submissionsV2.containsKey(songId)) {
       Runtime.trap("Submission not found");
     };
     switch (monthlyListeners) {
@@ -1413,11 +1545,23 @@ actor {
     appleMusicLink : ?Text;
     monthlyListeners : ?Float;
     revenue : ?Float;
+    // Premium fields
+    customCLine : ?Text;
+    customPLine : ?Text;
+    premiumLabel : ?Text;
+    contentType : ?Text;
+    sunoTrackLink : ?Text;
+    sunoAgreementFile : ?Storage.ExternalBlob;
+    sunoAgreementFilename : ?Text;
+    licenceFile : ?Storage.ExternalBlob;
+    licenceFilename : ?Text;
+    contentId : ?Bool;
+    callerTuneStartSecond : ?Float;
   };
 
   public query ({ caller }) func getAllSubmissionsWithStatsForAdmin() : async [SongSubmissionAdmin] {
     requireAdminOrTeam(caller);
-    submissions.values().toArray().map(func (s : SongSubmission) : SongSubmissionAdmin {
+    submissionsV2.values().toArray().map(func (s : SongSubmission) : SongSubmissionAdmin {
       {
         id = s.id;
         title = s.title;
@@ -1453,29 +1597,40 @@ actor {
         appleMusicLink = s.appleMusicLink;
         monthlyListeners = songMonthlyListeners.get(s.id);
         revenue = songRevenues.get(s.id);
+        customCLine = s.customCLine;
+        customPLine = s.customPLine;
+        premiumLabel = s.premiumLabel;
+        contentType = s.contentType;
+        sunoTrackLink = s.sunoTrackLink;
+        sunoAgreementFile = s.sunoAgreementFile;
+        sunoAgreementFilename = s.sunoAgreementFilename;
+        licenceFile = s.licenceFile;
+        licenceFilename = s.licenceFilename;
+        contentId = s.contentId;
+        callerTuneStartSecond = s.callerTuneStartSecond;
       }
     });
   };
 
   public query ({ caller }) func getMySubmissions() : async [SongSubmission] {
-    submissions.values().toArray().filter(
+    submissionsV2.values().toArray().filter(
       func(s : SongSubmission) : Bool { s.submitter == caller }
     );
   };
 
   public query ({ caller }) func getAllSubmissionsForAdmin() : async [SongSubmission] {
     requireAdminOrTeam(caller);
-    submissions.values().toArray();
+    submissionsV2.values().toArray();
   };
 
   public query ({ caller }) func getLiveSongsForAdmin() : async [SongSubmission] {
     requireAdminOrTeam(caller);
-    submissions.values().filter(func(s : SongSubmission) : Bool { s.status == #live }).toArray();
+    submissionsV2.values().filter(func(s : SongSubmission) : Bool { s.status == #live }).toArray();
   };
 
 
   public query func getSongInfo(songId : Text) : async ?PublicSongInfo {
-    switch (submissions.get(songId)) {
+    switch (submissionsV2.get(songId)) {
       case (null) { null };
       case (?s) {
         if (s.status == #live) {
@@ -1630,6 +1785,124 @@ actor {
     requireAdmin(caller);
     teamMembers.keys().toArray();
   };
+
+  // ── Premium Role (Verified Status) ────────────────────────────────────────
+
+  public shared ({ caller }) func grantPremiumRole(user : Principal) : async () {
+    requireAdmin(caller);
+    // Add to dedicated premium users map
+    premiumUsers.add(user, true);
+    // Also update isVerified on artist profiles (backward compat)
+    let userProfilesList = artistProfiles.values().toArray().filter(
+      func(p : ArtistProfile) : Bool { p.owner == user }
+    );
+    for (profile in userProfilesList.vals()) {
+      let updated : ArtistProfile = {
+        id = profile.id;
+        owner = profile.owner;
+        fullName = profile.fullName;
+        stageName = profile.stageName;
+        email = profile.email;
+        mobileNumber = profile.mobileNumber;
+        instagramLink = profile.instagramLink;
+        facebookLink = profile.facebookLink;
+        spotifyProfile = profile.spotifyProfile;
+        appleProfile = profile.appleProfile;
+        youtubeChannelLink = profile.youtubeChannelLink;
+        profilePhoto = profile.profilePhoto;
+        profilePhotoFilename = profile.profilePhotoFilename;
+        isApproved = profile.isApproved;
+        isVerified = true;
+      };
+      artistProfiles.add(profile.id, updated);
+    };
+  };
+
+  public shared ({ caller }) func revokePremiumRole(user : Principal) : async () {
+    requireAdmin(caller);
+    // Remove from dedicated premium users map
+    premiumUsers.remove(user);
+    // Also update isVerified on artist profiles (backward compat)
+    let userProfilesList = artistProfiles.values().toArray().filter(
+      func(p : ArtistProfile) : Bool { p.owner == user }
+    );
+    for (profile in userProfilesList.vals()) {
+      let updated : ArtistProfile = {
+        id = profile.id;
+        owner = profile.owner;
+        fullName = profile.fullName;
+        stageName = profile.stageName;
+        email = profile.email;
+        mobileNumber = profile.mobileNumber;
+        instagramLink = profile.instagramLink;
+        facebookLink = profile.facebookLink;
+        spotifyProfile = profile.spotifyProfile;
+        appleProfile = profile.appleProfile;
+        youtubeChannelLink = profile.youtubeChannelLink;
+        profilePhoto = profile.profilePhoto;
+        profilePhotoFilename = profile.profilePhotoFilename;
+        isApproved = profile.isApproved;
+        isVerified = false;
+      };
+      artistProfiles.add(profile.id, updated);
+    };
+  };
+
+  public query ({ caller }) func isCallerPremium() : async Bool {
+    switch (premiumUsers.get(caller)) {
+      case (null) { false };
+      case (?v) { v };
+    };
+  };
+
+  public query ({ caller }) func getAllPremiumUsers() : async [Principal] {
+    requireAdmin(caller);
+    premiumUsers.keys().toArray();
+  };
+
+  public query ({ caller }) func getAllRegisteredUsersForAdmin() : async [AdminUserView] {
+    requireAdmin(caller);
+    // Collect all unique principals from artistProfiles, adminRoles, teamMembers, and blockedUsers
+    let allPrincipals = Map.empty<Principal, Bool>();
+    for (profile in artistProfiles.values().toArray().vals()) {
+      allPrincipals.add(profile.owner, true);
+    };
+    for ((p, _) in accessControlState.userRoles.entries().toArray().vals()) {
+      allPrincipals.add(p, true);
+    };
+    for ((p, _) in teamMembers.entries().toArray().vals()) {
+      allPrincipals.add(p, true);
+    };
+    for ((p, _) in blockedUsers.entries().toArray().vals()) {
+      allPrincipals.add(p, true);
+    };
+
+    allPrincipals.keys().toArray().map(func(principal : Principal) : AdminUserView {
+      // Get display name from first artist profile
+      let profiles = artistProfiles.values().toArray().filter(
+        func(p : ArtistProfile) : Bool { p.owner == principal }
+      );
+      let displayName = if (profiles.size() > 0) { profiles[0].fullName } else { "" };
+      let isVerifiedStatus = if (profiles.size() > 0) { profiles[0].isVerified } else { false };
+
+      // Get blocked status
+      let blockStatus = switch (blockedUsers.get(principal)) {
+        case (null) { { songSubmissionBlocked = false; podcastSubmissionBlocked = false } };
+        case (?b) { b };
+      };
+
+      {
+        principal = principal;
+        displayName = displayName;
+        isAdmin = AccessControl.isAdmin(accessControlState, principal);
+        isTeamMember = isTeamMember(principal);
+        isVerified = isVerifiedStatus;
+        isSongBlocked = blockStatus.songSubmissionBlocked;
+        isPodcastBlocked = blockStatus.podcastSubmissionBlocked;
+      };
+    });
+  };
+
 
   // ── Website Branding ───────────────────────────────────────────────────────
 
@@ -2274,7 +2547,7 @@ actor {
     let blob = await Random.blob();
     let id = InviteLinksModule.generateUUID(blob);
     // Calculate total revenue for this user
-    let userSubmissions = submissions.values().toArray();
+    let userSubmissions = submissionsV2.values().toArray();
     var totalRevenue : Float = 0.0;
     for (sub in userSubmissions.vals()) {
       if (sub.submitter == caller) {
@@ -2385,5 +2658,67 @@ actor {
       };
     };
   };
+
+  // ── Stable migration: upgrade SongSubmissionLegacy -> SongSubmission ──────
+  // This runs after canister upgrade and migrates any legacy submissions
+  // (those without premium fields) into the new submissionsV2 map.
+  system func postupgrade() {
+    for ((id, legacy) in submissions.entries().toArray().vals()) {
+      if (not submissionsV2.containsKey(id)) {
+        let migrated : SongSubmission = {
+          id = legacy.id;
+          title = legacy.title;
+          releaseType = legacy.releaseType;
+          genre = legacy.genre;
+          language = legacy.language;
+          releaseDate = legacy.releaseDate;
+          artwork = legacy.artwork;
+          artworkFilename = legacy.artworkFilename;
+          artist = legacy.artist;
+          featuredArtist = legacy.featuredArtist;
+          composer = legacy.composer;
+          producer = legacy.producer;
+          lyricist = legacy.lyricist;
+          audioFile = legacy.audioFile;
+          audioFilename = legacy.audioFilename;
+          additionalDetails = legacy.additionalDetails;
+          status = legacy.status;
+          adminRemarks = legacy.adminRemarks;
+          adminComment = legacy.adminComment;
+          submitter = legacy.submitter;
+          timestamp = legacy.timestamp;
+          discountCode = legacy.discountCode;
+          acrResult = legacy.acrResult;
+          preSaveLink = legacy.preSaveLink;
+          liveStreamLink = legacy.liveStreamLink;
+          musicVideoLink = legacy.musicVideoLink;
+          albumTracks = legacy.albumTracks;
+          publicLink = legacy.publicLink;
+          adminLiveLink = legacy.adminLiveLink;
+          isManuallyRejected = legacy.isManuallyRejected;
+          spotifyLink = legacy.spotifyLink;
+          appleMusicLink = legacy.appleMusicLink;
+          // New premium fields default to null
+          customCLine = null;
+          customPLine = null;
+          premiumLabel = null;
+          contentType = null;
+          sunoTrackLink = null;
+          sunoAgreementFile = null;
+          sunoAgreementFilename = null;
+          licenceFile = null;
+          licenceFilename = null;
+          contentId = null;
+          callerTuneStartSecond = null;
+        };
+        submissionsV2.add(id, migrated);
+      };
+    };
+    // Clear legacy map after migration
+    for ((id, _) in submissions.entries().toArray().vals()) {
+      submissions.remove(id);
+    };
+  };
+
 
 };

@@ -1,38 +1,54 @@
-# INDIE TAMIL MUSIC PRODUCTION
+# INDIE TAMIL MUSIC PRODUCTION — Premium User Role & Extra Song Submission Fields
 
 ## Current State
-The platform has a `UserRevenuePanel` showing approved/live song revenues set by admin. `AdminRevenueManagement` lets admin set revenue per song. Backend has `setSongRevenue`, `getSongRevenue`, `getAllSongRevenues` in `main.mo` and declared in Candid files. No withdrawal system exists yet.
+
+- Backend has `grantPremiumRole` and `revokePremiumRole` functions, but they only flip `isVerified` on ArtistProfile records — there is no dedicated premium users store
+- No `isCallerPremium()` or `getAllPremiumUsers()` functions exist
+- `SongSubmission` and `SongSubmissionInput` types have no premium-specific fields
+- `SongSubmissionAdmin` has no premium-specific fields
+- `AdminUsersPanel` already has Grant/Revoke Premium buttons wired to the existing backend functions
+- `SongSubmissionForm` has no conditional premium fields
+- Admin Song Submission panel does not show premium fields when reviewing a submission
 
 ## Requested Changes (Diff)
 
 ### Add
-- `WithdrawRequest` type in `main.mo` with fields: id, submitter, fullName, googlePayAccountName, upiId, message, amount, qrCodeBlob, qrCodeFilename, status (pending/approved/rejected), rejectionReason, timestamp
-- `WithdrawStatus` variant type: `#pending`, `#approved`, `#rejected`
-- Backend functions: `submitWithdrawRequest`, `getMyWithdrawRequests`, `getAllWithdrawRequestsForAdmin`, `approveWithdrawRequest`, `rejectWithdrawRequest`
-- `withdrawRequests` stable map in `main.mo`
-- On approval: deduct amount from user's available revenue (tracked per principal in a `withdrawnAmounts` map)
-- All new types and functions declared in `backend.did.d.ts` and `backend.did.js`
-- New `UserWithdrawalPanel` component (user side): Withdraw Revenue button/form under My Revenue section
-- New `AdminWithdrawalRequestsManagement` component (admin side): Withdrawal Requests tab
-- Wire both components into `UserDashboard.tsx` and `AdminDashboard.tsx`
+- `premiumUsers` stable map in `main.mo` to track premium status separately from `isVerified`
+- `isCallerPremium()` query function — returns true if calling user is in premiumUsers map
+- `getAllPremiumUsers()` admin-only query — returns all premium user principals
+- Optional premium fields to `SongSubmission` type: `customCLine`, `customPLine`, `premiumLabel`, `contentType`, `sunoTrackLink`, `sunoAgreementFile`, `sunoAgreementFilename`, `licenceFile`, `licenceFilename`, `contentId`, `callerTuneStartSecond`
+- Same optional fields to `SongSubmissionInput` type
+- Same optional fields to `SongSubmissionAdmin` type
+- Premium section in `SongSubmissionForm` — shown only when `isCallerPremium` is true
+- Content Type conditional sub-fields (Suno Track Link + PDF upload for AI Generated; Licence PDF for Licensed Content)
+- Premium fields display in admin Song Submission review panel (show "Not provided" if null)
+- `isCallerPremium` and `getAllPremiumUsers` declared in `backend.did.d.ts` and `backend.did.js`
+- `isCallerPremium` hook in `useQueries.ts`
 
 ### Modify
-- `UserRevenuePanel.tsx`: Add "Withdraw Revenue" button that opens withdrawal form; show available balance (total revenue minus withdrawn); show past withdrawal requests with status
-- `AdminDashboard.tsx`: Add Withdrawal Requests tab with new component
-- `UserDashboard.tsx`: Already has revenue tab; the withdrawal section will be embedded within UserRevenuePanel
-- `backend.did.d.ts` and `backend.did.js`: Add new types and function declarations
-- `backend.ts`: Add new method bindings
+- `grantPremiumRole` in `main.mo` — also add user to `premiumUsers` map (keep existing isVerified logic)
+- `revokePremiumRole` in `main.mo` — also remove user from `premiumUsers` map (keep existing isVerified logic)
+- `submitSong` in `main.mo` — pass premium fields from input to stored submission
+- `editSongSubmission` in `main.mo` — preserve premium fields on edit
+- `adminUpdateSubmission`, `adminSetSubmissionLive`, `adminEditSubmission` — preserve premium fields
+- `getAllSubmissionsWithStatsForAdmin` — include premium fields in returned `SongSubmissionAdmin`
+- `SongSubmission` and `SongSubmissionInput` types in `backend.did.d.ts` and `backend.did.js` — add premium fields
+- `backend.ts` — add `isCallerPremium()` and `getAllPremiumUsers()` methods
 
 ### Remove
 - Nothing removed
 
 ## Implementation Plan
-1. Add `WithdrawStatus`, `WithdrawRequest`, `WithdrawRequestInput` types to `main.mo`
-2. Add `withdrawRequests` map and `withdrawnAmounts` map (stable) to actor state
-3. Add 5 new backend functions to `main.mo`
-4. Add types and function declarations to `backend.did.d.ts`
-5. Add IDL declarations to `backend.did.js`
-6. Add method bindings to `backend.ts`
-7. Update `UserRevenuePanel.tsx` with withdrawal form and request history
-8. Create `AdminWithdrawalRequestsManagement.tsx`
-9. Add Withdrawal Requests tab to `AdminDashboard.tsx`
+
+1. Add `premiumUsers` stable map to `main.mo`
+2. Add `isCallerPremium()` and `getAllPremiumUsers()` to `main.mo`
+3. Update `grantPremiumRole` and `revokePremiumRole` to also write to `premiumUsers`
+4. Add optional premium fields to `SongSubmission`, `SongSubmissionInput`, `SongSubmissionAdmin` types in `main.mo`
+5. Update `submitSong`, `editSongSubmission`, `adminUpdateSubmission`, `adminSetSubmissionLive`, `adminEditSubmission` to pass through premium fields
+6. Update `getAllSubmissionsWithStatsForAdmin` to include premium fields
+7. Update `backend.did.d.ts` — add `isCallerPremium`, `getAllPremiumUsers`, premium fields to SongSubmission types
+8. Update `backend.did.js` — add IDL declarations for new functions and premium fields
+9. Update `backend.ts` — add `isCallerPremium()` and `getAllPremiumUsers()` methods
+10. Add `useIsCallerPremium` hook to `useQueries.ts`
+11. Update `SongSubmissionForm` to show premium section conditionally
+12. Update admin Song Submission review panel to display premium fields

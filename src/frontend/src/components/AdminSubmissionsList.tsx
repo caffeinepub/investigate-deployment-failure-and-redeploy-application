@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertCircle,
+  Crown,
   Download,
   Edit,
   ExternalLink,
@@ -48,6 +49,21 @@ import {
 import { downloadExternalBlob } from "../utils/downloadExternalBlob";
 import AdminEditSubmissionDialog from "./AdminEditSubmissionDialog";
 import AdminManageLinksDialog from "./AdminManageLinksDialog";
+
+// Extended type that includes premium fields not yet in backend.ts SongSubmissionAdmin
+interface PremiumSongSubmissionAdmin extends SongSubmissionAdmin {
+  customCLine?: string;
+  customPLine?: string;
+  premiumLabel?: string;
+  contentType?: string;
+  sunoTrackLink?: string;
+  sunoAgreementFile?: import("../backend").ExternalBlob;
+  sunoAgreementFilename?: string;
+  licenceFile?: import("../backend").ExternalBlob;
+  licenceFilename?: string;
+  contentId?: boolean;
+  callerTuneStartSecond?: number;
+}
 
 export default function AdminSubmissionsList() {
   const {
@@ -236,6 +252,20 @@ export default function AdminSubmissionsList() {
     }
   };
 
+  const handleDownloadPremiumFile = async (
+    blob: import("../backend").ExternalBlob | undefined,
+    filename: string | undefined,
+    label: string,
+  ) => {
+    if (!blob) return;
+    try {
+      await downloadExternalBlob(blob, filename ?? label);
+      toast.success(`${label} downloaded`);
+    } catch (_error) {
+      toast.error(`Failed to download ${label}`);
+    }
+  };
+
   const getStatusBadge = (status: SongStatus) => {
     switch (status) {
       case "pending":
@@ -269,6 +299,23 @@ export default function AdminSubmissionsList() {
     }
   };
 
+  // Check if submission has any premium fields
+  const hasPremiumFields = (
+    submission: PremiumSongSubmissionAdmin,
+  ): boolean => {
+    return !!(
+      submission.customCLine ||
+      submission.customPLine ||
+      submission.premiumLabel ||
+      submission.contentType ||
+      submission.contentId !== undefined ||
+      submission.sunoTrackLink ||
+      submission.sunoAgreementFile ||
+      submission.licenceFile ||
+      submission.callerTuneStartSecond !== undefined
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -290,19 +337,29 @@ export default function AdminSubmissionsList() {
         </Card>
       ) : (
         sortedSubmissions.map((submission) => {
+          const ps = submission as PremiumSongSubmissionAdmin;
           const currentML = submission.monthlyListeners ?? null;
           const currentRev = submission.revenue ?? null;
           const edit = statsEdits[submission.id];
           const mlValue = edit?.monthlyListeners ?? "";
           const revValue = edit?.revenue ?? "";
+          const showPremiumFields = hasPremiumFields(
+            submission as PremiumSongSubmissionAdmin,
+          );
 
           return (
             <Card key={submission.id}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="text-xl">
+                    <CardTitle className="text-xl flex items-center gap-2">
                       {submission.title}
+                      {showPremiumFields && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/20 text-yellow-400 border border-yellow-500/40">
+                          <Crown className="w-3 h-3" />
+                          Premium
+                        </span>
+                      )}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
                       {submission.artist} • {submission.genre} •{" "}
@@ -402,6 +459,144 @@ export default function AdminSubmissionsList() {
                       {submission.adminLiveLink}{" "}
                       <ExternalLink className="w-3 h-3" />
                     </a>
+                  </div>
+                )}
+
+                {/* ── Premium Fields Section ── */}
+                {showPremiumFields && (
+                  <div className="space-y-3 pt-4 border-t border-yellow-500/30">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-4 h-4 text-yellow-400" />
+                      <p className="text-sm font-semibold text-yellow-300">
+                        Premium Fields
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-lg bg-yellow-950/10 border border-yellow-500/20 text-sm">
+                      <PremiumFieldDisplay
+                        label="Custom C Line"
+                        value={ps.customCLine}
+                      />
+                      <PremiumFieldDisplay
+                        label="Custom P Line"
+                        value={ps.customPLine}
+                      />
+                      <PremiumFieldDisplay
+                        label="Label"
+                        value={ps.premiumLabel}
+                      />
+                      <PremiumFieldDisplay
+                        label="Content Type"
+                        value={ps.contentType}
+                      />
+                      {/* Suno Track Link (show only if AI Generated) */}
+                      {ps.contentType === "AI Generated" && (
+                        <div className="col-span-2">
+                          {ps.sunoTrackLink ? (
+                            <div>
+                              <span className="font-medium text-yellow-200">
+                                Suno Track Link:
+                              </span>{" "}
+                              <a
+                                href={ps.sunoTrackLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-yellow-400 hover:underline inline-flex items-center gap-1"
+                              >
+                                {ps.sunoTrackLink}{" "}
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
+                          ) : (
+                            <PremiumFieldDisplay
+                              label="Suno Track Link"
+                              value={undefined}
+                            />
+                          )}
+                        </div>
+                      )}
+                      {/* Suno Agreement file */}
+                      {ps.contentType === "AI Generated" && (
+                        <div className="col-span-2">
+                          {ps.sunoAgreementFile ? (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-yellow-200">
+                                Commercial Use Suno Agreement:
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs border-yellow-500/40 text-yellow-300 hover:bg-yellow-950/30"
+                                onClick={() =>
+                                  handleDownloadPremiumFile(
+                                    ps.sunoAgreementFile,
+                                    ps.sunoAgreementFilename,
+                                    "Suno Agreement",
+                                  )
+                                }
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                {ps.sunoAgreementFilename ?? "Download"}
+                              </Button>
+                            </div>
+                          ) : (
+                            <PremiumFieldDisplay
+                              label="Commercial Use Suno Agreement"
+                              value={undefined}
+                            />
+                          )}
+                        </div>
+                      )}
+                      {/* Licence file */}
+                      {ps.contentType === "Licensed Content" && (
+                        <div className="col-span-2">
+                          {ps.licenceFile ? (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-yellow-200">
+                                Licence:
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs border-yellow-500/40 text-yellow-300 hover:bg-yellow-950/30"
+                                onClick={() =>
+                                  handleDownloadPremiumFile(
+                                    ps.licenceFile,
+                                    ps.licenceFilename,
+                                    "Licence",
+                                  )
+                                }
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                {ps.licenceFilename ?? "Download"}
+                              </Button>
+                            </div>
+                          ) : (
+                            <PremiumFieldDisplay
+                              label="Licence"
+                              value={undefined}
+                            />
+                          )}
+                        </div>
+                      )}
+                      <PremiumFieldDisplay
+                        label="Content ID"
+                        value={
+                          ps.contentId !== undefined
+                            ? ps.contentId
+                              ? "Yes"
+                              : "No"
+                            : undefined
+                        }
+                      />
+                      <PremiumFieldDisplay
+                        label="Caller Tune Start Second"
+                        value={
+                          ps.callerTuneStartSecond !== undefined
+                            ? String(ps.callerTuneStartSecond)
+                            : undefined
+                        }
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -650,6 +845,26 @@ export default function AdminSubmissionsList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+// ── Small helper to display a premium field label + value ──
+function PremiumFieldDisplay({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | undefined | null;
+}) {
+  return (
+    <div>
+      <span className="font-medium text-yellow-200">{label}:</span>{" "}
+      {value ? (
+        <span className="text-foreground">{value}</span>
+      ) : (
+        <span className="text-muted-foreground italic">Not provided</span>
+      )}
     </div>
   );
 }

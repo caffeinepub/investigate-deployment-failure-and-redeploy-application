@@ -6,6 +6,15 @@ declare module "./backend" {
         artistId: string;
         category: UserCategory;
     }
+    export interface AdminUserView {
+        principal: Principal;
+        displayName: string;
+        isAdmin: boolean;
+        isTeamMember: boolean;
+        isVerified: boolean;
+        isSongBlocked: boolean;
+        isPodcastBlocked: boolean;
+    }
     export interface PodcastShow {
         id: string;
         podcastType: PodcastType;
@@ -151,6 +160,17 @@ declare module "./backend" {
         releaseDate: Time;
         releaseType: string;
         featuredArtist: string;
+        customCLine?: string;
+        customPLine?: string;
+        premiumLabel?: string;
+        contentType?: string;
+        sunoTrackLink?: string;
+        sunoAgreementFile?: ExternalBlob;
+        sunoAgreementFilename?: string;
+        licenceFile?: ExternalBlob;
+        licenceFilename?: string;
+        contentId?: boolean;
+        callerTuneStartSecond?: number;
     }
     export interface PublicSongInfo {
         id: string;
@@ -224,6 +244,17 @@ declare module "./backend" {
         releaseType: string;
         adminRemarks: string;
         featuredArtist: string;
+        customCLine?: string;
+        customPLine?: string;
+        premiumLabel?: string;
+        contentType?: string;
+        sunoTrackLink?: string;
+        sunoAgreementFile?: ExternalBlob;
+        sunoAgreementFilename?: string;
+        licenceFile?: ExternalBlob;
+        licenceFilename?: string;
+        contentId?: boolean;
+        callerTuneStartSecond?: number;
     }
     export interface SongSubmissionAdmin {
         id: string;
@@ -260,6 +291,17 @@ declare module "./backend" {
         featuredArtist: string;
         monthlyListeners?: number;
         revenue?: number;
+        customCLine?: string;
+        customPLine?: string;
+        premiumLabel?: string;
+        contentType?: string;
+        sunoTrackLink?: string;
+        sunoAgreementFile?: ExternalBlob;
+        sunoAgreementFilename?: string;
+        licenceFile?: ExternalBlob;
+        licenceFilename?: string;
+        contentId?: boolean;
+        callerTuneStartSecond?: number;
     }
     export interface VerificationRequest {
         id: string;
@@ -388,7 +430,11 @@ declare module "./backend" {
         getAllSubmissionsForAdmin(): Promise<Array<SongSubmission>>;
         getAllSubmissionsWithStatsForAdmin(): Promise<Array<SongSubmissionAdmin>>;
         getAllSubscriptionPlans(): Promise<Array<SubscriptionPlan>>;
+        getAllRegisteredUsersForAdmin(): Promise<Array<AdminUserView>>;
         getAllTeamMembers(): Promise<Array<Principal>>;
+        grantPremiumRole(user: Principal): Promise<void>;
+        isCallerPremium(): Promise<boolean>;
+        getAllPremiumUsers(): Promise<Array<Principal>>;
         getAllTopVibingSongs(): Promise<Array<TopVibingSong>>;
         getAllVideoSubmissions(): Promise<Array<VideoSubmission>>;
         getArtistProfileByOwner(owner: Principal): Promise<ArtistProfile | null>;
@@ -459,5 +505,6 @@ declare module "./backend" {
         updateVideoStatus(videoId: string, newStatus: VideoSubmissionStatus, liveUrl: string | null): Promise<void>;
         updateVideoSubmission(input: VideoSubmissionInput, videoId: string): Promise<void>;
         upgradeUserToTeamMember(user: Principal): Promise<void>;
+        revokePremiumRole(user: Principal): Promise<void>;
     }
 }

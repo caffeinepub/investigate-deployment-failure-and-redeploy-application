@@ -8,8 +8,8 @@ import AdminPodcastSubmissions from "../components/AdminPodcastSubmissions";
 import AdminSubmissionsList from "../components/AdminSubmissionsList";
 import AdminSubscriptionPlansManagement from "../components/AdminSubscriptionPlansManagement";
 import AdminTopVibingSongsManagement from "../components/AdminTopVibingSongsManagement";
-import AdminUserManagement from "../components/AdminUserManagement";
 import AdminUserRoleManagement from "../components/AdminUserRoleManagement";
+import AdminUsersPanel from "../components/AdminUsersPanel";
 import AdminVerificationList from "../components/AdminVerificationList";
 import AdminVideoSubmissions from "../components/AdminVideoSubmissions";
 import AdminWithdrawalRequestsManagement from "../components/AdminWithdrawalRequestsManagement";
@@ -85,7 +85,7 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="users">
-          <AdminUserManagement />
+          <AdminUsersPanel />
         </TabsContent>
 
         <TabsContent value="plans">

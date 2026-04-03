@@ -89,6 +89,15 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface AdminUserView {
+    principal: Principal;
+    displayName: string;
+    isAdmin: boolean;
+    isTeamMember: boolean;
+    isVerified: boolean;
+    isSongBlocked: boolean;
+    isPodcastBlocked: boolean;
+}
 export interface UserProfile {
     name: string;
     artistId: string;
@@ -666,6 +675,7 @@ export interface backendInterface {
     getAllWithdrawRequestsForAdmin(): Promise<Array<WithdrawRequest>>;
     approveWithdrawRequest(requestId: string): Promise<void>;
     rejectWithdrawRequest(requestId: string, reason: string): Promise<void>;
+    getAllRegisteredUsersForAdmin(): Promise<Array<AdminUserView>>;
     getAllTeamMembers(): Promise<Array<Principal>>;
     getAllTopVibingSongs(): Promise<Array<TopVibingSong>>;
     getAllVideoSubmissions(): Promise<Array<VideoSubmission>>;
@@ -737,8 +747,12 @@ export interface backendInterface {
     updateVideoStatus(videoId: string, newStatus: VideoSubmissionStatus, liveUrl: string | null): Promise<void>;
     updateVideoSubmission(input: VideoSubmissionInput, videoId: string): Promise<void>;
     upgradeUserToTeamMember(user: Principal): Promise<void>;
+    grantPremiumRole(user: Principal): Promise<void>;
+    revokePremiumRole(user: Principal): Promise<void>;
+    isCallerPremium(): Promise<boolean>;
+    getAllPremiumUsers(): Promise<Array<Principal>>;
 }
-import type { ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, EpisodeType as _EpisodeType, ExternalBlob as _ExternalBlob, Language as _Language, LabelPartner as _LabelPartner, LabelPartnerInput as _LabelPartnerInput, PodcastCategory as _PodcastCategory, PodcastEpisode as _PodcastEpisode, PodcastEpisodeInput as _PodcastEpisodeInput, PodcastModerationStatus as _PodcastModerationStatus, PodcastShow as _PodcastShow, PodcastShowInput as _PodcastShowInput, PodcastType as _PodcastType, PublicSongInfo as _PublicSongInfo, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, SongSubmissionEditInput as _SongSubmissionEditInput, SongSubmissionInput as _SongSubmissionInput, StripeSessionStatus as _StripeSessionStatus, Time as _Time, TopVibingSong as _TopVibingSong, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserCategory as _UserCategory, UserProfile as _UserProfile, UserRole as _UserRole, VerificationRequest as _VerificationRequest, VerificationStatus as _VerificationStatus, VideoSubmission as _VideoSubmission, VideoSubmissionInput as _VideoSubmissionInput, VideoSubmissionStatus as _VideoSubmissionStatus, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { AdminUserView as _AdminUserView, ACRResult as _ACRResult, ApprovalStatus as _ApprovalStatus, ArtistProfile as _ArtistProfile, EpisodeType as _EpisodeType, ExternalBlob as _ExternalBlob, Language as _Language, LabelPartner as _LabelPartner, LabelPartnerInput as _LabelPartnerInput, PodcastCategory as _PodcastCategory, PodcastEpisode as _PodcastEpisode, PodcastEpisodeInput as _PodcastEpisodeInput, PodcastModerationStatus as _PodcastModerationStatus, PodcastShow as _PodcastShow, PodcastShowInput as _PodcastShowInput, PodcastType as _PodcastType, PublicSongInfo as _PublicSongInfo, SaveArtistProfileInput as _SaveArtistProfileInput, SongStatus as _SongStatus, SongSubmission as _SongSubmission, SongSubmissionEditInput as _SongSubmissionEditInput, SongSubmissionInput as _SongSubmissionInput, StripeSessionStatus as _StripeSessionStatus, Time as _Time, TopVibingSong as _TopVibingSong, TrackMetadata as _TrackMetadata, UserApprovalInfo as _UserApprovalInfo, UserCategory as _UserCategory, UserProfile as _UserProfile, UserRole as _UserRole, VerificationRequest as _VerificationRequest, VerificationStatus as _VerificationStatus, VideoSubmission as _VideoSubmission, VideoSubmissionInput as _VideoSubmissionInput, VideoSubmissionStatus as _VideoSubmissionStatus, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -1619,6 +1633,88 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getAllSubscriptionPlans();
+            return result;
+        }
+    }
+    async getAllRegisteredUsersForAdmin(): Promise<Array<AdminUserView>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllRegisteredUsersForAdmin();
+                return result.map((item: _AdminUserView) => ({
+                    principal: item.principal,
+                    displayName: item.displayName,
+                    isAdmin: item.isAdmin,
+                    isTeamMember: item.isTeamMember,
+                    isVerified: item.isVerified,
+                    isSongBlocked: item.isSongBlocked,
+                    isPodcastBlocked: item.isPodcastBlocked,
+                }));
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllRegisteredUsersForAdmin();
+            return result.map((item: _AdminUserView) => ({
+                principal: item.principal,
+                displayName: item.displayName,
+                isAdmin: item.isAdmin,
+                isTeamMember: item.isTeamMember,
+                isVerified: item.isVerified,
+                isSongBlocked: item.isSongBlocked,
+                isPodcastBlocked: item.isPodcastBlocked,
+            }));
+        }
+    }
+    async grantPremiumRole(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                await this.actor.grantPremiumRole(arg0);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            await this.actor.grantPremiumRole(arg0);
+        }
+    }
+    async revokePremiumRole(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                await this.actor.revokePremiumRole(arg0);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            await this.actor.revokePremiumRole(arg0);
+        }
+    }
+    async isCallerPremium(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isCallerPremium();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isCallerPremium();
+            return result;
+        }
+    }
+    async getAllPremiumUsers(): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllPremiumUsers();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllPremiumUsers();
             return result;
         }
     }
