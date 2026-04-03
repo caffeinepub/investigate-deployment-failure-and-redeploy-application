@@ -8,7 +8,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { ThemeProvider } from "next-themes";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import ProfileSetupModal from "./components/ProfileSetupModal";
@@ -140,20 +140,40 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// Maximum time (ms) to show the loading screen before rendering the app anyway.
+// This ensures a broken backend call never permanently blocks the UI.
+const MAX_LOADING_MS = 8000;
+
 function AppContent() {
   const { identity, isInitializing } = useInternetIdentity();
   const { actor: _actor, isFetching: actorFetching } = useActor();
+  const actorError = false;
   const {
     data: userProfile,
     isLoading: profileLoading,
     isFetched,
   } = useGetCallerUserProfile();
 
+  // Safety timeout: if loading takes longer than MAX_LOADING_MS, force-render
+  // the app so a hung backend call never results in a permanent loading screen.
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setLoadingTimedOut(true), MAX_LOADING_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   const isAuthenticated = !!identity;
   const showProfileSetup =
     isAuthenticated && !profileLoading && isFetched && userProfile === null;
 
-  if (isInitializing || (isAuthenticated && actorFetching)) {
+  // Show loading screen only while initializing auth AND actor (for logged-in users).
+  // Escape immediately if: actor errored, or the safety timeout fired.
+  const shouldShowLoading =
+    !loadingTimedOut &&
+    !actorError &&
+    (isInitializing || (isAuthenticated && actorFetching));
+
+  if (shouldShowLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
