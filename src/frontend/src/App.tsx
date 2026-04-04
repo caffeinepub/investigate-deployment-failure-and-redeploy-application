@@ -9,9 +9,12 @@ import {
 } from "@tanstack/react-router";
 import { ThemeProvider } from "next-themes";
 import React, { useEffect, useState } from "react";
+import CustomCursor from "./components/CustomCursor";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
+import PanelTransitionOverlay from "./components/PanelTransitionOverlay";
 import ProfileSetupModal from "./components/ProfileSetupModal";
+import { PanelTransitionProvider } from "./contexts/PanelTransitionContext";
 import { useActor } from "./hooks/useActor";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
 import { useGetCallerUserProfile } from "./hooks/useQueries";
@@ -185,11 +188,13 @@ function AppContent() {
   }
 
   return (
-    <>
+    <PanelTransitionProvider>
+      <CustomCursor />
+      <PanelTransitionOverlay />
       <RouterProvider router={router} />
       {showProfileSetup && <ProfileSetupModal />}
       <Toaster />
-    </>
+    </PanelTransitionProvider>
   );
 }
 

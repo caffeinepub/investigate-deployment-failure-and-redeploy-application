@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 import SongSubmissionForm from "../components/SongSubmissionForm";
 import TopVibingSongsSection from "../components/TopVibingSongsSection";
 import UserAnalysisPanel from "../components/UserAnalysisPanel";
@@ -9,13 +10,26 @@ import UserRevenuePanel from "../components/UserRevenuePanel";
 import UserSubmissionsList from "../components/UserSubmissionsList";
 import UserVideoSubmissionSection from "../components/UserVideoSubmissionSection";
 import VideoSubmissionForm from "../components/VideoSubmissionForm";
+import { usePanelTransition } from "../contexts/PanelTransitionContext";
 
 export default function UserDashboard() {
+  const [activeTab, setActiveTab] = useState("profiles");
+  const { triggerTransition } = usePanelTransition();
+
+  const handleTabChange = (value: string) => {
+    triggerTransition();
+    setActiveTab(value);
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
 
-      <Tabs defaultValue="profiles" className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
         <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
           <TabsTrigger value="profiles">Artist Profiles</TabsTrigger>
           <TabsTrigger value="submit">Submit Song</TabsTrigger>
