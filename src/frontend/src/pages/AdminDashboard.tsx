@@ -1,5 +1,4 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
 import AdminArtistManagement from "../components/AdminArtistManagement";
 import AdminChatInbox from "../components/AdminChatInbox";
 import AdminDebugPanel from "../components/AdminDebugPanel";
@@ -14,7 +13,6 @@ import AdminUsersPanel from "../components/AdminUsersPanel";
 import AdminVerificationList from "../components/AdminVerificationList";
 import AdminVideoSubmissions from "../components/AdminVideoSubmissions";
 import AdminWithdrawalRequestsManagement from "../components/AdminWithdrawalRequestsManagement";
-import { usePanelTransition } from "../contexts/PanelTransitionContext";
 import { useGetChatThreads } from "../hooks/useQueries";
 
 function MessagesTabLabel() {
@@ -34,23 +32,11 @@ function MessagesTabLabel() {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState("artists");
-  const { triggerTransition } = usePanelTransition();
-
-  const handleTabChange = (value: string) => {
-    triggerTransition();
-    setActiveTab(value);
-  };
-
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
 
-      <Tabs
-        value={activeTab}
-        onValueChange={handleTabChange}
-        className="w-full"
-      >
+      <Tabs defaultValue="artists" className="w-full">
         <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
           <TabsTrigger value="artists">Artists</TabsTrigger>
           <TabsTrigger value="songs">Song Submissions</TabsTrigger>
