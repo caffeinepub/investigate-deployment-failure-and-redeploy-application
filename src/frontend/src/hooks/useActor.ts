@@ -13,6 +13,7 @@ export function useActor() {
       const isAuthenticated = !!identity;
 
       if (!isAuthenticated) {
+        // Return anonymous actor if not authenticated
         return await createActorWithConfig();
       }
 
@@ -27,16 +28,15 @@ export function useActor() {
         const adminToken = getSecretParameter("caffeineAdminToken") || "";
         await actor._initializeAccessControlWithSecret(adminToken);
       } catch (e) {
-        console.warn(
-          "_initializeAccessControlWithSecret failed (non-fatal):",
-          e,
-        );
+        // Non-fatal: access control init failure should not block the actor
+        console.warn("Access control init failed (non-fatal):", e);
       }
       return actor;
     },
+    // Only refetch when identity changes
     staleTime: Number.POSITIVE_INFINITY,
-    enabled: true,
     retry: false,
+    enabled: true,
   });
 
   return {

@@ -1703,6 +1703,7 @@ actor {
     // No admin check required -- allows the deployer to reclaim admin if all admins were revoked
     accessControlState.userRoles.add(caller, #admin);
   };
+
   public shared ({ caller }) func promoteToAdmin(user : Principal) : async () {
     requireAdmin(caller);
     AccessControl.assignRole(accessControlState, caller, user, #admin);
@@ -2656,6 +2657,13 @@ actor {
         };
         withdrawRequests.add(requestId, updated);
       };
+    };
+  };
+
+  public query ({ caller }) func getWithdrawnAmountForUser() : async Float {
+    switch (withdrawnAmounts.get(caller)) {
+      case (null) { 0.0 };
+      case (?v) { v };
     };
   };
 

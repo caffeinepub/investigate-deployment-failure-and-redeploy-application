@@ -675,6 +675,7 @@ export interface backendInterface {
     getAllWithdrawRequestsForAdmin(): Promise<Array<WithdrawRequest>>;
     approveWithdrawRequest(requestId: string): Promise<void>;
     rejectWithdrawRequest(requestId: string, reason: string): Promise<void>;
+    getWithdrawnAmountForUser(): Promise<number>;
     getAllRegisteredUsersForAdmin(): Promise<Array<AdminUserView>>;
     getAllTeamMembers(): Promise<Array<Principal>>;
     getAllTopVibingSongs(): Promise<Array<TopVibingSong>>;
@@ -1620,6 +1621,20 @@ export class Backend implements backendInterface {
             }
         } else {
             await this.actor.rejectWithdrawRequest(requestId, reason);
+        }
+    }
+    async getWithdrawnAmountForUser(): Promise<number> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getWithdrawnAmountForUser();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getWithdrawnAmountForUser();
+            return result;
         }
     }
     async getAllSubscriptionPlans(): Promise<Array<SubscriptionPlan>> {
