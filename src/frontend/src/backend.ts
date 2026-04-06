@@ -343,6 +343,18 @@ export interface SongSubmissionInput {
     releaseDate: Time;
     releaseType: string;
     featuredArtist: string;
+    // Premium fields (optional)
+    customCLine?: string;
+    customPLine?: string;
+    premiumLabel?: string;
+    contentType?: string;
+    sunoTrackLink?: string;
+    sunoAgreementFile?: ExternalBlob;
+    sunoAgreementFilename?: string;
+    licenceFile?: ExternalBlob;
+    licenceFilename?: string;
+    contentId?: boolean;
+    callerTuneStartSecond?: number;
 }
 export interface PublicSongInfo {
     id: string;
@@ -3620,6 +3632,17 @@ async function to_candid_record_n108(_uploadFile: (file: ExternalBlob) => Promis
     releaseDate: Time;
     releaseType: string;
     featuredArtist: string;
+    customCLine?: string;
+    customPLine?: string;
+    premiumLabel?: string;
+    contentType?: string;
+    sunoTrackLink?: string;
+    sunoAgreementFile?: ExternalBlob;
+    sunoAgreementFilename?: string;
+    licenceFile?: ExternalBlob;
+    licenceFilename?: string;
+    contentId?: boolean;
+    callerTuneStartSecond?: number;
 }): Promise<{
     artworkBlob: _ExternalBlob;
     albumTracks: [] | [Array<_TrackMetadata>];
@@ -3641,6 +3664,17 @@ async function to_candid_record_n108(_uploadFile: (file: ExternalBlob) => Promis
     releaseDate: _Time;
     releaseType: string;
     featuredArtist: string;
+    customCLine: [] | [string];
+    customPLine: [] | [string];
+    premiumLabel: [] | [string];
+    contentType: [] | [string];
+    sunoTrackLink: [] | [string];
+    sunoAgreementFile: [] | [_ExternalBlob];
+    sunoAgreementFilename: [] | [string];
+    licenceFile: [] | [_ExternalBlob];
+    licenceFilename: [] | [string];
+    contentId: [] | [boolean];
+    callerTuneStartSecond: [] | [number];
 }> {
     return {
         artworkBlob: await to_candid_ExternalBlob_n12(_uploadFile, _downloadFile, value.artworkBlob),
@@ -3662,7 +3696,18 @@ async function to_candid_record_n108(_uploadFile: (file: ExternalBlob) => Promis
         producer: value.producer,
         releaseDate: value.releaseDate,
         releaseType: value.releaseType,
-        featuredArtist: value.featuredArtist
+        featuredArtist: value.featuredArtist,
+        customCLine: value.customCLine ? candid_some(value.customCLine) : candid_none(),
+        customPLine: value.customPLine ? candid_some(value.customPLine) : candid_none(),
+        premiumLabel: value.premiumLabel ? candid_some(value.premiumLabel) : candid_none(),
+        contentType: value.contentType ? candid_some(value.contentType) : candid_none(),
+        sunoTrackLink: value.sunoTrackLink ? candid_some(value.sunoTrackLink) : candid_none(),
+        sunoAgreementFile: value.sunoAgreementFile ? candid_some(await to_candid_ExternalBlob_n12(_uploadFile, _downloadFile, value.sunoAgreementFile)) : candid_none(),
+        sunoAgreementFilename: value.sunoAgreementFilename ? candid_some(value.sunoAgreementFilename) : candid_none(),
+        licenceFile: value.licenceFile ? candid_some(await to_candid_ExternalBlob_n12(_uploadFile, _downloadFile, value.licenceFile)) : candid_none(),
+        licenceFilename: value.licenceFilename ? candid_some(value.licenceFilename) : candid_none(),
+        contentId: value.contentId !== undefined ? candid_some(value.contentId) : candid_none(),
+        callerTuneStartSecond: value.callerTuneStartSecond !== undefined ? candid_some(value.callerTuneStartSecond) : candid_none()
     };
 }
 async function to_candid_record_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {

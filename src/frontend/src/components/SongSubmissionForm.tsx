@@ -311,23 +311,30 @@ export default function SongSubmissionForm() {
         discountCode: discountCode.trim() ? discountCode : undefined,
         albumTracks: isAlbum ? albumTracks : undefined,
         musicVideoLink: musicVideoLink.trim() ? musicVideoLink : undefined,
-        // Premium fields
-        ...(isPremium && {
-          customCLine: customCLine.trim() ? customCLine : undefined,
-          customPLine: customPLine.trim() ? customPLine : undefined,
-          premiumLabel: premiumLabel.trim() ? premiumLabel : undefined,
-          contentType: contentType || undefined,
-          sunoTrackLink: sunoTrackLink.trim() ? sunoTrackLink : undefined,
-          sunoAgreementFile: sunoAgreementBlob || undefined,
-          sunoAgreementFilename: sunoAgreementFile?.name,
-          licenceFile: licenceBlob || undefined,
-          licenceFilename: licenceFile?.name,
-          contentId: contentId,
-          callerTuneStartSecond:
-            callerTuneStartSecond !== ""
-              ? Number(callerTuneStartSecond)
-              : undefined,
-        }),
+        spotifyLink: undefined,
+        appleMusicLink: undefined,
+        // Premium fields — always include ALL keys explicitly so the backend.ts conversion function maps them to Candid [] | [T]
+        customCLine: isPremium && customCLine.trim() ? customCLine : undefined,
+        customPLine: isPremium && customPLine.trim() ? customPLine : undefined,
+        premiumLabel:
+          isPremium && premiumLabel.trim() ? premiumLabel : undefined,
+        contentType: isPremium && contentType ? contentType : undefined,
+        sunoTrackLink:
+          isPremium && sunoTrackLink.trim() ? sunoTrackLink : undefined,
+        sunoAgreementFile:
+          isPremium && sunoAgreementBlob ? sunoAgreementBlob : undefined,
+        sunoAgreementFilename:
+          isPremium && sunoAgreementFile?.name
+            ? sunoAgreementFile.name
+            : undefined,
+        licenceFile: isPremium && licenceBlob ? licenceBlob : undefined,
+        licenceFilename:
+          isPremium && licenceFile?.name ? licenceFile.name : undefined,
+        contentId: isPremium ? contentId : undefined,
+        callerTuneStartSecond:
+          isPremium && callerTuneStartSecond !== ""
+            ? Number(callerTuneStartSecond)
+            : undefined,
       };
 
       await submitSong.mutateAsync(input);
