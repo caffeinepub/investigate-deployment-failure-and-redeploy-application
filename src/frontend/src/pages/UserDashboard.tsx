@@ -1,4 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import GeneralSupportTab from "../components/GeneralSupportTab";
 import SongSubmissionForm from "../components/SongSubmissionForm";
 import TopVibingSongsSection from "../components/TopVibingSongsSection";
 import UserAnalysisPanel from "../components/UserAnalysisPanel";
@@ -26,6 +27,7 @@ export default function UserDashboard() {
           <TabsTrigger value="analysis">Analysis</TabsTrigger>
           <TabsTrigger value="revenue">₹ My Revenue</TabsTrigger>
           <TabsTrigger value="chat">💬 Chat</TabsTrigger>
+          <TabsTrigger value="generalSupport">🎧 General Support</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profiles">
@@ -84,6 +86,10 @@ export default function UserDashboard() {
             </div>
             <UserChatPanel />
           </div>
+        </TabsContent>
+
+        <TabsContent value="generalSupport">
+          <GeneralSupportTab />
         </TabsContent>
       </Tabs>
     </div>

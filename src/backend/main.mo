@@ -6,20 +6,20 @@ import Time "mo:core/Time";
 import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
 import Array "mo:core/Array";
-import Storage "blob-storage/Storage";
+import Storage "mo:caffeineai-object-storage/Storage";
 import List "mo:core/List";
 import Random "mo:core/Random";
-import MixinStorage "blob-storage/Mixin";
-import AccessControl "authorization/access-control";
-import InviteLinksModule "invite-links/invite-links-module";
-import Stripe "stripe/stripe";
-import OutCall "http-outcalls/outcall";
-import UserApproval "user-approval/approval";
-import MixinAuthorization "authorization/MixinAuthorization";
+import MixinObjectStorage "mo:caffeineai-object-storage/Mixin";
+import AccessControl "mo:caffeineai-authorization/access-control";
+import InviteLinksModule "mo:caffeineai-invite-links/invite-links-module";
+import Stripe "mo:caffeineai-stripe/stripe";
+import OutCall "mo:caffeineai-http-outcalls/outcall";
+import UserApproval "mo:caffeineai-user-approval/approval";
+import MixinAuthorization "mo:caffeineai-authorization/MixinAuthorization";
 import Iter "mo:core/Iter";
 
 actor {
-  include MixinStorage();
+  include MixinObjectStorage();
 
   public type SongStatus = {
     #pending;

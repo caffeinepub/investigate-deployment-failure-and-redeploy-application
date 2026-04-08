@@ -7,6 +7,7 @@ import AdminLabelPartnersManagement from "../components/AdminLabelPartnersManage
 import AdminPodcastSubmissions from "../components/AdminPodcastSubmissions";
 import AdminSubmissionsList from "../components/AdminSubmissionsList";
 import AdminSubscriptionPlansManagement from "../components/AdminSubscriptionPlansManagement";
+import AdminSupportRequestsManagement from "../components/AdminSupportRequestsManagement";
 import AdminTopVibingSongsManagement from "../components/AdminTopVibingSongsManagement";
 import AdminUserRoleManagement from "../components/AdminUserRoleManagement";
 import AdminUsersPanel from "../components/AdminUsersPanel";
@@ -57,6 +58,9 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="debug" data-ocid="debug.tab">
             🔧 Debug
+          </TabsTrigger>
+          <TabsTrigger value="generalSupport" data-ocid="admin.support.tab">
+            🎧 Support Requests
           </TabsTrigger>
         </TabsList>
 
@@ -114,6 +118,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="debug">
           <AdminDebugPanel />
+        </TabsContent>
+
+        <TabsContent value="generalSupport">
+          <AdminSupportRequestsManagement />
         </TabsContent>
       </Tabs>
     </div>

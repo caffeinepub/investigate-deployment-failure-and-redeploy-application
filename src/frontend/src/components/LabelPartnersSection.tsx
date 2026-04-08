@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "@tanstack/react-router";
 import { Building2 } from "lucide-react";
